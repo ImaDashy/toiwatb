@@ -20,5 +20,31 @@
         }
       ]
     }
+    
+    {
+      "number": 2,
+      "title": "Kavindaism",
+      "publishDate": "2025-04-11T12:00:00Z",
+      "content": "# Kavindaism\n\nI was raised in a Buddhist family. I attended Sunday School, learned about the teachings of the Buddha and memorised my prayers. For the longest time I carried the “Heart of A Buddha” with me, a small book containing one-line quotes from Buddhist scripts.  I am almost positive several of these quotes have been plagiarised by George Lucas via Yoda.
+      \n\n As I grew older, I naturally began to question the ideas and lessons I had learned when I was younger. Had I been raised in any other religion, this would have been a torturous time of self-doubt, a crisis of faith, a struggle against everything I had been taught and the world I saw before me.
+\n\n For a Buddhist? This was totally fine, man.
+      \n\n Buddhism encourages you to ask questions and seek out your own answers. Buddhism teaches you not to blindly accept things as Truth, unless you yourself truly believe it to be. Buddhism is the cool, alternative Aunt/Uncle of religions, who doesn’t always bathe and who lets you sip their beer even though you’re only 14.
+By questioning the teachings of Buddhism, as Buddhism had taught me to do, I decided I did not accept the teachings of Buddhism. Even at an early age, the irony was not lost on me.
+I would brag to my sister that I was no longer a Buddhist, but had created my own religion: Kavindaism (derived from my middle name Kavinda. Mystery solved). I was the Prophet and had it just Two Commandments:
+1. Maintain Respect.
+2. Don’t be a Dickhead.
+\n\n Buddhism is so often portrayed as a liberating and spiritual experience, so my apparent rejection of it can be difficult to explain to others. People often put it down to rebellion for rebellion’s sake. I feel like a child who ran away from the circus, to go to university and become a straight-laced accountant. Take that, Bearded Mum and World’s Strongest Dad.
+\n\n But the beliefs instilled in us throughout our childhood can be difficult to quell. The leopard can’t change it’s spots[^1]; the accountant can’t help but juggle his stationery. Despite my best efforts, my mind and heart clung to the notion of Karma; What Goes Around Comes Around. Of all the complex Buddhist teachings, I have no justification for my choice to believe in this one philosophy. There was no epiphany, no profound chain of events in which I witnessed Karma with my own eyes. Frankly I just liked the idea of the whole thing.
+\n\n This cherry-picked belief has shaped my world view so significantly that it makes me glad I only chose one idea to take to heart. Who knows how distorted my life would have seemed if I’d followed everything I read or learned about with such conviction. Karma encourages me to do positive things for the world, like carry an old lady’s bag up the stairs, or feed breadcrumbs to a squirrel. It helps me forgive others grievances against me, safe in the knowledge that they may soon walk into a glass door or be bitten by a well-fed squirrel. It also compels me to make decisions that other people would find absurd or naive, but that I think helps me earn Frequent Karmic Points, a case in point being my arrival into Paris.
+",
+      "footnotes": [
+        {
+          "id": "1",
+          "text": "<a href='https://yoursubdomain.example.com/resource1'>www.changeyourspots.com</a> - are you a leaopard struggling with unsightly spots? Do you wish you could change them? Etc slick cosmetic ad for leopards."
+        },
+      ]
+    }
+
+    
   ]
 }
