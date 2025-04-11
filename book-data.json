@@ -1,8 +1,8 @@
 {
   "title": "The Ocean Is Wettest At The Bottom",
-  "author": "Umam Zyedad",
+  "author": "Uman Zyedad",
   "coverImage": "https://via.placeholder.com/800x1200",
-  "lastUpdated": "2023-06-01T12:00:00Z",
+  "lastUpdated": "2023-06-15T12:00:00Z",
   "chapters": [
     {
       "number": 1,
@@ -19,24 +19,30 @@
           "text": "This is the second footnote with another <a href='https://yoursubdomain.example.com/resource2'>link to your subdomain</a>."
         }
       ]
-    }
-    
+    },
     {
       "number": 2,
-      "title": "Kavindaism",
-      "publishDate": "2025-04-11T12:00:00Z",
-      "content": "# Kavindaism\n\n Buddhism is so often portrayed as a liberating and spiritual experience, so my apparent rejection of it can be difficult to explain to others. People often put it down to rebellion for rebellion’s sake. I feel like a child who ran away from the circus, to go to university and become a straight-laced accountant. Take that, Bearded Mum and World’s Strongest Dad.
-\n\n But the beliefs instilled in us throughout our childhood can be difficult to quell. The leopard can’t change it’s spots[^1]; the accountant can’t help but juggle his stationery. Despite my best efforts, my mind and heart clung to the notion of Karma; What Goes Around Comes Around. Of all the complex Buddhist teachings, I have no justification for my choice to believe in this one philosophy. There was no epiphany, no profound chain of events in which I witnessed Karma with my own eyes. Frankly I just liked the idea of the whole thing.
-\n\n This cherry-picked belief has shaped my world view so significantly that it makes me glad I only chose one idea to take to heart. Who knows how distorted my life would have seemed if I’d followed everything I read or learned about with such conviction. Karma encourages me to do positive things for the world, like carry an old lady’s bag up the stairs, or feed breadcrumbs to a squirrel. It helps me forgive others grievances against me, safe in the knowledge that they may soon walk into a glass door or be bitten by a well-fed squirrel. It also compels me to make decisions that other people would find absurd or naive, but that I think helps me earn Frequent Karmic Points, a case in point being my arrival into Paris.
-",
+      "title": "Getting Started",
+      "publishDate": "2023-06-08T12:00:00Z",
+      "content": "# Getting Started\n\nThis is the second chapter of our serial e-book. Now we're getting into the main content.\n\nEach chapter can be as long as you need. The pagination system will automatically break it into readable pages.\n\n## Key Concepts\n\nHere we introduce some key concepts for our readers. These will be expanded upon in future chapters.\n\n- First important point\n- Second important point\n- Third important point\n\nThis paragraph has a reference to an important external resource[^1].\n\n## Further Reading\n\nWe can suggest further reading materials and resources for readers who want to explore more deeply.",
       "footnotes": [
         {
           "id": "1",
-          "text": "<a href='https://yoursubdomain.example.com/resource1'>www.changeyourspots.com</a> - are you a leaopard struggling with unsightly spots? Do you wish you could change them? Etc slick cosmetic ad for leopards."
-        },
+          "text": "You can find more information at <a href='https://yoursubdomain.example.com/details'>this detailed guide</a>."
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "title": "Advanced Topics",
+      "publishDate": "2023-06-15T12:00:00Z",
+      "content": "# Advanced Topics\n\nBy the third chapter, we're getting into more advanced material. Readers who have been following along weekly will be ready for this content.\n\n## Complex Concepts\n\nNow we can explore more complex ideas that build on what was covered in previous chapters.\n\nThis is a good place to include more detailed footnotes[^1] that provide additional context or clarification.\n\n## Case Studies\n\nReal-world examples help solidify understanding. Here we can discuss some practical applications.\n\n1. First example scenario\n2. Second example scenario\n3. Third example scenario\n\nEach of these demonstrates the principles discussed earlier in a concrete way.\n\n## Looking Ahead\n\nAt the end of this chapter, we can tease what's coming in the next installment to keep readers engaged and looking forward to next week's chapter.",
+      "footnotes": [
+        {
+          "id": "1",
+          "text": "This concept was first introduced by Smith (2018) and later expanded by Johnson (2020). See <a href='https://yoursubdomain.example.com/references'>the references page</a> for complete citations."
+        }
       ]
     }
-
-    
   ]
 }
