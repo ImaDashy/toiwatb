@@ -1,4 +1,570 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kindle-Style E-Book</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f0ece3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        .book-container {
+            width: 90%;
+            max-width: 1000px;
+            height: 80vh;
+            max-height: 700px;
+            position: relative;
+            overflow: hidden;
+            background-color: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 5px;
+        }
+        
+        .book {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .page-wrapper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.5s ease-out;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .page-wrapper.slide-left {
+            transform: translateX(-100%);
+        }
+        
+        .page-wrapper.slide-right {
+            transform: translateX(100%);
+        }
+        
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: hidden;
+            padding: 40px;
+            background: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .page.front {
+            z-index: 1;
+        }
+        
+        .page.back {
+            z-index: 0;
+        }
+        
+        /* Cover styling */
+        .cover {
+            position: relative;
+            overflow: hidden;
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding-bottom: 50px;
+        }
+        
+        .cover-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
+        
+        .cover-content {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            width: 100%;
+        }
+        
+        .cover h1 {
+            font-family: 'Palatino', serif;
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .cover h2 {
+            font-family: 'Palatino', serif;
+            font-size: 1.8em;
+            margin-bottom: 30px;
+            font-weight: 400;
+        }
+        
+        .turn-indicator {
+            position: absolute;
+            bottom: 30px;
+            font-size: 1.2em;
+            color: rgba(255,255,255,0.8);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        /* Content styling */
+        .content h1 {
+            font-family: 'Palatino', serif;
+            font-size: 2.2em;
+            color: #444;
+            margin-bottom: 30px;
+        }
+        
+        .content h2 {
+            font-family: 'Palatino', serif;
+            color: #444;
+            margin-top: 1.5em;
+            margin-bottom: 0.8em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5em;
+        }
+        
+        .content p {
+            margin-bottom: 1.2em;
+            text-align: justify;
+        }
+        
+        .content a {
+            color: #0066cc;
+            text-decoration: none;
+            border-bottom: 1px dotted #0066cc;
+        }
+        
+        .content a:hover {
+            color: #004080;
+            border-bottom: 1px solid #004080;
+        }
+        
+        .page-number {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.9em;
+            color: #888;
+        }
+        
+        .page-number.left {
+            left: 40px;
+        }
+        
+        .page-number.right {
+            right: 40px;
+        }
+        
+        .turn-page-hint {
+            position: absolute;
+            bottom: 20px;
+            color: #777;
+            font-style: italic;
+            font-size: 0.9em;
+            animation: pulse 2s infinite;
+        }
+        
+        .turn-page-hint.right {
+            right: 20px;
+        }
+        
+        .turn-page-hint.left {
+            left: 20px;
+        }
+        
+        /* Footnote styling */
+        .footnote-ref {
+            font-size: 0.75em;
+            vertical-align: super;
+            color: #0066cc;
+            cursor: pointer;
+            margin-left: 1px;
+        }
+        
+        .footnotes {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 0.9em;
+            color: #555;
+        }
+        
+        .footnote-item {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .footnote-number {
+            min-width: 25px;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        
+        .footnote-content {
+            flex: 1;
+        }
+        
+        .footnote-backref {
+            font-size: 0.8em;
+            margin-left: 5px;
+            color: #0066cc;
+            cursor: pointer;
+        }
+        
+        /* Navigation arrows */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3em;
+            color: rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 100;
+            transition: color 0.3s;
+            user-select: none;
+        }
+        
+        .nav-arrow:hover {
+            color: rgba(0,0,0,0.5);
+        }
+        
+        .nav-arrow.prev {
+            left: -50px;
+        }
+        
+        .nav-arrow.next {
+            right: -50px;
+        }
+        
+        /* Additional utility classes */
+        .page-content {
+            width: 100%;
+            height: 100%;
+            padding-bottom: 50px; /* Space for page number and hints */
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Hide overflow for content container */
+        .page.content {
+            overflow: hidden;
+        }
+        
+        /* For mobile */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+                margin: 0;
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .book-container {
+                width: 100%;
+                height: 100vh;
+                max-height: none;
+                margin: 0;
+            }
+            
+            .book {
+                width: 100%;
+                height: 100%;
+            }
+            
+            .page {
+                padding: 20px;
+                font-size: 16px;
+                overflow-y: auto;
+            }
+            
+            .content h1 {
+                font-size: 1.8em;
+                margin-bottom: 20px;
+            }
+            
+            .content h2 {
+                font-size: 1.5em;
+                margin-top: 1.2em;
+            }
+            
+            .content p {
+                margin-bottom: 1em;
+                line-height: 1.5;
+            }
+            
+            .nav-arrow {
+                font-size: 2em;
+                background-color: rgba(255, 255, 255, 0.7);
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                top: auto;
+                bottom: 20px;
+                transform: none;
+            }
+            
+            .nav-arrow.prev {
+                left: 20px;
+            }
+            
+            .nav-arrow.next {
+                right: 20px;
+            }
+            
+            .cover h1 {
+                font-size: 2em;
+            }
+            
+            .cover h2 {
+                font-size: 1.4em;
+            }
+            
+            .turn-page-hint {
+                font-size: 0.8em;
+                bottom: 10px;
+            }
+            
+            .footnotes {
+                margin-top: 30px;
+                font-size: 0.85em;
+            }
+        }
+        
+        /* Specific optimization for very narrow screens (phones in portrait) */
+        @media (max-width: 480px) {
+            .page {
+                padding: 15px;
+                font-size: 15px;
+            }
+            
+            .content h1 {
+                font-size: 1.6em;
+            }
+            
+            .content h2 {
+                font-size: 1.3em;
+            }
+            
+            .page-number {
+                font-size: 0.8em;
+                bottom: 10px;
+            }
+            
+            .turn-page-hint {
+                font-size: 0.75em;
+                bottom: 8px;
+            }
+        }
+        
+        /* Content form styling */
+        .content-form {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            max-width: 300px;
+        }
+        
+        .content-form input, 
+        .content-form textarea, 
+        .content-form button {
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="book-container">
+        <div class="book">
+            <!-- Cover Page -->
+            <div class="page-wrapper" id="cover-wrapper">
+                <div class="page front cover">
+                    <img src="/api/placeholder/800/1200" alt="Book Cover" class="cover-image">
+                    <div class="cover-content">
+                        <h1>My E-Book Title</h1>
+                        <h2>By Author Name</h2>
+                    </div>
+                    <div class="turn-indicator">Tap to open →</div>
+                </div>
+                <div class="page back content">
+                    <h1>Table of Contents</h1>
+                    <ul style="list-style-type:none; margin-left:20px; line-height:2">
+                        <li>Chapter 1: Introduction</li>
+                        <li>Chapter 2: Main Concepts</li>
+                        <li>Chapter 3: Advanced Topics</li>
+                    </ul>
+                    <div class="page-number right">i</div>
+                    <div class="turn-page-hint">Click to turn page →</div>
+                </div>
+            </div>
+            
+            <!-- Page 1-2 -->
+            <div class="page-wrapper" id="page1-wrapper">
+                <div class="page front content">
+                    <h1>Chapter 1: Introduction</h1>
+                    <p>Welcome to this e-book! This is an example of how your online e-book might look. The great advantage of this format is the ability to include <a href="https://example.com/resource" target="_blank">external links</a> that readers can access while reading.</p>
+                    
+                    <p>You can reference other chapters internally or include citations that link to your footnotes<span class="footnote-ref" id="ref1">1</span>. Footnotes are an essential part of academic and reference books<span class="footnote-ref" id="ref2">2</span>.</p>
+                    
+                    <p>This paragraph demonstrates how the text will flow on the page. The styling is designed to be easy on the eyes with appropriate line spacing, font choice, and contrast to simulate a real e-book reading experience.</p>
+                    
+                    <p>As you explore this interactive format, notice how the page-turning animation enhances the feeling of reading an actual book while maintaining all the benefits of digital content.</p>
+                    
+                    <div class="footnotes">
+                        <div class="footnote-item">
+                            <div class="footnote-number" id="fn1">1.</div>
+                            <div class="footnote-content">
+                                Footnotes provide additional information or citations without interrupting the main text flow.
+                                <a class="footnote-backref" href="#ref1">↩</a>
+                            </div>
+                        </div>
+                        <div class="footnote-item">
+                            <div class="footnote-number" id="fn2">2.</div>
+                            <div class="footnote-content">
+                                This e-book format preserves the functionality of footnotes while enhancing their usability through direct linking.
+                                <a class="footnote-backref" href="#ref2">↩</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="page-number left">1</div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                </div>
+                <div class="page back content">
+                    <p>The ability to link to external resources is one of the key advantages of a web-based e-book. As you read, you can explore related content without losing your place in the book.</p>
+                    
+                    <p>Another advantage is the ability to update content in real-time. If new research becomes available or certain information changes, you can update your e-book immediately.</p>
+                    
+                    <h2>Getting Started</h2>
+                    <p>Before diving into the main content, it's important to understand the basic concepts that will be covered throughout this book. The following chapters will build upon these foundations to provide a comprehensive understanding of the subject matter.</p>
+                    
+                    <p>Feel free to navigate through the book by clicking on each page to go forward, or the left side to go back. You can also use the arrow buttons on either side of the book.</p>
+                    
+                    <div class="page-number right">2</div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                </div>
+            </div>
+            
+            <!-- Page 3-4 -->
+            <div class="page-wrapper" id="page2-wrapper">
+                <div class="page front content">
+                    <h1>Chapter 2: Main Concepts</h1>
+                    <p>This chapter explores the main concepts of your subject. You can embed links to <a href="https://www.youtube.com/watch?v=example" target="_blank">video content</a>, <a href="https://example.com/audio" target="_blank">audio resources</a>, or even <a href="https://example.com/interactive" target="_blank">interactive elements</a> that enhance the reader's understanding.</p>
+                    
+                    <p>One of the advantages of web-based e-books is the ability to update content in real-time. If a particular resource becomes outdated, you can simply update the link without needing to republish the entire book.</p>
+                    
+                    <p>The format allows for a seamless integration of multimedia elements that would be impossible in traditional e-books, creating a more engaging and comprehensive learning experience.</p>
+                    
+                    <div class="page-number left">3</div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                </div>
+                <div class="page back content">
+                    <p>As we continue exploring these concepts, it's important to understand how they interconnect and build upon each other. Each idea presented here forms part of a larger framework that will be fully revealed as you progress through the book.</p>
+                    
+                    <p>The interactive nature of this format allows you to explore these concepts at your own pace, revisiting earlier sections as needed and following external links to deepen your understanding.</p>
+                    
+                    <p>Remember that you can always return to the table of contents by navigating back to the beginning of the book, or you can continue forward to explore more advanced topics in the next chapter.</p>
+                    
+                    <div class="page-number right">4</div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                </div>
+            </div>
+            
+            <!-- Page 5-6 -->
+            <div class="page-wrapper" id="page3-wrapper">
+                <div class="page front content">
+                    <h1>Chapter 3: Advanced Topics</h1>
+                    <p>In this chapter, we delve into more advanced topics. You might want to link to <a href="https://example.com/documentation" target="_blank">documentation</a> or <a href="https://example.com/research-paper" target="_blank">research papers</a> that provide deeper insights.</p>
+                    
+                    <p>The web format allows you to incorporate references to current events and ongoing research, making your e-book more dynamic and relevant than traditional e-books.</p>
+                    
+                    <p>As technology evolves and new discoveries are made, your e-book can evolve alongside them, providing readers with the most up-to-date information available.</p>
+                    
+                    <div class="page-number left">5</div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                </div>
+                <div class="page back content">
+                    <h2>Conclusion</h2>
+                    <p>We've reached the end of our sample e-book. In a complete book, you would continue adding pages and chapters to cover your entire subject matter.</p>
+                    
+                    <p>The format demonstrated here combines the aesthetic appeal and intuitive navigation of a physical book with the dynamic capabilities of digital content, creating an engaging and informative reading experience.</p>
+                    
+                    <p>By implementing this web-based approach, you're able to create content that is both timeless in its presentation and continually relevant through its ability to connect to the wider digital ecosystem.</p>
+                    
+                    <p>Thank you for exploring this interactive e-book template!</p>
+                    
+                    <div class="page-number right">6</div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Arrows -->
+        <div class="nav-arrow prev" id="prev-btn">&#8249;</div>
+        <div class="nav-arrow next" id="next-btn">&#8250;</div>
+    </div>
+
+    <!-- Content Form -->
+    <div class="content-form">
+        <h3>Load Book Content</h3>
+        <div style="margin-bottom: 5px;">
+            <input id="book-title" placeholder="Book Title" style="width: 100%; margin-bottom: 5px;">
+            <input id="book-author" placeholder="Author Name" style="width: 100%; margin-bottom: 5px;">
+            <input id="book-chapter" placeholder="Chapter Title" style="width: 100%; margin-bottom: 5px;">
+        </div>
+        <textarea id="book-content-input" placeholder="Paste your book content here..." 
+            style="width: 100%; height: 150px; margin-bottom: 10px;"></textarea>
+        <button id="load-content-btn" style="padding: 5px 10px;">Load Content</button>
+        <button id="close-form-btn" style="padding: 5px 10px; margin-left: 5px;">Close</button>
+    </div>
+
+    <script>
+        // Wait for DOM to load
         document.addEventListener('DOMContentLoaded', function() {
             // Check if mobile device
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
@@ -180,1140 +746,203 @@
                 }
             });
             
-            // Function to paginate text content
-            window.paginateBook = function(contentText, options = {}) {
-                // Load pagination script
-                const script = document.createElement('script');
-                script.src = 'pagination.js'; // You would create this file with the pagination code
-                script.onload = function() {
-                    // Initialize with content
-                    initializeBookWithContent(contentText, options);
-                };
-                document.head.appendChild(script);
-            };
+            // Content form controls
+            document.getElementById('close-form-btn').addEventListener('click', function() {
+                document.querySelector('.content-form').style.display = 'none';
+            });
             
-            // Example content loader function
-            window.loadBookContent = function() {
+            document.getElementById('load-content-btn').addEventListener('click', function() {
+                loadBookContent();
+            });
+            
+            // Pagination functionality
+            function loadBookContent() {
                 const contentInput = document.getElementById('book-content-input');
                 if(contentInput && contentInput.value.trim()) {
-                    paginateBook(contentInput.value, {
+                    const options = {
                         title: document.getElementById('book-title').value || 'My E-Book',
                         author: document.getElementById('book-author').value || 'Author Name',
                         chapterTitle: document.getElementById('book-chapter').value || 'Chapter 1'
-                    });
+                    };
+                    
+                    paginateAndLoadContent(contentInput.value, options);
                 }
-            };
-            
-            // Add content input area (can be toggled for development)
-            const addContentForm = function() {
-                const form = document.createElement('div');
-                form.className = 'content-form';
-                form.style.cssText = 'position: fixed; top: 10px; left: 10px; z-index: 1000; background: white; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);';
-                form.innerHTML = `
-                    <h3>Load Book Content</h3>
-                    <div style="margin-bottom: 5px;">
-                        <input id="book-title" placeholder="Book Title" style="width: 100%; margin-bottom: 5px;">
-                        <input id="book-author" placeholder="Author Name" style="width: 100%; margin-bottom: 5px;">
-                        <input id="book-chapter" placeholder="Chapter Title" style="width: 100%; margin-bottom: 5px;">
-                    </div>
-                    <textarea id="book-content-input" placeholder="Paste your book content here..." 
-                        style="width: 100%; height: 150px; margin-bottom: 10px;"></textarea>
-                    <button onclick="window.loadBookContent()" style="padding: 5px 10px;">Load Content</button>
-                    <button onclick="this.parentNode.style.display='none'" style="padding: 5px 10px; margin-left: 5px;">Close</button>
-                `;
-                document.body.appendChild(form);
-            };
-            
-            // Add the content form for loading book content
-            addContentForm();
-            
-            // Simple function to programmatically add content (for API use)
-            window.loadBook = function(bookData) {
-                if(typeof paginateBook === 'function' && bookData && bookData.content) {
-                    paginateBook(bookData.content, {
-                        title: bookData.title || 'My E-Book',
-                        author: bookData.author || 'Author Name',
-                        chapterTitle: bookData.chapterTitle || 'Chapter 1',
-                        footnotes: bookData.footnotes || []
-                    });
-                }
-            };
-        });
-        
-        // Pagination functions
-        /**
-         * Function to automatically paginate content
-         * 
-         * This function takes a long text and formats it into book pages
-         * with proper pagination and navigation
-         * 
-         * @param {string} contentText - The text content to paginate
-         * @param {Object} options - Configuration options
-         * @returns {Array} An array of HTML page elements
-         */
-        function paginateContent(contentText, options = {}) {
-          // Default options
-          const defaults = {
-            title: 'My Book',
-            author: 'Author Name',
-            chapterTitle: 'Chapter 1',
-            startPageNumber: 1,
-            wordsPerPage: 250, // Approximate
-            includeTableOfContents: true,
-            footnotes: [] // Array of {id, text}
-          };
-          
-          const settings = { ...defaults, ...options };
-          
-          // Clean the input text
-          const cleanText = contentText
-            .replace(/\r\n/g, '\n')  // Normalize line breaks
-            .replace(/\n{3,}/g, '\n\n')  // Replace multiple line breaks with double
-            .trim();
-          
-          // Detect paragraphs (text blocks separated by blank lines)
-          const paragraphs = cleanText.split(/\n\n+/);
-          
-          // Create an array to hold all pages
-          const pages = [];
-          
-          // Add cover and table of contents
-          createCoverPage(pages, settings);
-          if (settings.includeTableOfContents) {
-            createTableOfContents(pages, settings);
-          }
-          
-          // Create content pages
-          let pageNumber = settings.startPageNumber;
-          let currentPageContent = [];
-          let wordCount = 0;
-          let currentPage = { front: null, back: null };
-          
-          // Process paragraphs into pages
-          paragraphs.forEach((paragraph, index) => {
-            // Skip empty paragraphs
-            if (!paragraph.trim()) return;
-            
-            // Check if paragraph starts with a heading marker (e.g., #)
-            let isHeading = paragraph.trim().startsWith('#');
-            let paragraphElement = '';
-            
-            if (isHeading) {
-              // Format as heading
-              const level = paragraph.match(/^#+/)[0].length;
-              const headingText = paragraph.replace(/^#+\s*/, '');
-              paragraphElement = `<h${level}>${headingText}</h${level}>`;
-            } else {
-              // Regular paragraph
-              paragraphElement = `<p>${paragraph}</p>`;
             }
             
-            // Count words in this paragraph
-            const paragraphWords = paragraph.split(/\s+/).length;
-            
-            // Check if adding this paragraph would exceed the word limit for the page
-            if (wordCount + paragraphWords > settings.wordsPerPage && currentPageContent.length > 0) {
-              // This paragraph would make the page too long, so finalize current page
-              if (!currentPage.front) {
-                currentPage.front = createPageHTML(currentPageContent.join(''), pageNumber, 'left', settings);
-                currentPageContent = [];
-                wordCount = 0;
-              } else {
-                currentPage.back = createPageHTML(currentPageContent.join(''), pageNumber + 1, 'right', settings);
-                pages.push(currentPage);
-                currentPage = { front: null, back: null };
-                pageNumber += 2;
-                currentPageContent = [];
-                wordCount = 0;
-              }
-            }
-            
-            // Add paragraph to current page content
-            currentPageContent.push(paragraphElement);
-            wordCount += paragraphWords;
-            
-            // Check if we're at the last paragraph and need to finalize the page
-            if (index === paragraphs.length - 1) {
-              if (!currentPage.front) {
-                currentPage.front = createPageHTML(currentPageContent.join(''), pageNumber, 'left', settings);
-                currentPage.back = createPageHTML('', pageNumber + 1, 'right', settings);
-              } else {
-                currentPage.back = createPageHTML(currentPageContent.join(''), pageNumber + 1, 'right', settings);
-              }
-              pages.push(currentPage);
-            }
-          });
-          
-          // Add footnotes to the last page
-          if (settings.footnotes && settings.footnotes.length > 0) {
-            addFootnotesToLastPage(pages, settings.footnotes);
-          }
-          
-          return pages;
-        }
-
-        /**
-         * Create HTML for a single page
-         */
-        function createPageHTML(content, pageNumber, position, settings) {
-          const hints = position === 'left' 
-            ? '<div class="turn-page-hint right">Tap right side or swipe left for next page →</div>'
-            : '<div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>';
-          
-          return `
-            <div class="page-content">
-              ${content}
-            </div>
-            <div class="page-number ${position}">${pageNumber}</div>
-            ${hints}
-          `;
-        }
-
-        /**
-         * Create a cover page
-         */
-        function createCoverPage(pages, settings) {
-          const coverFront = `
-            <img src="/api/placeholder/800/1200" alt="Book Cover" class="cover-image">
-            <div class="cover-content">
-              <h1>${settings.title}</h1>
-              <h2>By ${settings.author}</h2>
-            </div>
-            <div class="turn-indicator">Click to open →</div>
-          `;
-          
-          const coverBack = `
-            <h1>About This Book</h1>
-            <p>This book was automatically paginated for optimal reading.</p>
-            <p>Navigation is simple: click or tap the right side of a page to go forward, 
-            or the left side to go back. You can also use the arrow buttons on either side of the book.</p>
-            <p>On mobile devices, swiping left or right also works for navigation.</p>
-            <div class="page-number right">i</div>
-            <div class="turn-page-hint">Click to turn page →</div>
-          `;
-          
-          pages.push({
-            front: coverFront,
-            back: coverBack,
-            isCover: true
-          });
-        }
-
-        /**
-         * Create a table of contents page
-         */
-        function createTableOfContents(pages, settings) {
-          const tocContent = `
-            <h1>Table of Contents</h1>
-            <ul style="list-style-type:none; margin-left:20px; line-height:2">
-              <li>${settings.chapterTitle}</li>
-            </ul>
-            <div class="page-number left">ii</div>
-            <div class="turn-page-hint right">Tap right side or swipe left to turn forward →</div>
-          `;
-          
-          // TOC back page (can be empty or contain additional content)
-          const tocBackContent = `
-            <h2>How to Use This Book</h2>
-            <p>This interactive e-book is designed to mimic the experience of reading a physical book.
-            Each page can be turned with a simple click or swipe.</p>
-            <p>Unlike scrolling web pages, the content is carefully paginated to ensure optimal
-            reading comfort with proper page breaks.</p>
-            <div class="page-number right">iii</div>
-            <div class="turn-page-hint left">← Tap left side or swipe right to go back</div>
-          `;
-          
-          pages.push({
-            front: tocContent,
-            back: tocBackContent
-          });
-        }
-
-        /**
-         * Add footnotes to the last page
-         */
-        function addFootnotesToLastPage(pages, footnotes) {
-          if (!footnotes || footnotes.length === 0) return;
-          
-          const lastPage = pages[pages.length - 1];
-          
-          // Create footnotes HTML
-          const footnotesHTML = `
-            <div class="footnotes">
-              ${footnotes.map(fn => `
-                <div class="footnote-item">
-                  <div class="footnote-number" id="fn${fn.id}">${fn.id}.</div>
-                  <div class="footnote-content">
-                    ${fn.text}
-                    <a class="footnote-backref" href="#ref${fn.id}">↩</a>
-                  </div>
-                </div>
-              `).join('')}
-            </div>
-          `;
-          
-          // Append footnotes to the last page with content
-          if (lastPage.back && lastPage.back.trim()) {
-            // If back page has content, append it there
-            lastPage.back = lastPage.back.replace('</div>', footnotesHTML + '</div>');
-          } else if (lastPage.front && lastPage.front.trim()) {
-            // If only front page has content, append it there
-            lastPage.front = lastPage.front.replace('</div>', footnotesHTML + '</div>');
-          }
-        }
-
-        /**
-         * Initialize the book with paginated content
-         */
-        function initializeBookWithContent(contentText, options = {}) {
-          // Get the paginated content
-          const paginatedPages = paginateContent(contentText, options);
-          
-          // Get the book container
-          const bookContainer = document.querySelector('.book-container');
-          const book = document.querySelector('.book');
-          
-          // Clear existing content
-          book.innerHTML = '';
-          
-          // Add pages to the book
-          paginatedPages.forEach((pagePair, index) => {
-            const pageWrapper = document.createElement('div');
-            pageWrapper.className = 'page-wrapper';
-            pageWrapper.id = `page${index}-wrapper`;
-            
-            if (index > 0) {
-              pageWrapper.style.display = 'none';
-            }
-            
-            // Create front page
-            const frontPage = document.createElement('div');
-            frontPage.className = pagePair.isCover ? 'page front cover' : 'page front content';
-            frontPage.innerHTML = pagePair.front;
-            
-            // Create back page
-            const backPage = document.createElement('div');
-            backPage.className = 'page back content';
-            backPage.innerHTML = pagePair.back;
-            
-            // Add pages to wrapper
-            pageWrapper.appendChild(frontPage);
-            pageWrapper.appendChild(backPage);
-            
-            // Add wrapper to book
-            book.appendChild(pageWrapper);
-          });
-          
-          // Re-initialize navigation
-          initializeBookNavigation();
-        }
-
-        /**
-         * Re-initialize the book navigation after generating pages
-         */
-        function initializeBookNavigation() {
-          // Re-select all page wrappers after they've been created
-          const pageWrappers = document.querySelectorAll('.page-wrapper');
-          const prevBtn = document.getElementById('prev-btn');
-          const nextBtn = document.getElementById('next-btn');
-          
-          // Check if mobile device
-          const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
-          
-          // Current page index
-          let currentPage = 0;
-          const totalPages = pageWrappers.length;
-          
-          // Function to update navigation arrows visibility
-          function updateNavArrows() {
-            prevBtn.style.visibility = currentPage > 0 ? 'visible' : 'hidden';
-            nextBtn.style.visibility = currentPage < totalPages - 1 ? 'visible' : 'hidden';
-          }
-          
-          // Initialize arrows
-          updateNavArrows();
-          
-          // Function to turn to specific page
-          function turnToPage(pageIndex) {
-            if(pageIndex < 0 || pageIndex >= totalPages) return;
-            
-            if(pageIndex > currentPage) {
-              // Prepare the next page to slide in from right
-              pageWrappers[pageIndex].style.display = 'block';
-              pageWrappers[pageIndex].style.transform = 'translateX(100%)';
-              
-              // Small delay to ensure the initial position is rendered
-              setTimeout(() => {
-                // Slide current page out to left and next page in from right
-                pageWrappers[currentPage].style.transform = 'translateX(-100%)';
-                pageWrappers[pageIndex].style.transform = 'translateX(0)';
+            // Basic pagination function (simplified version)
+            function paginateAndLoadContent(content, options) {
+                // Default options
+                const settings = {
+                    title: options.title || 'My Book',
+                    author: options.author || 'Author Name',
+                    chapterTitle: options.chapterTitle || 'Chapter 1',
+                    wordsPerPage: 200 // Approximate
+                };
                 
-                // After animation completes, hide current page and reset positioning
-                setTimeout(() => {
-                  pageWrappers[currentPage].style.display = 'none';
-                  currentPage = pageIndex;
-                  updateNavArrows();
-                  
-                  // On mobile, scroll to top when turning to a new page
-                  if(isMobile) {
-                    window.scrollTo(0, 0);
-                  }
-                }, 500); // Match the transition duration in CSS
-              }, 50);
-            } 
-            // If turning backward
-            else if(pageIndex < currentPage) {
-              // Prepare the previous page to slide in from left
-              pageWrappers[pageIndex].style.display = 'block';
-              pageWrappers[pageIndex].style.transform = 'translateX(-100%)';
-              
-              // Small delay to ensure the initial position is rendered
-              setTimeout(() => {
-                // Slide current page out to right and previous page in from left
-                pageWrappers[currentPage].style.transform = 'translateX(100%)';
-                pageWrappers[pageIndex].style.transform = 'translateX(0)';
+                // Clean and split the content into paragraphs
+                const paragraphs = content.trim().split(/\n\n+/);
                 
-                // After animation completes, hide current page and reset positioning
-                setTimeout(() => {
-                  pageWrappers[currentPage].style.display = 'none';
-                  currentPage = pageIndex;
-                  updateNavArrows();
-                  
-                  // On mobile, scroll to top when turning to a new page
-                  if(isMobile) {
-                    window.scrollTo(0, 0);
-                  }
-                }, 500); // Match the transition duration in CSS
-              }, 50);
-            }
-          }
-          
-          // Click on pages to turn them
-          pageWrappers.forEach((wrapper, index) => {
-            wrapper.addEventListener('click', (e) => {
-              // Only respond to clicks if this is the current page
-              if(index === currentPage) {
-                // Determine if click was on left or right side of the page
-                const clickX = e.clientX;
-                const wrapperRect = wrapper.getBoundingClientRect();
-                const wrapperCenter = wrapperRect.left + (wrapperRect.width / 2);
+                // Clear the existing book content
+                book.innerHTML = '';
                 
-                // If clicked on left side and not on first page, go back
-                if(clickX < wrapperCenter && currentPage > 0) {
-                  turnToPage(currentPage - 1);
-                } 
-                // If clicked on right side, go forward
-                else if(clickX >= wrapperCenter) {
-                  turnToPage(index + 1);
-                }
-              }
-            });
-          });
-          
-          // Add the same navigation events as before
-          prevBtn.addEventListener('click', () => {
-            if(currentPage > 0) {
-              turnToPage(currentPage - 1);
-            }
-          });
-          
-          nextBtn.addEventListener('click', () => {
-            if(currentPage < totalPages - 1) {
-              turnToPage(currentPage + 1);
-            }
-          });
-          
-          // Keyboard, touch events and footnote navigation
-          // These are handled at the document level and don't need to be reinitialized
-        }<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Interactive E-Book</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Georgia', serif;
-            line-height: 1.6;
-            color: #333;
-            background-color: #f0ece3;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
-        }
-        
-        .book-container {
-            width: 90%;
-            max-width: 1000px;
-            height: 80vh;
-            max-height: 700px;
-            position: relative;
-            overflow: hidden;
-            background-color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            border-radius: 5px;
-        }
-        
-        .book {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-            transition: transform 1s;
-        }
-        
-        .page-wrapper {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.5s ease-out;
-            cursor: pointer;
-            overflow: hidden;
-        }
-        
-        .page-wrapper.slide-left {
-            transform: translateX(-100%);
-        }
-        
-        .page-wrapper.slide-right {
-            transform: translateX(100%);
-        }
-        
-        .page {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            overflow: hidden;
-            padding: 40px;
-            background: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        
-        .page.front {
-            z-index: 1;
-        }
-        
-        /* Footnote styling */
-        .footnote-ref {
-            font-size: 0.75em;
-            vertical-align: super;
-            color: #0066cc;
-            cursor: pointer;
-            margin-left: 1px;
-        }
-        
-        .footnotes {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            font-size: 0.9em;
-            color: #555;
-        }
-        
-        .footnote-item {
-            display: flex;
-            margin-bottom: 10px;
-        }
-        
-        .footnote-number {
-            min-width: 25px;
-            font-weight: bold;
-            color: #0066cc;
-        }
-        
-        .footnote-content {
-            flex: 1;
-        }
-        
-        .footnote-backref {
-            font-size: 0.8em;
-            margin-left: 5px;
-            color: #0066cc;
-            cursor: pointer;
-        }
-        
-        .page.back {
-            z-index: 0;
-        }
-        
-        /* Cover styling */
-        .cover {
-            position: relative;
-            overflow: hidden;
-            color: white;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding-bottom: 50px;
-        }
-        
-        .cover-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
-        
-        .cover-content {
-            position: relative;
-            z-index: 2;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.6);
-            width: 100%;
-        }
-        
-        .cover h1 {
-            font-family: 'Palatino', serif;
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-        
-        .cover h2 {
-            font-family: 'Palatino', serif;
-            font-size: 1.8em;
-            margin-bottom: 30px;
-            font-weight: 400;
-        }
-        
-        .turn-indicator {
-            position: absolute;
-            bottom: 30px;
-            font-size: 1.2em;
-            color: rgba(255,255,255,0.8);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
-        }
-        
-        /* Content styling */
-        .content h1 {
-            font-family: 'Palatino', serif;
-            font-size: 2.2em;
-            color: #444;
-            margin-bottom: 30px;
-        }
-        
-        .content h2 {
-            font-family: 'Palatino', serif;
-            color: #444;
-            margin-top: 1.5em;
-            margin-bottom: 0.8em;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 0.5em;
-        }
-        
-        .content p {
-            margin-bottom: 1.2em;
-            text-align: justify;
-        }
-        
-        .content a {
-            color: #0066cc;
-            text-decoration: none;
-            border-bottom: 1px dotted #0066cc;
-        }
-        
-        .content a:hover {
-            color: #004080;
-            border-bottom: 1px solid #004080;
-        }
-        
-        .page-number {
-            position: absolute;
-            bottom: 20px;
-            font-size: 0.9em;
-            color: #888;
-        }
-        
-        .page-number.left {
-            left: 40px;
-        }
-        
-        .page-number.right {
-            right: 40px;
-        }
-        
-        .turn-page-hint {
-            position: absolute;
-            bottom: 20px;
-            color: #777;
-            font-style: italic;
-            font-size: 0.9em;
-            animation: pulse 2s infinite;
-        }
-        
-        .turn-page-hint.right {
-            right: 20px;
-        }
-        
-        .turn-page-hint.left {
-            left: 20px;
-        }
-        
-        /* Navigation arrows */
-        .nav-arrow {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 3em;
-            color: rgba(0,0,0,0.2);
-            cursor: pointer;
-            z-index: 100;
-            transition: color 0.3s;
-            user-select: none;
-        }
-        
-        .nav-arrow:hover {
-            color: rgba(0,0,0,0.5);
-        }
-        
-        .nav-arrow.prev {
-            left: -50px;
-        }
-        
-        .nav-arrow.next {
-            right: -50px;
-        }
-        
-        /* For mobile */
-        @media (max-width: 768px) {
-            body {
-                padding: 0;
-                margin: 0;
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .book-container {
-                width: 100%;
-                height: 100vh;
-                max-height: none;
-                margin: 0;
-                perspective: 1200px;
-            }
-            
-            .book {
-                width: 100%;
-                height: 100%;
-            }
-            
-            .page {
-                padding: 20px;
-                font-size: 16px;
-                overflow-y: auto;
-            }
-            
-            .content h1 {
-                font-size: 1.8em;
-                margin-bottom: 20px;
-            }
-            
-            .content h2 {
-                font-size: 1.5em;
-                margin-top: 1.2em;
-            }
-            
-            .content p {
-                margin-bottom: 1em;
-                line-height: 1.5;
-            }
-            
-            .nav-arrow {
-                font-size: 2em;
-                background-color: rgba(255, 255, 255, 0.7);
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                top: auto;
-                bottom: 20px;
-                transform: none;
-            }
-            
-            .nav-arrow.prev {
-                left: 20px;
-            }
-            
-            .nav-arrow.next {
-                right: 20px;
-            }
-            
-            .cover h1 {
-                font-size: 2em;
-            }
-            
-            .cover h2 {
-                font-size: 1.4em;
-            }
-            
-            .turn-page-hint {
-                font-size: 0.8em;
-                bottom: 10px;
-            }
-            
-            .footnotes {
-                margin-top: 30px;
-                font-size: 0.85em;
-            }
-        }
-        
-        /* Specific optimization for very narrow screens (phones in portrait) */
-        @media (max-width: 480px) {
-            .page {
-                padding: 15px;
-                font-size: 15px;
-            }
-            
-            .content h1 {
-                font-size: 1.6em;
-            }
-            
-            .content h2 {
-                font-size: 1.3em;
-            }
-            
-            .page-number {
-                font-size: 0.8em;
-                bottom: 10px;
-            }
-            
-            .turn-page-hint {
-                font-size: 0.75em;
-                bottom: 8px;
-            }
-            
-            .page-wrapper.turn {
-                transform: rotateY(-165deg); /* Slightly less rotation for better visibility on small screens */
-            }
-        }
-    </style>
-</head>
-<body>
-    <div class="book-container">
-        <div class="book">
-            <!-- Cover Page -->
-            <div class="page-wrapper" id="cover-wrapper">
-                <div class="page front cover">
+                // Create cover page
+                const coverWrapper = document.createElement('div');
+                coverWrapper.className = 'page-wrapper';
+                coverWrapper.id = 'cover-wrapper';
+                
+                const coverFront = document.createElement('div');
+                coverFront.className = 'page front cover';
+                coverFront.innerHTML = `
                     <img src="/api/placeholder/800/1200" alt="Book Cover" class="cover-image">
                     <div class="cover-content">
-                        <h1>My E-Book Title</h1>
-                        <h2>By Author Name</h2>
+                        <h1>${settings.title}</h1>
+                        <h2>By ${settings.author}</h2>
                     </div>
                     <div class="turn-indicator">Tap to open →</div>
-                </div>
-                <div class="page back content">
+                `;
+                
+                const coverBack = document.createElement('div');
+                coverBack.className = 'page back content';
+                coverBack.innerHTML = `
                     <h1>Table of Contents</h1>
                     <ul style="list-style-type:none; margin-left:20px; line-height:2">
-                        <li>Chapter 1: Introduction</li>
-                        <li>Chapter 2: Main Concepts</li>
-                        <li>Chapter 3: Advanced Topics</li>
+                        <li>${settings.chapterTitle}</li>
                     </ul>
                     <div class="page-number right">i</div>
-                    <div class="turn-page-hint right">Click right side to turn forward →</div>
-                    <div class="turn-page-hint left">← Click left side to go back</div>
-                </div>
-            </div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                `;
+                
+                coverWrapper.appendChild(coverFront);
+                coverWrapper.appendChild(coverBack);
+                book.appendChild(coverWrapper);
+                
+                // Paginate the content
+                let currentPage = 1;
+                let pageContent = [];
+                let wordCount = 0;
+                
+                // Add chapter title to first page
+                pageContent.push(`<h1>${settings.chapterTitle}</h1>`);
+                
+                // Create pages for all paragraphs
+                for(let i = 0; i < paragraphs.length; i++) {
+                    const paragraph = paragraphs[i].trim();
+                    if(!paragraph) continue;
+                    
+                    // Check if it's a heading
+                    let formattedParagraph = '';
+                    if(paragraph.startsWith('#')) {
+                        const level = (paragraph.match(/^#+/) || [''])[0].length;
+                        const headingText = paragraph.replace(/^#+\s*/, '');
+                        formattedParagraph = `<h${Math.min(level, 6)}>${headingText}</h${Math.min(level, 6)}>`;
+                    } else {
+                        formattedParagraph = `<p>${paragraph}</p>`;
+                    }
+                    
+                    // Count words
+                    const words = paragraph.split(/\s+/).length;
+                    
+                    // Check if adding this paragraph would exceed the page limit
+                    if(wordCount + words > settings.wordsPerPage && pageContent.length > 0) {
+                        // Create a new page
+                        createPage(pageContent.join(''), currentPage);
+                        pageContent = [];
+                        pageContent.push(formattedParagraph);
+                        wordCount = words;
+                        currentPage++;
+                    } else {
+                        pageContent.push(formattedParagraph);
+                        wordCount += words;
+                    }
+                }
+                
+                // Create the final page if there's content left
+                if(pageContent.length > 0) {
+                    createPage(pageContent.join(''), currentPage);
+                }
+                
+                // Re-initialize navigation
+                initializeNavigation();
+            }
             
-            <!-- Page 1-2 -->
-            <div class="page-wrapper" id="page1-wrapper">
-                <div class="page front content">
-                    <h1>Chapter 1: Introduction</h1>
-                    <p>Welcome to this e-book! This is an example of how your online e-book might look. The great advantage of this format is the ability to include <a href="https://example.com/resource" target="_blank">external links</a> that readers can access while reading.</p>
-                    
-                    <p>You can reference other chapters internally or include citations that link to your footnotes<span class="footnote-ref" id="ref1">1</span>. Footnotes are an essential part of academic and reference books<span class="footnote-ref" id="ref2">2</span>.</p>
-                    
-                    <p>This paragraph demonstrates how the text will flow on the page. The styling is designed to be easy on the eyes with appropriate line spacing, font choice, and contrast to simulate a real e-book reading experience.</p>
-                    
-                    <p>As you explore this interactive format, notice how the page-turning animation enhances the feeling of reading an actual book while maintaining all the benefits of digital content.</p>
-                    
-                    <div class="footnotes">
-                        <div class="footnote-item">
-                            <div class="footnote-number" id="fn1">1.</div>
-                            <div class="footnote-content">
-                                Footnotes provide additional information or citations without interrupting the main text flow.
-                                <a class="footnote-backref" href="#ref1">↩</a>
-                            </div>
-                        </div>
-                        <div class="footnote-item">
-                            <div class="footnote-number" id="fn2">2.</div>
-                            <div class="footnote-content">
-                                This e-book format preserves the functionality of footnotes while enhancing their usability through direct linking.
-                                <a class="footnote-backref" href="#ref2">↩</a>
-                            </div>
-                        </div>
+            // Helper function to create a page with content
+            function createPage(content, pageNumber) {
+                const pageWrapper = document.createElement('div');
+                pageWrapper.className = 'page-wrapper';
+                pageWrapper.id = `page${pageNumber}-wrapper`;
+                pageWrapper.style.display = 'none';
+                
+                // Front page
+                const frontPage = document.createElement('div');
+                frontPage.className = 'page front content';
+                frontPage.innerHTML = `
+                    <div class="page-content">
+                        ${content}
                     </div>
-                    
-                    <div class="page-number left">1</div>
-                    <div class="turn-page-hint">Click to turn page →</div>
-                </div>
-                <div class="page back content">
-                    <p>The ability to link to external resources is one of the key advantages of a web-based e-book. As you read, you can explore related content without losing your place in the book.</p>
-                    
-                    <p>Another advantage is the ability to update content in real-time. If new research becomes available or certain information changes, you can update your e-book immediately.</p>
-                    
-                    <h2>Getting Started</h2>
-                    <p>Before diving into the main content, it's important to understand the basic concepts that will be covered throughout this book. The following chapters will build upon these foundations to provide a comprehensive understanding of the subject matter.</p>
-                    
-                    <p>Feel free to navigate through the book by clicking on each page to turn it, just like you would with a physical book.</p>
-                    
-                    <div class="page-number right">2</div>
-                    <div class="turn-page-hint">Click to turn page →</div>
-                </div>
-            </div>
-            
-            <!-- Page 3-4 -->
-            <div class="page-wrapper" id="page2-wrapper">
-                <div class="page front content">
-                    <h1>Chapter 2: Main Concepts</h1>
-                    <p>This chapter explores the main concepts of your subject. You can embed links to <a href="https://www.youtube.com/watch?v=example" target="_blank">video content</a>, <a href="https://example.com/audio" target="_blank">audio resources</a>, or even <a href="https://example.com/interactive" target="_blank">interactive elements</a> that enhance the reader's understanding.</p>
-                    
-                    <p>One of the advantages of web-based e-books is the ability to update content in real-time. If a particular resource becomes outdated, you can simply update the link without needing to republish the entire book.</p>
-                    
-                    <p>The format allows for a seamless integration of multimedia elements that would be impossible in traditional e-books, creating a more engaging and comprehensive learning experience.</p>
-                    
-                    <div class="page-number left">3</div>
-                    <div class="turn-page-hint">Click to turn page →</div>
-                </div>
-                <div class="page back content">
-                    <p>As we continue exploring these concepts, it's important to understand how they interconnect and build upon each other. Each idea presented here forms part of a larger framework that will be fully revealed as you progress through the book.</p>
-                    
-                    <p>The interactive nature of this format allows you to explore these concepts at your own pace, revisiting earlier sections as needed and following external links to deepen your understanding.</p>
-                    
-                    <p>Remember that you can always return to the table of contents by navigating back to the beginning of the book, or you can continue forward to explore more advanced topics in the next chapter.</p>
-                    
-                    <div class="page-number right">4</div>
-                    <div class="turn-page-hint">Click to turn page →</div>
-                </div>
-            </div>
-            
-            <!-- Page 5-6 -->
-            <div class="page-wrapper" id="page3-wrapper">
-                <div class="page front content">
-                    <h1>Chapter 3: Advanced Topics</h1>
-                    <p>In this chapter, we delve into more advanced topics. You might want to link to <a href="https://example.com/documentation" target="_blank">documentation</a> or <a href="https://example.com/research-paper" target="_blank">research papers</a> that provide deeper insights.</p>
-                    
-                    <p>The web format allows you to incorporate references to current events and ongoing research, making your e-book more dynamic and relevant than traditional e-books.</p>
-                    
-                    <p>As technology evolves and new discoveries are made, your e-book can evolve alongside them, providing readers with the most up-to-date information available.</p>
-                    
-                    <div class="page-number left">5</div>
-                    <div class="turn-page-hint">Click to turn page →</div>
-                </div>
-                <div class="page back content">
-                    <h2>Conclusion</h2>
-                    <p>We've reached the end of our sample e-book. In a complete book, you would continue adding pages and chapters to cover your entire subject matter.</p>
-                    
-                    <p>The format demonstrated here combines the aesthetic appeal and intuitive navigation of a physical book with the dynamic capabilities of digital content, creating an engaging and informative reading experience.</p>
-                    
-                    <p>By implementing this web-based approach, you're able to create content that is both timeless in its presentation and continually relevant through its ability to connect to the wider digital ecosystem.</p>
-                    
-                    <p>Thank you for exploring this interactive e-book template!</p>
-                    
-                    <div class="page-number right">6</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Navigation Arrows -->
-        <div class="nav-arrow prev" id="prev-btn">&#8249;</div>
-        <div class="nav-arrow next" id="next-btn">&#8250;</div>
-    </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if mobile device
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
-            // Get all page wrappers
-            const pageWrappers = document.querySelectorAll('.page-wrapper');
-            const book = document.querySelector('.book');
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            
-            // Hide all pages except cover initially
-            for(let i = 1; i < pageWrappers.length; i++) {
-                pageWrappers[i].style.display = 'none';
-            }
-            
-            // Current page index
-            let currentPage = 0;
-            const totalPages = pageWrappers.length;
-            
-            // Function to update navigation arrows visibility
-            function updateNavArrows() {
-                prevBtn.style.visibility = currentPage > 0 ? 'visible' : 'hidden';
-                nextBtn.style.visibility = currentPage < totalPages - 1 ? 'visible' : 'hidden';
-            }
-            
-            // Initialize arrows
-            updateNavArrows();
-            
-            // Function to turn to specific page
-            function turnToPage(pageIndex) {
-                if(pageIndex < 0 || pageIndex >= totalPages) return;
+                    <div class="page-number left">${pageNumber}</div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                `;
                 
-                // If turning forward
-                if(pageIndex > currentPage) {
-                    // Turn current page
-                    pageWrappers[currentPage].classList.add('turn');
-                    
-                    // After animation completes, hide current page and show next
-                    setTimeout(() => {
-                        pageWrappers[currentPage].style.display = 'none';
-                        currentPage = pageIndex;
-                        pageWrappers[currentPage].style.display = 'block';
-                        updateNavArrows();
-                        
-                        // On mobile, scroll to top when turning to a new page
-                        if(isMobile) {
-                            window.scrollTo(0, 0);
-                        }
-                    }, 600);
-                } 
-                // If turning backward
-                else if(pageIndex < currentPage) {
-                    // Show previous page (already turned)
-                    pageWrappers[pageIndex].style.display = 'block';
-                    
-                    // After a tiny delay, unturn it
-                    setTimeout(() => {
-                        pageWrappers[pageIndex].classList.remove('turn');
-                    }, 50);
-                    
-                    // After animation completes, hide current page
-                    setTimeout(() => {
-                        pageWrappers[currentPage].style.display = 'none';
-                        currentPage = pageIndex;
-                        updateNavArrows();
-                        
-                        // On mobile, scroll to top when turning to a new page
-                        if(isMobile) {
-                            window.scrollTo(0, 0);
-                        }
-                    }, 600);
-                }
+                // Back page
+                const backPage = document.createElement('div');
+                backPage.className = 'page back content';
+                backPage.innerHTML = `
+                    <div class="page-content">
+                        <p>This is page ${pageNumber + 1}</p>
+                    </div>
+                    <div class="page-number right">${pageNumber + 1}</div>
+                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                `;
+                
+                pageWrapper.appendChild(frontPage);
+                pageWrapper.appendChild(backPage);
+                book.appendChild(pageWrapper);
             }
             
-            // Click on pages to turn them
-            pageWrappers.forEach((wrapper, index) => {
-                wrapper.addEventListener('click', (e) => {
-                    // Only respond to clicks if this is the current page
-                    if(index === currentPage) {
-                        // Determine if click was on left or right side of the page
-                        const clickX = e.clientX;
-                        const wrapperRect = wrapper.getBoundingClientRect();
-                        const wrapperCenter = wrapperRect.left + (wrapperRect.width / 2);
-                        
-                        // If clicked on left side and not on first page, go back
-                        if(clickX < wrapperCenter && currentPage > 0) {
-                            turnToPage(currentPage - 1);
-                        } 
-                        // If clicked on right side, go forward
-                        else if(clickX >= wrapperCenter) {
-                            turnToPage(index + 1);
+            // Re-initialize navigation after creating new pages
+            function initializeNavigation() {
+                // Re-select elements
+                const pageWrappers = document.querySelectorAll('.page-wrapper');
+                
+                // Hide all pages except cover
+                for(let i = 1; i < pageWrappers.length; i++) {
+                    pageWrappers[i].style.display = 'none';
+                }
+                
+                // Reset current page
+                currentPage = 0;
+                
+                // Update arrows
+                updateNavArrows();
+                
+                // Re-attach click handlers
+                pageWrappers.forEach((wrapper, index) => {
+                    // Remove existing listeners (to prevent duplicates)
+                    const newWrapper = wrapper.cloneNode(true);
+                    wrapper.parentNode.replaceChild(newWrapper, wrapper);
+                    
+                    newWrapper.addEventListener('click', (e) => {
+                        // Only respond to clicks if this is the current page
+                        if(index === currentPage) {
+                            // Determine if click was on left or right side of the page
+                            const clickX = e.clientX;
+                            const wrapperRect = newWrapper.getBoundingClientRect();
+                            const wrapperCenter = wrapperRect.left + (wrapperRect.width / 2);
+                            
+                            // If clicked on left side and not on first page, go back
+                            if(clickX < wrapperCenter && currentPage > 0) {
+                                turnToPage(currentPage - 1);
+                            } 
+                            // If clicked on right side, go forward
+                            else if(clickX >= wrapperCenter && currentPage < pageWrappers.length - 1) {
+                                turnToPage(currentPage + 1);
+                            }
                         }
-                    }
+                    });
                 });
-            });
-            
-            // Navigation buttons
-            prevBtn.addEventListener('click', () => {
-                if(currentPage > 0) {
-                    turnToPage(currentPage - 1);
-                }
-            });
-            
-            nextBtn.addEventListener('click', () => {
-                if(currentPage < totalPages - 1) {
-                    turnToPage(currentPage + 1);
-                }
-            });
-            
-            // Keyboard navigation
-            document.addEventListener('keydown', (e) => {
-                if(e.key === 'ArrowRight' || e.key === ' ') {
-                    if(currentPage < totalPages - 1) {
-                        turnToPage(currentPage + 1);
-                    }
-                } else if(e.key === 'ArrowLeft') {
-                    if(currentPage > 0) {
-                        turnToPage(currentPage - 1);
-                    }
-                }
-            });
-            
-            // Add swipe gestures for mobile
-            let touchStartX = 0;
-            let touchEndX = 0;
-            
-            document.addEventListener('touchstart', (e) => {
-                touchStartX = e.changedTouches[0].screenX;
-            }, false);
-            
-            document.addEventListener('touchend', (e) => {
-                touchEndX = e.changedTouches[0].screenX;
-                handleSwipe();
-            }, false);
-            
-            function handleSwipe() {
-                const swipeThreshold = 50; // Minimum distance for swipe
-                if(touchEndX < touchStartX - swipeThreshold) {
-                    // Swipe left - go forward
-                    if(currentPage < totalPages - 1) {
-                        turnToPage(currentPage + 1);
-                    }
-                }
-                if(touchEndX > touchStartX + swipeThreshold) {
-                    // Swipe right - go back
-                    if(currentPage > 0) {
-                        turnToPage(currentPage - 1);
-                    }
-                }
             }
-            
-            // Footnote navigation
-            document.addEventListener('click', (e) => {
-                if(e.target.classList.contains('footnote-ref')) {
-                    e.preventDefault();
-                    const id = e.target.id.replace('ref', 'fn');
-                    const footnote = document.getElementById(id);
-                    if(footnote) {
-                        footnote.scrollIntoView({ behavior: 'smooth' });
-                    }
-                }
-                
-                if(e.target.classList.contains('footnote-backref')) {
-                    e.preventDefault();
-                    const id = e.target.getAttribute('href').substring(1);
-                    const ref = document.getElementById(id);
-                    if(ref) {
-                        ref.scrollIntoView({ behavior: 'smooth' });
-                    }
-                }
-            });
         });
     </script>
 </body>
