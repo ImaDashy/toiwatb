@@ -59,6 +59,8 @@
             padding: 40px;
             background: white;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
         }
         
         .page.front {
@@ -192,49 +194,63 @@
             left: 20px;
         }
         
-        /* Inline footnote styling */
+        /* Bottom of page footnote styling */
         .footnote-ref {
             font-size: 0.7em;
             vertical-align: super;
             color: #0066cc;
             cursor: pointer;
             margin-left: 1px;
-            border-bottom: none;
+            text-decoration: none;
         }
         
-        .footnote-ref:hover {
-            text-decoration: underline;
-        }
-        
-        .footnote-container {
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 10px 15px;
-            margin: 15px 0;
+        .footnotes-section {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
             font-size: 0.9em;
-            position: relative;
-            max-width: 100%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: #555;
         }
         
-        .footnote-container:before {
-            content: '↑ Footnote';
-            display: block;
+        .footnotes-section h4 {
+            font-size: 0.9em;
+            margin-bottom: 10px;
             font-style: italic;
-            color: #777;
-            margin-bottom: 5px;
-            font-size: 0.8em;
+            color: #666;
         }
         
-        .footnote-close {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            color: #777;
-            cursor: pointer;
-            font-size: 1.2em;
-            line-height: 1;
+        .footnote-item {
+            display: flex;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .footnote-number {
+            min-width: 25px;
+            font-weight: bold;
+            color: #0066cc;
+        }
+        
+        .footnote-content {
+            flex: 1;
+        }
+        
+        .footnote-content a {
+            color: #0066cc;
+            text-decoration: none;
+            border-bottom: 1px dotted #0066cc;
+        }
+        
+        .footnote-content a:hover {
+            color: #004080;
+            border-bottom: 1px solid #004080;
+        }
+        
+        /* Main content area */
+        .page-content {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
         }
         
         /* Navigation arrows */
@@ -268,15 +284,6 @@
         
         .nav-arrow.next {
             right: 10px;
-        }
-        
-        /* Additional utility classes */
-        .page-content {
-            width: 100%;
-            height: 100%;
-            padding-bottom: 50px; /* Space for page number and hints */
-            overflow: auto;
-            position: relative;
         }
         
         /* Click area styles */
@@ -463,7 +470,7 @@
                 bottom: 10px;
             }
             
-            .toc-panel, .admin-panel {
+            .toc-panel {
                 max-width: 80%;
             }
         }
@@ -621,18 +628,20 @@
                         number: 1,
                         title: "Introduction",
                         publishDate: new Date().toISOString(),
-                        content: "# Introduction\n\nThis is a sample chapter for the serial e-book demo. In a real implementation, you would load chapters from a JSON file.\n\nYou can include **bold text**, *italic text*, and [links](https://example.com).\n\nThis is a paragraph with a footnote reference[^1]. And here's another one[^2].\n\n## A Subheading\n\nMore content goes here. You can add as much text as needed, and it will be automatically paginated.",
+                        content: "# Introduction\n\nThis is a sample chapter for the serial e-book demo. In a real implementation, you would load chapters from a JSON file.\n\nYou can include **bold text**, *italic text*, and [links](https://example.com).\n\nThis paragraph includes a footnote reference[^1]. And here's another one with a longer explanation[^2].\n\n## A Subheading\n\nMore content goes here. You can add as much text as needed, and it will be automatically paginated with footnotes at the bottom of each page.",
                         footnotes: [
                             { id: "1", text: "This is the first footnote. It can contain <a href='https://example.com'>links</a> and basic formatting." },
-                            { id: "2", text: "This is the second footnote, showing that multiple footnotes are supported on a single page." }
+                            { id: "2", text: "This is the second footnote, which is longer to demonstrate how longer footnotes are handled. It might contain multiple sentences and explain a complex concept in detail. It can also contain <a href='https://example.com/resource'>links to additional resources</a> for readers who want to explore a topic further." }
                         ]
                     },
                     {
                         number: 2,
                         title: "Getting Started",
                         publishDate: new Date().toISOString(),
-                        content: "# Getting Started\n\nThis is the second chapter of the demo e-book.\n\nYou'll need to create a JSON file similar to this demo data structure to provide real content for your serial publication.\n\nEach week, you can update the JSON file with a new chapter.",
-                        footnotes: []
+                        content: "# Getting Started\n\nThis is the second chapter of the demo e-book.\n\nYou'll need to create a JSON file similar to this demo data structure to provide real content for your serial publication.\n\nEach week, you can update the JSON file with a new chapter. Here's a reference with a footnote[^1].\n\n## Another Section\n\nThe footnotes will appear at the bottom of each page, with proper superscript numbers in the text.",
+                        footnotes: [
+                            { id: "1", text: "Footnotes will be placed at the bottom of each page, not inline. They can contain links and formatting." }
+                        ]
                     }
                 ]
             };
@@ -690,10 +699,12 @@
             const coverBack = document.createElement('div');
             coverBack.className = 'page back content';
             coverBack.innerHTML = `
-                <h1>About This Publication</h1>
-                <p>This is a serial publication with new chapters released weekly.</p>
-                <p>Last updated: ${new Date(bookData.lastUpdated).toLocaleDateString()}</p>
-                <p>The table of contents on the next page allows you to navigate to specific chapters.</p>
+                <div class="page-content">
+                    <h1>About This Publication</h1>
+                    <p>This is a serial publication with new chapters released weekly.</p>
+                    <p>Last updated: ${new Date(bookData.lastUpdated).toLocaleDateString()}</p>
+                    <p>The table of contents on the next page allows you to navigate to specific chapters.</p>
+                </div>
                 <div class="page-number right">i</div>
                 <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
             `;
@@ -719,8 +730,9 @@
             tocFront.className = 'page front content';
             
             let tocHTML = `
-                <h1>Table of Contents</h1>
-                <ul style="list-style-type:none; margin-left:20px; line-height:1.8">
+                <div class="page-content">
+                    <h1>Table of Contents</h1>
+                    <ul style="list-style-type:none; margin-left:20px; line-height:1.8">
             `;
             
             for(let i = 0; i < bookData.chapters.length; i++) {
@@ -729,7 +741,8 @@
             }
             
             tocHTML += `
-                </ul>
+                    </ul>
+                </div>
                 <div class="page-number left">ii</div>
                 <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
                 <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
@@ -740,16 +753,18 @@
             const tocBack = document.createElement('div');
             tocBack.className = 'page back content';
             tocBack.innerHTML = `
-                <h2>How to Navigate</h2>
-                <p>You can navigate this e-book in several ways:</p>
-                <ul>
-                    <li>Tap or click the right side of any page to go forward</li>
-                    <li>Tap or click the left side to go backward</li>
-                    <li>Use the arrow buttons on either side of the page</li>
-                    <li>Use the left and right arrow keys on your keyboard</li>
-                    <li>On mobile devices, swipe left or right</li>
-                </ul>
-                <p>Your reading progress is automatically saved, so you can continue where you left off next time you visit.</p>
+                <div class="page-content">
+                    <h2>How to Navigate</h2>
+                    <p>You can navigate this e-book in several ways:</p>
+                    <ul>
+                        <li>Tap or click the right side of any page to go forward</li>
+                        <li>Tap or click the left side to go backward</li>
+                        <li>Use the arrow buttons on either side of the page</li>
+                        <li>Use the left and right arrow keys on your keyboard</li>
+                        <li>On mobile devices, swipe left or right</li>
+                    </ul>
+                    <p>Your reading progress is automatically saved, so you can continue where you left off next time you visit.</p>
+                </div>
                 <div class="page-number right">iii</div>
                 <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
                 <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
@@ -779,11 +794,10 @@
             const book = document.getElementById('book');
             const content = chapter.content;
             
-            // Parse content into pages
-            const pages = paginateContent(content, {
+            // Parse and paginate content with footnotes at bottom
+            const pages = paginateContentWithFootnotes(content, chapter.footnotes, {
                 chapterNumber: chapter.number,
-                chapterTitle: chapter.title,
-                footnotes: chapter.footnotes || []
+                chapterTitle: chapter.title
             });
             
             // Create a page wrapper for each content page
@@ -797,24 +811,13 @@
                 
                 const frontPage = document.createElement('div');
                 frontPage.className = 'page front content';
-                frontPage.innerHTML = pages[i].content;
+                frontPage.innerHTML = pages[i];
                 
                 // Add navigation click areas
                 addNavigationAreas(pageWrapper);
                 
                 pageWrapper.appendChild(frontPage);
                 book.appendChild(pageWrapper);
-                
-                // Add event listeners for footnote references
-                setTimeout(() => {
-                    pageWrapper.querySelectorAll('.footnote-ref').forEach(ref => {
-                        ref.addEventListener('click', function(e) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleFootnote(this.getAttribute('data-id'));
-                        });
-                    });
-                }, 0);
             }
         }
         
@@ -840,38 +843,159 @@
             pageWrapper.appendChild(rightNav);
         }
         
-        // Toggle footnote visibility
-        function toggleFootnote(id) {
-            // Remove any existing footnote containers
-            const existingFootnotes = document.querySelectorAll('.footnote-container');
-            existingFootnotes.forEach(fn => fn.remove());
+        // Paginate content with footnotes at the bottom of each page
+        function paginateContentWithFootnotes(content, allFootnotes, options) {
+            const settings = {
+                chapterNumber: options.chapterNumber || 1,
+                chapterTitle: options.chapterTitle || 'Chapter',
+                wordsPerPage: 250 // Approximate - will be adjusted based on footnotes
+            };
             
-            // Find the footnote reference
-            const ref = document.querySelector(`.footnote-ref[data-id="${id}"]`);
-            if (!ref) return;
+            // Clean and split the content into paragraphs
+            const paragraphs = content.trim().split(/\n\n+/);
             
-            // Find the footnote text in the current chapter
-            const chapterIndex = parseInt(document.querySelectorAll('.page-wrapper')[currentPage].getAttribute('data-chapter'));
-            const footnotes = bookData.chapters[chapterIndex].footnotes;
-            const footnote = footnotes.find(fn => fn.id === id);
+            // Array to hold all pages
+            const pages = [];
             
-            if (footnote) {
-                // Create and insert footnote container after the reference
-                const container = document.createElement('div');
-                container.className = 'footnote-container';
-                container.innerHTML = `
-                    ${footnote.text}
-                    <span class="footnote-close" onclick="this.parentNode.remove()">×</span>
+            // Current page data
+            let currentPage = {
+                content: [],
+                footnotes: [],
+                wordCount: 0
+            };
+            
+            // Add chapter title to first page
+            currentPage.content.push(`<h1>${settings.chapterTitle}</h1>`);
+            
+            // Process each paragraph
+            for(let i = 0; i < paragraphs.length; i++) {
+                const paragraph = paragraphs[i].trim();
+                if(!paragraph) continue;
+                
+                // Format paragraph based on markdown and collect footnotes for this paragraph
+                const { formattedText, footnoteRefs } = formatParagraphWithFootnotes(paragraph, allFootnotes);
+                
+                // Count words in this paragraph
+                const words = paragraph.split(/\s+/).length;
+                
+                // Estimate space needed for footnotes (each footnote takes roughly 15-30 words worth of space)
+                const footnoteSpace = footnoteRefs.length * 30;
+                
+                // Check if adding this paragraph would exceed the page limit
+                if((currentPage.wordCount + words + footnoteSpace) > settings.wordsPerPage && currentPage.content.length > 0) {
+                    // Create the page with its footnotes
+                    pages.push(createPageWithFootnotes(currentPage));
+                    
+                    // Start a new page
+                    currentPage = {
+                        content: [formattedText],
+                        footnotes: [...footnoteRefs],
+                        wordCount: words
+                    };
+                } else {
+                    // Add to current page
+                    currentPage.content.push(formattedText);
+                    currentPage.footnotes.push(...footnoteRefs);
+                    currentPage.wordCount += words;
+                }
+            }
+            
+            // Add the last page
+            if(currentPage.content.length > 0) {
+                pages.push(createPageWithFootnotes(currentPage));
+            }
+            
+            return pages;
+        }
+        
+        // Format a paragraph with footnote references
+        function formatParagraphWithFootnotes(paragraph, allFootnotes) {
+            let formattedText = '';
+            const footnoteRefs = [];
+            
+            if(paragraph.startsWith('#')) {
+                // Heading
+                const level = (paragraph.match(/^#+/) || [''])[0].length;
+                const headingText = paragraph.replace(/^#+\s*/, '');
+                formattedText = `<h${Math.min(level, 6)}>${headingText}</h${Math.min(level, 6)}>`;
+            } else if(paragraph.startsWith('> ')) {
+                // Blockquote
+                const quoteText = paragraph.replace(/^>\s*/, '');
+                formattedText = `<blockquote>${quoteText}</blockquote>`;
+            } else if(paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
+                // Unordered list
+                const listItems = paragraph.split(/\n- |\n\* /).map(item => item.replace(/^- |^\* /, '').trim());
+                formattedText = '<ul>' + listItems.map(item => `<li>${item}</li>`).join('') + '</ul>';
+            } else if(/^\d+\.\s/.test(paragraph)) {
+                // Ordered list
+                const listItems = paragraph.split(/\n\d+\.\s/).map(item => item.replace(/^\d+\.\s/, '').trim());
+                formattedText = '<ol>' + listItems.map(item => `<li>${item}</li>`).join('') + '</ol>';
+            } else {
+                // Regular paragraph - check for footnotes and links
+                let processedText = paragraph;
+                
+                // Replace footnote references: [^1] -> <sup class="footnote-ref" id="ref1">1</sup>
+                processedText = processedText.replace(/\[\^(\d+)\]/g, (match, id) => {
+                    // Find this footnote in the full list
+                    const footnote = allFootnotes.find(fn => fn.id === id);
+                    if(footnote) {
+                        footnoteRefs.push(footnote);
+                        return `<sup class="footnote-ref" id="ref${id}">${id}</sup>`;
+                    }
+                    return match;
+                });
+                
+                // Replace markdown links: [text](url) -> <a href="url" target="_blank">text</a>
+                processedText = processedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
+                
+                // Replace emphasis: *text* -> <em>text</em>
+                processedText = processedText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+                
+                // Replace strong: **text** -> <strong>text</strong>
+                processedText = processedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+                
+                formattedText = `<p>${processedText}</p>`;
+            }
+            
+            return { formattedText, footnoteRefs };
+        }
+        
+        // Create a page with footnotes at the bottom
+        function createPageWithFootnotes(pageData) {
+            let pageHTML = `
+                <div class="page-content">
+                    ${pageData.content.join('')}
+                </div>
+            `;
+            
+            // Add footnotes section if there are any footnotes
+            if(pageData.footnotes.length > 0) {
+                pageHTML += `
+                    <div class="footnotes-section">
+                        <h4>Notes</h4>
                 `;
                 
-                // Insert after the reference
-                ref.parentNode.insertBefore(container, ref.nextSibling);
+                // Add each footnote
+                for(let footnote of pageData.footnotes) {
+                    pageHTML += `
+                        <div class="footnote-item">
+                            <div class="footnote-number">${footnote.id}.</div>
+                            <div class="footnote-content">${footnote.text}</div>
+                        </div>
+                    `;
+                }
                 
-                // Scroll to make sure the footnote is visible if needed
-                setTimeout(() => {
-                    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                }, 100);
+                pageHTML += `</div>`;
             }
+            
+            // Add page number and navigation hints
+            pageHTML += `
+                <div class="page-number left"></div>
+                <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
+                <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+            `;
+            
+            return pageHTML;
         }
         
         // Navigate to a specific page with animation
@@ -1080,118 +1204,6 @@
             if(newChapters > 0) {
                 alert(`Welcome back! ${newChapters} new chapter${newChapters > 1 ? 's' : ''} have been added since your last visit.`);
             }
-        }
-        
-        // Paginate content into pages with footnotes
-        function paginateContent(content, options) {
-            const settings = {
-                chapterNumber: options.chapterNumber || 1,
-                chapterTitle: options.chapterTitle || 'Chapter',
-                footnotes: options.footnotes || [],
-                wordsPerPage: 300 // Approximate
-            };
-            
-            // Clean and split the content into paragraphs
-            const paragraphs = content.trim().split(/\n\n+/);
-            
-            // Array to hold all pages
-            const pages = [];
-            
-            // Current page data
-            let currentPage = {
-                content: [],
-                wordCount: 0
-            };
-            
-            // Add chapter title to first page if it's the first page of the chapter
-            if(options.isFirstPage !== false) {
-                currentPage.content.push(`<h1>${settings.chapterTitle}</h1>`);
-            }
-            
-            // Process each paragraph
-            for(let i = 0; i < paragraphs.length; i++) {
-                const paragraph = paragraphs[i].trim();
-                if(!paragraph) continue;
-                
-                // Format paragraph based on markdown
-                let formattedParagraph = '';
-                
-                if(paragraph.startsWith('#')) {
-                    // Heading
-                    const level = (paragraph.match(/^#+/) || [''])[0].length;
-                    const headingText = paragraph.replace(/^#+\s*/, '');
-                    formattedParagraph = `<h${Math.min(level, 6)}>${headingText}</h${Math.min(level, 6)}>`;
-                } else if(paragraph.startsWith('> ')) {
-                    // Blockquote
-                    const quoteText = paragraph.replace(/^>\s*/, '');
-                    formattedParagraph = `<blockquote>${quoteText}</blockquote>`;
-                } else if(paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
-                    // Unordered list
-                    const listItems = paragraph.split(/\n- |\n\* /).map(item => item.replace(/^- |^\* /, '').trim());
-                    formattedParagraph = '<ul>' + listItems.map(item => `<li>${item}</li>`).join('') + '</ul>';
-                } else if(/^\d+\.\s/.test(paragraph)) {
-                    // Ordered list
-                    const listItems = paragraph.split(/\n\d+\.\s/).map(item => item.replace(/^\d+\.\s/, '').trim());
-                    formattedParagraph = '<ol>' + listItems.map(item => `<li>${item}</li>`).join('') + '</ol>';
-                } else {
-                    // Regular paragraph - check for footnotes and links
-                    let processedText = paragraph;
-                    
-                    // Replace footnote references: [^1] -> <span class="footnote-ref" data-id="1">1</span>
-                    processedText = processedText.replace(/\[\^(\d+)\]/g, '<span class="footnote-ref" data-id="$1">[$1]</span>');
-                    
-                    // Replace markdown links: [text](url) -> <a href="url" target="_blank">text</a>
-                    processedText = processedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-                    
-                    // Replace emphasis: *text* -> <em>text</em>
-                    processedText = processedText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-                    
-                    // Replace strong: **text** -> <strong>text</strong>
-                    processedText = processedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-                    
-                    formattedParagraph = `<p>${processedText}</p>`;
-                }
-                
-                // Count words
-                const words = paragraph.split(/\s+/).length;
-                
-                // Check if adding this paragraph would exceed the page limit
-                if(currentPage.wordCount + words > settings.wordsPerPage && currentPage.content.length > 0) {
-                    // Finalize the current page
-                    pages.push(createPageContent(currentPage.content, pages.length + 1));
-                    
-                    // Start a new page
-                    currentPage = {
-                        content: [formattedParagraph],
-                        wordCount: words
-                    };
-                } else {
-                    // Add to current page
-                    currentPage.content.push(formattedParagraph);
-                    currentPage.wordCount += words;
-                }
-            }
-            
-            // Add the last page
-            if(currentPage.content.length > 0) {
-                pages.push(createPageContent(currentPage.content, pages.length + 1));
-            }
-            
-            return pages;
-        }
-        
-        // Create page content object
-        function createPageContent(contentArray, pageNumber) {
-            return {
-                content: `
-                    <div class="page-content">
-                        ${contentArray.join('')}
-                    </div>
-                    <div class="page-number left">${pageNumber}</div>
-                    <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
-                    <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
-                `
-            };
         }
     </script>
 </body>
