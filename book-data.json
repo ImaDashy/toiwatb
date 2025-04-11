@@ -1,0 +1,24 @@
+{
+  "title": "My Serial E-Book",
+  "author": "Your Name",
+  "coverImage": "https://via.placeholder.com/800x1200",
+  "lastUpdated": "2023-06-01T12:00:00Z",
+  "chapters": [
+    {
+      "number": 1,
+      "title": "Introduction",
+      "publishDate": "2023-06-01T12:00:00Z",
+      "content": "# Introduction\n\nThis is the first chapter of my serial e-book. Each week, I'll be adding a new chapter.\n\nYou can include **bold text**, *italic text*, and [links to external sites](https://example.com).\n\nThis paragraph includes a footnote reference[^1]. Footnotes appear inline when clicked.\n\n## A Subheading\n\nMore content goes here. You could reference another footnote[^2] that contains links to your subdomain.\n\nThe system automatically saves the reader's progress so they can pick up where they left off.",
+      "footnotes": [
+        {
+          "id": "1",
+          "text": "This is the first footnote. It can contain <a href='https://yoursubdomain.example.com/resource1'>links to your subdomain</a> and basic formatting."
+        },
+        {
+          "id": "2",
+          "text": "This is the second footnote with another <a href='https://yoursubdomain.example.com/resource2'>link to your subdomain</a>."
+        }
+      ]
+    }
+  ]
+}
