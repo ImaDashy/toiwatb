@@ -251,18 +251,26 @@
             z-index: 100;
             transition: color 0.3s;
             user-select: none;
+            background-color: rgba(255,255,255,0.4);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .nav-arrow:hover {
             color: rgba(0,0,0,0.5);
+            background-color: rgba(255,255,255,0.6);
         }
         
         .nav-arrow.prev {
-            left: -50px;
+            left: 10px;
         }
         
         .nav-arrow.next {
-            right: -50px;
+            right: 10px;
         }
         
         /* Additional utility classes */
@@ -295,6 +303,7 @@
                 height: 100vh;
                 max-height: none;
                 margin: 0;
+                border-radius: 0;
             }
             
             .book {
@@ -325,25 +334,19 @@
             
             .nav-arrow {
                 font-size: 2em;
-                background-color: rgba(255, 255, 255, 0.7);
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                width: 45px;
+                height: 45px;
                 top: auto;
                 bottom: 20px;
                 transform: none;
             }
             
             .nav-arrow.prev {
-                left: 20px;
+                left: 15px;
             }
             
             .nav-arrow.next {
-                right: 20px;
+                right: 15px;
             }
             
             .cover h1 {
@@ -410,6 +413,24 @@
         .content-form button {
             font-family: Arial, sans-serif;
         }
+        
+        /* Click area styles */
+        .nav-click-area {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 40%;
+            z-index: 90;
+            cursor: pointer;
+        }
+        
+        .nav-click-area.left {
+            left: 0;
+        }
+        
+        .nav-click-area.right {
+            right: 0;
+        }
     </style>
 </head>
 <body>
@@ -418,7 +439,7 @@
             <!-- Cover Page -->
             <div class="page-wrapper" id="cover-wrapper">
                 <div class="page front cover">
-                    <img src="/api/placeholder/800/1200" alt="Book Cover" class="cover-image">
+                    <img src="https://via.placeholder.com/800x1200" alt="Book Cover" class="cover-image">
                     <div class="cover-content">
                         <h1>My E-Book Title</h1>
                         <h2>By Author Name</h2>
@@ -435,6 +456,9 @@
                     <div class="page-number right">i</div>
                     <div class="turn-page-hint">Click to turn page →</div>
                 </div>
+                <!-- Navigation click areas -->
+                <div class="nav-click-area left" data-direction="prev"></div>
+                <div class="nav-click-area right" data-direction="next"></div>
             </div>
             
             <!-- Page 1-2 -->
@@ -484,6 +508,9 @@
                     <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
                     <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
                 </div>
+                <!-- Navigation click areas -->
+                <div class="nav-click-area left" data-direction="prev"></div>
+                <div class="nav-click-area right" data-direction="next"></div>
             </div>
             
             <!-- Page 3-4 -->
@@ -511,6 +538,9 @@
                     <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
                     <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
                 </div>
+                <!-- Navigation click areas -->
+                <div class="nav-click-area left" data-direction="prev"></div>
+                <div class="nav-click-area right" data-direction="next"></div>
             </div>
             
             <!-- Page 5-6 -->
@@ -541,6 +571,9 @@
                     <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
                     <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
                 </div>
+                <!-- Navigation click areas -->
+                <div class="nav-click-area left" data-direction="prev"></div>
+                <div class="nav-click-area right" data-direction="next"></div>
             </div>
         </div>
         
@@ -648,36 +681,30 @@
                 }
             }
             
-            // Click on pages to turn them
-            pageWrappers.forEach((wrapper, index) => {
-                wrapper.addEventListener('click', (e) => {
-                    // Only respond to clicks if this is the current page
-                    if(index === currentPage) {
-                        // Determine if click was on left or right side of the page
-                        const clickX = e.clientX;
-                        const wrapperRect = wrapper.getBoundingClientRect();
-                        const wrapperCenter = wrapperRect.left + (wrapperRect.width / 2);
-                        
-                        // If clicked on left side and not on first page, go back
-                        if(clickX < wrapperCenter && currentPage > 0) {
-                            turnToPage(currentPage - 1);
-                        } 
-                        // If clicked on right side, go forward
-                        else if(clickX >= wrapperCenter) {
-                            turnToPage(index + 1);
-                        }
+            // Add event listeners to navigation areas
+            document.querySelectorAll('.nav-click-area').forEach(area => {
+                area.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const direction = area.getAttribute('data-direction');
+                    
+                    if(direction === 'prev' && currentPage > 0) {
+                        turnToPage(currentPage - 1);
+                    } else if(direction === 'next' && currentPage < totalPages - 1) {
+                        turnToPage(currentPage + 1);
                     }
                 });
             });
             
             // Navigation buttons
-            prevBtn.addEventListener('click', () => {
+            prevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 if(currentPage > 0) {
                     turnToPage(currentPage - 1);
                 }
             });
             
-            nextBtn.addEventListener('click', () => {
+            nextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 if(currentPage < totalPages - 1) {
                     turnToPage(currentPage + 1);
                 }
@@ -793,7 +820,7 @@
                 const coverFront = document.createElement('div');
                 coverFront.className = 'page front cover';
                 coverFront.innerHTML = `
-                    <img src="/api/placeholder/800/1200" alt="Book Cover" class="cover-image">
+                    <img src="https://via.placeholder.com/800x1200" alt="Book Cover" class="cover-image">
                     <div class="cover-content">
                         <h1>${settings.title}</h1>
                         <h2>By ${settings.author}</h2>
@@ -812,8 +839,19 @@
                     <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
                 `;
                 
+                // Add navigation click areas
+                const coverLeftNav = document.createElement('div');
+                coverLeftNav.className = 'nav-click-area left';
+                coverLeftNav.setAttribute('data-direction', 'prev');
+                
+                const coverRightNav = document.createElement('div');
+                coverRightNav.className = 'nav-click-area right';
+                coverRightNav.setAttribute('data-direction', 'next');
+                
                 coverWrapper.appendChild(coverFront);
                 coverWrapper.appendChild(coverBack);
+                coverWrapper.appendChild(coverLeftNav);
+                coverWrapper.appendChild(coverRightNav);
                 book.appendChild(coverWrapper);
                 
                 // Paginate the content
@@ -884,20 +922,31 @@
                     <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
                 `;
                 
-                // Back page
+                // Back page (could be empty or contain related content)
                 const backPage = document.createElement('div');
                 backPage.className = 'page back content';
                 backPage.innerHTML = `
                     <div class="page-content">
-                        <p>This is page ${pageNumber + 1}</p>
+                        <p>Page ${pageNumber + 1}</p>
                     </div>
                     <div class="page-number right">${pageNumber + 1}</div>
                     <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
                     <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
                 `;
                 
+                // Add navigation click areas
+                const leftNav = document.createElement('div');
+                leftNav.className = 'nav-click-area left';
+                leftNav.setAttribute('data-direction', 'prev');
+                
+                const rightNav = document.createElement('div');
+                rightNav.className = 'nav-click-area right';
+                rightNav.setAttribute('data-direction', 'next');
+                
                 pageWrapper.appendChild(frontPage);
                 pageWrapper.appendChild(backPage);
+                pageWrapper.appendChild(leftNav);
+                pageWrapper.appendChild(rightNav);
                 book.appendChild(pageWrapper);
             }
             
@@ -917,28 +966,16 @@
                 // Update arrows
                 updateNavArrows();
                 
-                // Re-attach click handlers
-                pageWrappers.forEach((wrapper, index) => {
-                    // Remove existing listeners (to prevent duplicates)
-                    const newWrapper = wrapper.cloneNode(true);
-                    wrapper.parentNode.replaceChild(newWrapper, wrapper);
-                    
-                    newWrapper.addEventListener('click', (e) => {
-                        // Only respond to clicks if this is the current page
-                        if(index === currentPage) {
-                            // Determine if click was on left or right side of the page
-                            const clickX = e.clientX;
-                            const wrapperRect = newWrapper.getBoundingClientRect();
-                            const wrapperCenter = wrapperRect.left + (wrapperRect.width / 2);
-                            
-                            // If clicked on left side and not on first page, go back
-                            if(clickX < wrapperCenter && currentPage > 0) {
-                                turnToPage(currentPage - 1);
-                            } 
-                            // If clicked on right side, go forward
-                            else if(clickX >= wrapperCenter && currentPage < pageWrappers.length - 1) {
-                                turnToPage(currentPage + 1);
-                            }
+                // Add event listeners to navigation areas
+                document.querySelectorAll('.nav-click-area').forEach(area => {
+                    area.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const direction = area.getAttribute('data-direction');
+                        
+                        if(direction === 'prev' && currentPage > 0) {
+                            turnToPage(currentPage - 1);
+                        } else if(direction === 'next' && currentPage < pageWrappers.length - 1) {
+                            turnToPage(currentPage + 1);
                         }
                     });
                 });
