@@ -24,21 +24,22 @@
         }
         
         .book-container {
-            width: 90%;
-            max-width: 1000px;
-            height: 80vh;
-            max-height: 700px;
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
             position: relative;
             overflow: hidden;
             background-color: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             border-radius: 5px;
+            margin: 20px;
         }
         
         .book {
             position: absolute;
             width: 100%;
             height: 100%;
+            overflow: hidden;
         }
         
         .page-wrapper {
@@ -46,34 +47,23 @@
             width: 100%;
             height: 100%;
             transition: transform 0.5s ease-out;
-            overflow: hidden;
+            overflow-y: auto;
+            background: white;
         }
         
         .page {
-            position: absolute;
             width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            overflow: hidden;
+            min-height: 100%;
             padding: 40px;
             background: white;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
-        }
-        
-        .page.front {
-            z-index: 1;
-        }
-        
-        .page.back {
-            z-index: 0;
         }
         
         /* Cover styling */
         .cover {
             position: relative;
+            height: 100%;
             overflow: hidden;
             color: white;
             text-align: center;
@@ -163,27 +153,22 @@
         }
         
         .page-number {
-            position: absolute;
-            bottom: 20px;
+            padding: 20px 0;
             font-size: 0.9em;
             color: #888;
-        }
-        
-        .page-number.left {
-            left: 40px;
-        }
-        
-        .page-number.right {
-            right: 40px;
+            text-align: center;
         }
         
         .turn-page-hint {
-            position: absolute;
+            position: fixed;
             bottom: 20px;
             color: #777;
             font-style: italic;
             font-size: 0.9em;
             animation: pulse 2s infinite;
+            background: rgba(255,255,255,0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
         }
         
         .turn-page-hint.right {
@@ -205,7 +190,7 @@
         }
         
         .footnotes-section {
-            margin-top: auto;
+            margin-top: 40px;
             padding-top: 20px;
             border-top: 1px solid #ddd;
             font-size: 0.9em;
@@ -221,7 +206,7 @@
         
         .footnote-item {
             display: flex;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             line-height: 1.4;
         }
         
@@ -249,13 +234,12 @@
         /* Main content area */
         .page-content {
             flex: 1;
-            overflow: hidden;
-            position: relative;
+            margin-bottom: 40px;
         }
         
         /* Navigation arrows */
         .nav-arrow {
-            position: absolute;
+            position: fixed;
             top: 50%;
             transform: translateY(-50%);
             font-size: 3em;
@@ -398,26 +382,12 @@
         
         /* For mobile */
         @media (max-width: 768px) {
-            body {
-                padding: 0;
-                margin: 0;
-                min-height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
             .book-container {
                 width: 100%;
                 height: 100vh;
                 max-height: none;
                 margin: 0;
                 border-radius: 0;
-            }
-            
-            .book {
-                width: 100%;
-                height: 100%;
             }
             
             .page {
@@ -685,35 +655,20 @@
             coverWrapper.className = 'page-wrapper';
             coverWrapper.id = 'cover-wrapper';
             
-            const coverFront = document.createElement('div');
-            coverFront.className = 'page front cover';
-            coverFront.innerHTML = `
-                <img src="${bookData.coverImage}" alt="Book Cover" class="cover-image">
-                <div class="cover-content">
-                    <h1>${bookData.title}</h1>
-                    <h2>By ${bookData.author}</h2>
+            coverWrapper.innerHTML = `
+                <div class="page cover">
+                    <img src="${bookData.coverImage}" alt="Book Cover" class="cover-image">
+                    <div class="cover-content">
+                        <h1>${bookData.title}</h1>
+                        <h2>By ${bookData.author}</h2>
+                    </div>
+                    <div class="turn-indicator">Tap to open →</div>
                 </div>
-                <div class="turn-indicator">Tap to open →</div>
-            `;
-            
-            const coverBack = document.createElement('div');
-            coverBack.className = 'page back content';
-            coverBack.innerHTML = `
-                <div class="page-content">
-                    <h1>About This Publication</h1>
-                    <p>This is a serial publication with new chapters released weekly.</p>
-                    <p>Last updated: ${new Date(bookData.lastUpdated).toLocaleDateString()}</p>
-                    <p>The table of contents on the next page allows you to navigate to specific chapters.</p>
-                </div>
-                <div class="page-number right">i</div>
-                <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
             `;
             
             // Add navigation click areas
             addNavigationAreas(coverWrapper);
             
-            coverWrapper.appendChild(coverFront);
-            coverWrapper.appendChild(coverBack);
             book.appendChild(coverWrapper);
         }
         
@@ -726,13 +681,11 @@
             tocWrapper.id = 'toc-wrapper';
             tocWrapper.style.display = 'none';
             
-            const tocFront = document.createElement('div');
-            tocFront.className = 'page front content';
-            
             let tocHTML = `
-                <div class="page-content">
-                    <h1>Table of Contents</h1>
-                    <ul style="list-style-type:none; margin-left:20px; line-height:1.8">
+                <div class="page content">
+                    <div class="page-content">
+                        <h1>Table of Contents</h1>
+                        <ul style="list-style-type:none; margin-left:20px; line-height:1.8">
             `;
             
             for(let i = 0; i < bookData.chapters.length; i++) {
@@ -741,40 +694,17 @@
             }
             
             tocHTML += `
-                    </ul>
+                        </ul>
+                    </div>
+                    <div class="page-number">Page ii</div>
                 </div>
-                <div class="page-number left">ii</div>
-                <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
-                <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
             `;
             
-            tocFront.innerHTML = tocHTML;
-            
-            const tocBack = document.createElement('div');
-            tocBack.className = 'page back content';
-            tocBack.innerHTML = `
-                <div class="page-content">
-                    <h2>How to Navigate</h2>
-                    <p>You can navigate this e-book in several ways:</p>
-                    <ul>
-                        <li>Tap or click the right side of any page to go forward</li>
-                        <li>Tap or click the left side to go backward</li>
-                        <li>Use the arrow buttons on either side of the page</li>
-                        <li>Use the left and right arrow keys on your keyboard</li>
-                        <li>On mobile devices, swipe left or right</li>
-                    </ul>
-                    <p>Your reading progress is automatically saved, so you can continue where you left off next time you visit.</p>
-                </div>
-                <div class="page-number right">iii</div>
-                <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
-                <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
-            `;
+            tocWrapper.innerHTML = tocHTML;
             
             // Add navigation click areas
             addNavigationAreas(tocWrapper);
             
-            tocWrapper.appendChild(tocFront);
-            tocWrapper.appendChild(tocBack);
             book.appendChild(tocWrapper);
             
             // Add event listeners for TOC links
@@ -809,14 +739,15 @@
                 pageWrapper.setAttribute('data-page', i);
                 pageWrapper.style.display = 'none';
                 
-                const frontPage = document.createElement('div');
-                frontPage.className = 'page front content';
-                frontPage.innerHTML = pages[i];
+                pageWrapper.innerHTML = `
+                    <div class="page content">
+                        ${pages[i]}
+                    </div>
+                `;
                 
                 // Add navigation click areas
                 addNavigationAreas(pageWrapper);
                 
-                pageWrapper.appendChild(frontPage);
                 book.appendChild(pageWrapper);
             }
         }
@@ -843,12 +774,12 @@
             pageWrapper.appendChild(rightNav);
         }
         
-        // Paginate content with footnotes at the bottom of each page
+        // Paginate content with footnotes at the bottom
         function paginateContentWithFootnotes(content, allFootnotes, options) {
             const settings = {
                 chapterNumber: options.chapterNumber || 1,
                 chapterTitle: options.chapterTitle || 'Chapter',
-                wordsPerPage: 250 // Approximate - will be adjusted based on footnotes
+                wordsPerPage: 300 // Approximate - adjust based on your content
             };
             
             // Clean and split the content into paragraphs
@@ -878,13 +809,13 @@
                 // Count words in this paragraph
                 const words = paragraph.split(/\s+/).length;
                 
-                // Estimate space needed for footnotes (each footnote takes roughly 15-30 words worth of space)
-                const footnoteSpace = footnoteRefs.length * 30;
+                // Estimate space needed for footnotes (each footnote takes roughly 20 words worth of space)
+                const footnoteSpace = footnoteRefs.length * 20;
                 
                 // Check if adding this paragraph would exceed the page limit
                 if((currentPage.wordCount + words + footnoteSpace) > settings.wordsPerPage && currentPage.content.length > 0) {
                     // Create the page with its footnotes
-                    pages.push(createPageWithFootnotes(currentPage));
+                    pages.push(createPageWithFootnotes(currentPage, pages.length + 1));
                     
                     // Start a new page
                     currentPage = {
@@ -902,7 +833,7 @@
             
             // Add the last page
             if(currentPage.content.length > 0) {
-                pages.push(createPageWithFootnotes(currentPage));
+                pages.push(createPageWithFootnotes(currentPage, pages.length + 1));
             }
             
             return pages;
@@ -961,7 +892,7 @@
         }
         
         // Create a page with footnotes at the bottom
-        function createPageWithFootnotes(pageData) {
+        function createPageWithFootnotes(pageData, pageNumber) {
             let pageHTML = `
                 <div class="page-content">
                     ${pageData.content.join('')}
@@ -977,7 +908,7 @@
                 
                 // Add each footnote
                 for(let footnote of pageData.footnotes) {
-                    pageHTML += `
+pageHTML += `
                         <div class="footnote-item">
                             <div class="footnote-number">${footnote.id}.</div>
                             <div class="footnote-content">${footnote.text}</div>
@@ -988,11 +919,9 @@
                 pageHTML += `</div>`;
             }
             
-            // Add page number and navigation hints
+            // Add page number
             pageHTML += `
-                <div class="page-number left"></div>
-                <div class="turn-page-hint right">Tap right side or swipe left for next page →</div>
-                <div class="turn-page-hint left">← Tap left side or swipe right for previous page</div>
+                <div class="page-number">Page ${pageNumber}</div>
             `;
             
             return pageHTML;
@@ -1003,26 +932,53 @@
             if(pageIndex < 0 || pageIndex >= totalPages) return;
             
             const pageWrappers = document.querySelectorAll('.page-wrapper');
+            const currentWrapper = pageWrappers[currentPage];
+            const targetWrapper = pageWrappers[pageIndex];
             
-            // Hide current page
-            pageWrappers[currentPage].style.display = 'none';
+            // First make target page visible
+            targetWrapper.style.display = 'block';
             
-            // Show new page
-            pageWrappers[pageIndex].style.display = 'block';
-            
-            // Update current page
-            currentPage = pageIndex;
-            updateNavigation();
-            
-            // Update current chapter based on page
-            updateCurrentChapter();
-            
-            // Save reading progress
-            saveReadingProgress();
-            
-            // On mobile, scroll to top
-            if(window.innerWidth < 768) {
-                window.scrollTo(0, 0);
+            // Create slide animation
+            if(pageIndex > currentPage) {
+                // Moving forward - slide from right
+                targetWrapper.style.transform = 'translateX(100%)';
+                
+                // Give the browser a moment to render before starting animation
+                setTimeout(() => {
+                    currentWrapper.style.transform = 'translateX(-100%)';
+                    targetWrapper.style.transform = 'translateX(0)';
+                    
+                    // After animation completes
+                    setTimeout(() => {
+                        currentWrapper.style.display = 'none';
+                        currentWrapper.style.transform = '';
+                        
+                        // Update current page
+                        currentPage = pageIndex;
+                        updateNavigation();
+                        updateCurrentChapter();
+                        saveReadingProgress();
+                    }, 500);
+                }, 20);
+            } else {
+                // Moving backward - slide from left
+                targetWrapper.style.transform = 'translateX(-100%)';
+                
+                setTimeout(() => {
+                    currentWrapper.style.transform = 'translateX(100%)';
+                    targetWrapper.style.transform = 'translateX(0)';
+                    
+                    setTimeout(() => {
+                        currentWrapper.style.display = 'none';
+                        currentWrapper.style.transform = '';
+                        
+                        // Update current page
+                        currentPage = pageIndex;
+                        updateNavigation();
+                        updateCurrentChapter();
+                        saveReadingProgress();
+                    }, 500);
+                }, 20);
             }
         }
         
