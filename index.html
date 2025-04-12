@@ -24,7 +24,7 @@
         }
         
         .book-container {
-            width: 100%;
+            width: 90%;
             max-width: 800px;
             height: 90vh;
             position: relative;
@@ -32,7 +32,7 @@
             background-color: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
             border-radius: 5px;
-            margin: 20px;
+            margin: 20px auto;
         }
         
         .book {
@@ -47,17 +47,18 @@
             width: 100%;
             height: 100%;
             transition: transform 0.5s ease-out;
-            overflow-y: auto;
+            overflow: hidden;
             background: white;
         }
         
         .page {
             width: 100%;
-            min-height: 100%;
+            height: 100%;
             padding: 40px;
             background: white;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
         }
         
         /* Cover styling */
@@ -153,7 +154,8 @@
         }
         
         .page-number {
-            padding: 20px 0;
+            padding: 15px 0;
+            margin-top: auto;
             font-size: 0.9em;
             color: #888;
             text-align: center;
@@ -169,6 +171,7 @@
             background: rgba(255,255,255,0.7);
             padding: 5px 10px;
             border-radius: 5px;
+            z-index: 10;
         }
         
         .turn-page-hint.right {
@@ -190,11 +193,13 @@
         }
         
         .footnotes-section {
-            margin-top: 40px;
-            padding-top: 20px;
+            margin-top: auto;
+            padding-top: 15px;
             border-top: 1px solid #ddd;
             font-size: 0.9em;
             color: #555;
+            max-height: 40%;
+            overflow: hidden;
         }
         
         .footnotes-section h4 {
@@ -206,7 +211,7 @@
         
         .footnote-item {
             display: flex;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             line-height: 1.4;
         }
         
@@ -234,7 +239,11 @@
         /* Main content area */
         .page-content {
             flex: 1;
-            margin-bottom: 40px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            max-height: 75%;
         }
         
         /* Navigation arrows */
@@ -382,6 +391,11 @@
         
         /* For mobile */
         @media (max-width: 768px) {
+            body {
+                padding: 0;
+                margin: 0;
+            }
+            
             .book-container {
                 width: 100%;
                 height: 100vh;
@@ -598,7 +612,7 @@
                         number: 1,
                         title: "Introduction",
                         publishDate: new Date().toISOString(),
-                        content: "# Introduction\n\nThis is a sample chapter for the serial e-book demo. In a real implementation, you would load chapters from a JSON file.\n\nYou can include **bold text**, *italic text*, and [links](https://example.com).\n\nThis paragraph includes a footnote reference[^1]. And here's another one with a longer explanation[^2].\n\n## A Subheading\n\nMore content goes here. You can add as much text as needed, and it will be automatically paginated with footnotes at the bottom of each page.",
+                        content: "# Introduction\n\nThis is a sample chapter for the serial e-book demo. In a real implementation, you would load chapters from a JSON file.\n\nYou can include **bold text**, *italic text*, and [links](https://example.com).\n\nThis paragraph includes a footnote reference[^1]. And here's another one with a longer explanation[^2].\n\n## A Subheading\n\nMore content goes here. You can add as much text as needed, and it will be automatically paginated with footnotes at the bottom of each page. The system will ensure that each page fits exactly within the viewport without requiring scrolling.\n\nEach paragraph will be carefully placed on the appropriate page, with footnotes always visible at the bottom. If a paragraph would extend beyond the available space, it will be moved to the next page.\n\nThis allows for a reading experience similar to a Kindle, where each page is exactly one screen of content, and the reader simply flips from one page to the next without ever needing to scroll.",
                         footnotes: [
                             { id: "1", text: "This is the first footnote. It can contain <a href='https://example.com'>links</a> and basic formatting." },
                             { id: "2", text: "This is the second footnote, which is longer to demonstrate how longer footnotes are handled. It might contain multiple sentences and explain a complex concept in detail. It can also contain <a href='https://example.com/resource'>links to additional resources</a> for readers who want to explore a topic further." }
@@ -608,7 +622,7 @@
                         number: 2,
                         title: "Getting Started",
                         publishDate: new Date().toISOString(),
-                        content: "# Getting Started\n\nThis is the second chapter of the demo e-book.\n\nYou'll need to create a JSON file similar to this demo data structure to provide real content for your serial publication.\n\nEach week, you can update the JSON file with a new chapter. Here's a reference with a footnote[^1].\n\n## Another Section\n\nThe footnotes will appear at the bottom of each page, with proper superscript numbers in the text.",
+                        content: "# Getting Started\n\nThis is the second chapter of the demo e-book.\n\nYou'll need to create a JSON file similar to this demo data structure to provide real content for your serial publication.\n\nEach week, you can update the JSON file with a new chapter. Here's a reference with a footnote[^1].\n\n## Another Section\n\nThe footnotes will appear at the bottom of each page, not inline. They can contain links and formatting.\n\nMore paragraphs to demonstrate pagination. This content will be split into multiple pages as needed to ensure that everything fits on the screen without scrolling.\n\nEach page will have its own set of footnotes that are referenced on that page. This creates a clean reading experience where all needed information is visible at once.\n\nUsers can simply swipe or tap to move between pages, without having to scroll up and down.",
                         footnotes: [
                             { id: "1", text: "Footnotes will be placed at the bottom of each page, not inline. They can contain links and formatting." }
                         ]
@@ -774,12 +788,13 @@
             pageWrapper.appendChild(rightNav);
         }
         
-        // Paginate content with footnotes at the bottom
+        // Paginate content with footnotes at the bottom - much more conservative page sizing
         function paginateContentWithFootnotes(content, allFootnotes, options) {
             const settings = {
                 chapterNumber: options.chapterNumber || 1,
                 chapterTitle: options.chapterTitle || 'Chapter',
-                wordsPerPage: 300 // Approximate - adjust based on your content
+                // Much smaller word count per page to ensure everything fits
+                wordsPerPage: 120 // Smaller count to fit everything on one screen
             };
             
             // Clean and split the content into paragraphs
@@ -809,8 +824,8 @@
                 // Count words in this paragraph
                 const words = paragraph.split(/\s+/).length;
                 
-                // Estimate space needed for footnotes (each footnote takes roughly 20 words worth of space)
-                const footnoteSpace = footnoteRefs.length * 20;
+                // Estimate space needed for footnotes (each footnote takes roughly 30 words worth of space)
+                const footnoteSpace = footnoteRefs.length * 35;
                 
                 // Check if adding this paragraph would exceed the page limit
                 if((currentPage.wordCount + words + footnoteSpace) > settings.wordsPerPage && currentPage.content.length > 0) {
@@ -882,7 +897,7 @@
                 // Replace emphasis: *text* -> <em>text</em>
                 processedText = processedText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
                 
-                // Replace strong: **text** -> <strong>text</strong>
+// Replace strong: **text** -> <strong>text</strong>
                 processedText = processedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
                 
                 formattedText = `<p>${processedText}</p>`;
@@ -908,7 +923,7 @@
                 
                 // Add each footnote
                 for(let footnote of pageData.footnotes) {
-pageHTML += `
+                    pageHTML += `
                         <div class="footnote-item">
                             <div class="footnote-number">${footnote.id}.</div>
                             <div class="footnote-content">${footnote.text}</div>
@@ -935,50 +950,52 @@ pageHTML += `
             const currentWrapper = pageWrappers[currentPage];
             const targetWrapper = pageWrappers[pageIndex];
             
-            // First make target page visible
-            targetWrapper.style.display = 'block';
+            // Define animation direction
+            const direction = pageIndex > currentPage ? 'forward' : 'backward';
             
-            // Create slide animation
-            if(pageIndex > currentPage) {
-                // Moving forward - slide from right
+            // Begin animation
+            if (direction === 'forward') {
+                // Show target off-screen to the right
+                targetWrapper.style.display = 'block';
                 targetWrapper.style.transform = 'translateX(100%)';
                 
-                // Give the browser a moment to render before starting animation
-                setTimeout(() => {
+                // Animation timing
+                requestAnimationFrame(() => {
+                    // Slide current left and target to center
                     currentWrapper.style.transform = 'translateX(-100%)';
                     targetWrapper.style.transform = 'translateX(0)';
                     
-                    // After animation completes
                     setTimeout(() => {
+                        // Hide previous page when animation completes
                         currentWrapper.style.display = 'none';
                         currentWrapper.style.transform = '';
-                        
-                        // Update current page
                         currentPage = pageIndex;
                         updateNavigation();
                         updateCurrentChapter();
                         saveReadingProgress();
                     }, 500);
-                }, 20);
+                });
             } else {
-                // Moving backward - slide from left
+                // Show target off-screen to the left
+                targetWrapper.style.display = 'block';
                 targetWrapper.style.transform = 'translateX(-100%)';
                 
-                setTimeout(() => {
+                // Animation timing
+                requestAnimationFrame(() => {
+                    // Slide current right and target to center
                     currentWrapper.style.transform = 'translateX(100%)';
                     targetWrapper.style.transform = 'translateX(0)';
                     
                     setTimeout(() => {
+                        // Hide previous page when animation completes
                         currentWrapper.style.display = 'none';
                         currentWrapper.style.transform = '';
-                        
-                        // Update current page
                         currentPage = pageIndex;
                         updateNavigation();
                         updateCurrentChapter();
                         saveReadingProgress();
                     }, 500);
-                }, 20);
+                });
             }
         }
         
