@@ -1178,6 +1178,134 @@
                 alert(`Welcome back! ${newChapters} new chapter${newChapters > 1 ? 's' : ''} have been added since your last visit.`);
             }
         }
+// JSON Formatter Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize JSON formatter
+    const openFormatterBtn = document.getElementById('open-formatter-btn');
+    const closeFormatterBtn = document.getElementById('close-formatter-btn');
+    const formatJsonBtn = document.getElementById('format-json-btn');
+    const copyJsonBtn = document.getElementById('copy-json-btn');
+    const jsonFormatter = document.getElementById('json-formatter');
+    
+    // Open formatter
+    if (openFormatterBtn) {
+        openFormatterBtn.addEventListener('click', function() {
+            jsonFormatter.style.display = 'block';
+        });
+    }
+    
+    // Close formatter
+    if (closeFormatterBtn) {
+        closeFormatterBtn.addEventListener('click', function() {
+            jsonFormatter.style.display = 'none';
+        });
+    }
+    
+    // Format JSON
+    if (formatJsonBtn) {
+        formatJsonBtn.addEventListener('click', function() {
+            const chapterTitle = document.getElementById('chapter-title-input').value;
+            const chapterNumber = document.getElementById('chapter-number-input').value;
+            const chapterText = document.getElementById('chapter-text-input').value;
+            
+            if (!chapterTitle || !chapterNumber || !chapterText) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            // Generate JSON for a new chapter
+            const jsonOutput = createChapterJSON(chapterTitle, chapterNumber, chapterText);
+            document.getElementById('formatted-json').value = jsonOutput;
+        });
+    }
+    
+    // Copy to clipboard
+    if (copyJsonBtn) {
+        copyJsonBtn.addEventListener('click', function() {
+            const formattedJson = document.getElementById('formatted-json');
+            formattedJson.select();
+            document.execCommand('copy');
+            
+            // Show feedback
+            const originalText = copyJsonBtn.textContent;
+            copyJsonBtn.textContent = 'Copied!';
+            setTimeout(() => {
+                copyJsonBtn.textContent = originalText;
+            }, 2000);
+        });
+    }
+    
+    // Utility function to create chapter JSON
+    function createChapterJSON(title, number, text) {
+        // Create a chapter object
+        const chapter = {
+            number: parseInt(number),
+            title: title,
+            publishDate: new Date().toISOString(),
+            content: text,
+            footnotes: []
+        };
+        
+        // Format it nicely
+        return JSON.stringify(chapter, null, 2);
+    }
+    
+    // Function to update existing book JSON
+    function updateBookJSON(newChapter) {
+        // Assuming bookData is your global book data
+        if (typeof bookData !== 'undefined') {
+            // Check if chapter with this number already exists
+            const existingIndex = bookData.chapters.findIndex(ch => ch.number === newChapter.number);
+            
+            if (existingIndex >= 0) {
+                // Update existing chapter
+                bookData.chapters[existingIndex] = newChapter;
+            } else {
+                // Add new chapter
+                bookData.chapters.push(newChapter);
+                // Sort chapters by number
+                bookData.chapters.sort((a, b) => a.number - b.number);
+            }
+            
+            // Update lastUpdated field
+            bookData.lastUpdated = new Date().toISOString();
+            
+            // Return formatted book data
+            return JSON.stringify(bookData, null, 2);
+        }
+        
+        return null;
+    }
+});
     </script>
+
+<!-- JSON Formatter Tool -->
+<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 20px rgba(0,0,0,0.3); z-index: 2000; display: none; width: 90%; max-width: 600px;" id="json-formatter">
+    <h3>Chapter JSON Formatter</h3>
+    <div>
+        <label for="chapter-title-input">Chapter Title:</label>
+        <input type="text" id="chapter-title-input" style="width: 100%; margin-bottom: 10px; padding: 5px;">
+    </div>
+    <div>
+        <label for="chapter-number-input">Chapter Number:</label>
+        <input type="number" id="chapter-number-input" style="width: 100%; margin-bottom: 10px; padding: 5px;" value="1">
+    </div>
+    <div>
+        <label for="chapter-text-input">Paste Chapter Text:</label>
+        <textarea id="chapter-text-input" style="width: 100%; height: 200px; margin-bottom: 10px; padding: 5px; font-family: monospace;"></textarea>
+    </div>
+    <div>
+        <label for="formatted-json">Formatted JSON (Copy this to your JSON file):</label>
+        <textarea id="formatted-json" style="width: 100%; height: 200px; margin-bottom: 10px; padding: 5px; font-family: monospace;" readonly></textarea>
+    </div>
+    <div>
+        <button id="format-json-btn" style="padding: 8px 16px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;">Format</button>
+        <button id="copy-json-btn" style="padding: 8px 16px; background: #009933; color: white; border: none; border-radius: 4px; margin-left: 10px; cursor: pointer;">Copy to Clipboard</button>
+        <button id="close-formatter-btn" style="padding: 8px 16px; margin-left: 10px; cursor: pointer;">Close</button>
+    </div>
+</div>
+
+<!-- Button to open the formatter -->
+<button id="open-formatter-btn" style="position: fixed; bottom: 10px; right: 10px; padding: 8px 16px; background: #0066cc; color: white; border: none; border-radius: 4px; z-index: 1000; cursor: pointer;">Format Chapter</button>
 </body>
 </html>
