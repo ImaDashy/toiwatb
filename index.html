@@ -3,1309 +3,1831 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Serial E-Book</title>
+    <title>Kindle-Style E-Reader</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Georgia', serif;
         }
         
         body {
-            font-family: 'Georgia', serif;
-            line-height: 1.6;
+            background-color: #f4f0e8;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* E-Reader Container */
+        .ereader {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: #f4f0e8;
             color: #333;
-            background-color: #f0ece3;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow: hidden;
+            position: relative;
         }
         
-        .book-container {
-            width: 90%;
-            max-width: 800px;
-            height: 90vh;
+        /* Reading Area */
+        .reading-area {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Page Container */
+        .page-container {
+            width: 100%;
+            height: 100%;
             position: relative;
             overflow: hidden;
-            background-color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            border-radius: 5px;
-            margin: 20px auto;
         }
         
-        .book {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-        
-        .page-wrapper {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            transition: transform 0.5s ease-out;
-            overflow: hidden;
-            background: white;
-        }
-        
+        /* Individual Page */
         .page {
+            position: absolute;
             width: 100%;
             height: 100%;
-            padding: 40px;
-            background: white;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        /* Cover styling */
-        .cover {
-            position: relative;
-            height: 100%;
-            overflow: hidden;
-            color: white;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding-bottom: 50px;
-        }
-        
-        .cover-image {
-            position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            padding: 40px;
+            background-color: #f4f0e8;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            transform: translateX(100%);
+        }
+        
+        .page.active {
+            transform: translateX(0);
+            z-index: 2;
+        }
+        
+        .page.previous {
+            transform: translateX(-100%);
             z-index: 1;
         }
         
-        .cover-content {
-            position: relative;
-            z-index: 2;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.6);
-            width: 100%;
+        .page.next {
+            transform: translateX(100%);
+            z-index: 1;
         }
         
-        .cover h1 {
-            font-family: 'Palatino', serif;
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-        }
-        
-        .cover h2 {
-            font-family: 'Palatino', serif;
-            font-size: 1.8em;
-            margin-bottom: 30px;
-            font-weight: 400;
-        }
-        
-        .turn-indicator {
-            position: absolute;
-            bottom: 30px;
-            font-size: 1.2em;
-            color: rgba(255,255,255,0.8);
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { opacity: 0.5; }
-            50% { opacity: 1; }
-            100% { opacity: 0.5; }
-        }
-        
-        /* Content styling */
-        .content h1 {
-            font-family: 'Palatino', serif;
-            font-size: 2.2em;
-            color: #444;
-            margin-bottom: 30px;
-        }
-        
-        .content h2 {
-            font-family: 'Palatino', serif;
-            color: #444;
-            margin-top: 1.5em;
-            margin-bottom: 0.8em;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 0.5em;
-        }
-        
-        .content p {
-            margin-bottom: 1.2em;
-            text-align: justify;
-        }
-        
-        .content a {
-            color: #0066cc;
-            text-decoration: none;
-            border-bottom: 1px dotted #0066cc;
-        }
-        
-        .content a:hover {
-            color: #004080;
-            border-bottom: 1px solid #004080;
-        }
-        
-        .page-number {
-            padding: 15px 0;
-            margin-top: auto;
-            font-size: 0.9em;
-            color: #888;
-            text-align: center;
-        }
-        
-        .turn-page-hint {
-            position: fixed;
-            bottom: 20px;
-            color: #777;
-            font-style: italic;
-            font-size: 0.9em;
-            animation: pulse 2s infinite;
-            background: rgba(255,255,255,0.7);
-            padding: 5px 10px;
-            border-radius: 5px;
-            z-index: 10;
-        }
-        
-        .turn-page-hint.right {
-            right: 20px;
-        }
-        
-        .turn-page-hint.left {
-            left: 20px;
-        }
-        
-        /* Bottom of page footnote styling */
-        .footnote-ref {
-            font-size: 0.7em;
-            vertical-align: super;
-            color: #0066cc;
-            cursor: pointer;
-            margin-left: 1px;
-            text-decoration: none;
-        }
-        
-        .footnotes-section {
-            margin-top: auto;
-            padding-top: 15px;
-            border-top: 1px solid #ddd;
-            font-size: 0.9em;
-            color: #555;
-            max-height: 40%;
-            overflow: hidden;
-        }
-        
-        .footnotes-section h4 {
-            font-size: 0.9em;
-            margin-bottom: 10px;
-            font-style: italic;
-            color: #666;
-        }
-        
-        .footnote-item {
-            display: flex;
-            margin-bottom: 10px;
-            line-height: 1.4;
-        }
-        
-        .footnote-number {
-            min-width: 25px;
-            font-weight: bold;
-            color: #0066cc;
-        }
-        
-        .footnote-content {
-            flex: 1;
-        }
-        
-        .footnote-content a {
-            color: #0066cc;
-            text-decoration: none;
-            border-bottom: 1px dotted #0066cc;
-        }
-        
-        .footnote-content a:hover {
-            color: #004080;
-            border-bottom: 1px solid #004080;
-        }
-        
-        /* Main content area */
+        /* Page Content */
         .page-content {
             flex: 1;
             overflow: hidden;
-            position: relative;
+            line-height: 1.7;
+            font-size: 18px;
+        }
+        
+        /* Cover Page */
+        .cover-page {
+            text-align: center;
             display: flex;
             flex-direction: column;
-            max-height: 75%;
-        }
-        
-        /* Navigation arrows */
-        .nav-arrow {
-            position: fixed;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 3em;
-            color: rgba(0,0,0,0.2);
-            cursor: pointer;
-            z-index: 100;
-            transition: color 0.3s;
-            user-select: none;
-            background-color: rgba(255,255,255,0.4);
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
             justify-content: center;
-        }
-        
-        .nav-arrow:hover {
-            color: rgba(0,0,0,0.5);
-            background-color: rgba(255,255,255,0.6);
-        }
-        
-        .nav-arrow.prev {
-            left: 10px;
-        }
-        
-        .nav-arrow.next {
-            right: 10px;
-        }
-        
-        /* Click area styles */
-        .nav-click-area {
-            position: absolute;
-            top: 0;
-            height: 100%;
-            width: 40%;
-            z-index: 90;
-            cursor: pointer;
-        }
-        
-        .nav-click-area.left {
-            left: 0;
-        }
-        
-        .nav-click-area.right {
-            right: 0;
-        }
-        
-        /* TOC panel */
-        .toc-panel {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            max-width: 300px;
-            max-height: 80vh;
-            overflow-y: auto;
-            transition: all 0.3s ease;
-        }
-        
-        .toc-panel.collapsed {
-            width: 40px;
-            height: 40px;
-            overflow: hidden;
-        }
-        
-        .toc-toggle {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 30px;
-            height: 30px;
-            background: #f0f0f0;
-            border-radius: 50%;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-weight: bold;
+        }
+        
+        .cover-page h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .cover-page h2 {
+            font-size: 24px;
+            margin-bottom: 40px;
+            text-align: center;
+            font-weight: normal;
+        }
+        
+        /* TOC Page */
+        .toc-page h1 {
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
         }
         
         .toc-list {
             list-style-type: none;
-            margin-top: 10px;
         }
         
         .toc-list li {
-            padding: 8px 5px;
+            margin-bottom: 15px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        .toc-list .chapter-link:hover {
+            text-decoration: underline;
+        }
+        
+        .new-badge {
+            background-color: #d35400;
+            color: white;
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        
+        /* Chapter Page */
+        .chapter-page h2 {
+            font-size: 24px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        /* Footnotes */
+        .footnotes {
+            border-top: 1px solid #ccc;
+            margin-top: 20px;
+            padding-top: 20px;
+            font-size: 14px;
+        }
+        
+        .footnote-ref {
+            vertical-align: super;
+            font-size: smaller;
+            color: #0066cc;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        
+        /* Navigation Controls */
+        .page-nav-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 10;
+            opacity: 0.7;
+        }
+        
+        .page-nav-controls:hover {
+            opacity: 1;
+        }
+        
+        .page-nav-button {
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .page-nav-button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .page-nav-button:hover:not(:disabled) {
+            background-color: #555;
+        }
+        
+        .page-number {
+            font-size: 14px;
+            text-align: center;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            color: #666;
+        }
+        
+        /* Menu Button */
+        .menu-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Admin and Menu Panels */
+        .panel {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 90%;
+            max-width: 400px;
+            height: 100%;
+            background-color: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+            padding: 20px;
+        }
+        
+        .panel.active {
+            right: 0;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .panel-header h2 {
+            margin: 0;
+        }
+        
+        .close-panel-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #0066cc;
+        }
+        
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        button:hover {
+            background-color: #0055aa;
+        }
+        
+        button.secondary {
+            background-color: #ccc;
+            color: #333;
+        }
+        
+        button.secondary:hover {
+            background-color: #bbb;
+        }
+        
+        /* Editor Styles */
+        .editor {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            min-height: 300px;
+            background-color: white;
+            margin-bottom: 20px;
+        }
+        
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        
+        .toolbar-btn {
+            padding: 5px 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .toolbar-btn:hover {
+            background-color: #f0f0f0;
+        }
+        
+        /* Footnote Editor */
+        .footnote-item {
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+        
+        .footnote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .footnote-editor {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            min-height: 80px;
+        }
+        
+        /* Modals */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Admin Button */
+        .admin-login {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Chapter List */
+        .chapter-list {
+            list-style-type: none;
+            margin-bottom: 20px;
+        }
+        
+        .chapter-list-item {
+            padding: 15px;
             border-bottom: 1px solid #eee;
             cursor: pointer;
         }
         
-        .toc-list li:hover {
-            background-color: #f0f0f0;
+        .chapter-list-item:hover {
+            background-color: #f5f5f5;
         }
         
-        .toc-list li.current {
-            font-weight: bold;
-            color: #0066cc;
-        }
-        
-        .toc-list .new-badge {
-            background-color: #ff6b6b;
-            color: white;
-            font-size: 0.7em;
-            padding: 2px 5px;
-            border-radius: 10px;
-            margin-left: 5px;
-            font-weight: bold;
-        }
-        
-        /* Reading progress */
-        .reading-progress {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-        
-        .resume-button {
-            display: block;
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            padding: 8px;
-            background-color: #0066cc;
-            color: white;
-            border: none;
-            border-radius: 5px;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0066cc;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Menu Panel */
+        .menu-panel {
+            padding: 20px;
+        }
+        
+        .menu-list {
+            list-style-type: none;
+            margin-bottom: 20px;
+        }
+        
+        .menu-item {
+            padding: 15px 10px;
+            border-bottom: 1px solid #eee;
             cursor: pointer;
-            font-weight: bold;
-            margin-top: 10px;
+            font-size: 18px;
         }
         
-        .resume-button:hover {
-            background-color: #004d99;
+        .menu-item:hover {
+            background-color: #f5f5f5;
         }
         
-        /* For mobile */
+        /* Link modal */
+        .link-modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Mobile Optimizations */
         @media (max-width: 768px) {
-            body {
-                padding: 0;
-                margin: 0;
-            }
-            
-            .book-container {
-                width: 100%;
-                height: 100vh;
-                max-height: none;
-                margin: 0;
-                border-radius: 0;
-            }
-            
             .page {
                 padding: 20px;
-                font-size: 16px;
             }
             
-            .content h1 {
-                font-size: 1.8em;
+            .page-content {
+                font-size: 16px;
+                line-height: 1.6;
+            }
+            
+            .cover-page h1 {
+                font-size: 28px;
+            }
+            
+            .cover-page h2 {
+                font-size: 20px;
+            }
+            
+            .chapter-page h2 {
+                font-size: 20px;
                 margin-bottom: 20px;
             }
             
-            .content h2 {
-                font-size: 1.5em;
-                margin-top: 1.2em;
-            }
-            
-            .content p {
-                margin-bottom: 1em;
-                line-height: 1.5;
-            }
-            
-            .nav-arrow {
-                font-size: 2em;
-                width: 45px;
-                height: 45px;
-                top: auto;
-                bottom: 20px;
-                transform: none;
-            }
-            
-            .nav-arrow.prev {
-                left: 15px;
-            }
-            
-            .nav-arrow.next {
-                right: 15px;
-            }
-            
-            .cover h1 {
-                font-size: 2em;
-            }
-            
-            .cover h2 {
-                font-size: 1.4em;
-            }
-            
-            .turn-page-hint {
-                font-size: 0.8em;
-                bottom: 10px;
-            }
-            
-            .toc-panel {
-                max-width: 80%;
+            .panel {
+                width: 100%;
+                max-width: none;
             }
         }
     </style>
 </head>
 <body>
-    <div class="book-container">
-        <div class="book" id="book">
-            <!-- Pages will be added here by JavaScript -->
+    <!-- E-Reader Container -->
+    <div class="ereader" id="ereader">
+        <!-- Reading Area -->
+        <div class="reading-area" id="reading-area">
+            <!-- Page Container -->
+            <div class="page-container" id="page-container">
+                <!-- Pages will be dynamically added here -->
+            </div>
+            
+            <!-- Page Navigation Controls -->
+            <div class="page-nav-controls" id="page-nav-controls">
+                <button class="page-nav-button" id="prev-page-btn" disabled>&lt;</button>
+                <button class="page-nav-button" id="next-page-btn">&gt;</button>
+            </div>
         </div>
         
-        <!-- Navigation Arrows -->
-        <div class="nav-arrow prev" id="prev-btn">&#8249;</div>
-        <div class="nav-arrow next" id="next-btn">&#8250;</div>
+        <!-- Menu Button -->
+        <button class="menu-button" id="menu-button">☰</button>
     </div>
-
-    <!-- Table of Contents Panel -->
-    <div class="toc-panel" id="toc-panel">
-        <div class="toc-toggle" id="toc-toggle">≡</div>
-        <h3>Table of Contents</h3>
-        <ul class="toc-list" id="toc-list">
-            <!-- Chapters will be added here by JavaScript -->
-        </ul>
-        <div class="reading-progress" id="reading-progress">
-            <h4>Your Progress</h4>
-            <p id="progress-info">No progress saved</p>
-            <button class="resume-button" id="resume-button">Resume Reading</button>
+    
+    <!-- Menu Panel -->
+    <div class="panel" id="menu-panel">
+        <div class="panel-header">
+            <h2>Menu</h2>
+            <button class="close-panel-button" id="close-menu-btn">&times;</button>
+        </div>
+        <div class="menu-panel">
+            <ul class="menu-list">
+                <li class="menu-item" id="go-to-cover-btn">Cover</li>
+                <li class="menu-item" id="go-to-contents-btn">Table of Contents</li>
+                <li class="menu-item" id="admin-login-btn">Admin Login</li>
+            </ul>
         </div>
     </div>
-
+    
+    <!-- Admin Panel -->
+    <div class="panel" id="admin-panel">
+        <div class="panel-header">
+            <h2>Admin Panel</h2>
+            <button class="close-panel-button" id="close-admin-btn">&times;</button>
+        </div>
+        
+        <!-- Chapter List -->
+        <div id="admin-chapter-list-container">
+            <h3>Chapters</h3>
+            <button id="new-chapter-btn">New Chapter</button>
+            <ul class="chapter-list" id="admin-chapter-list">
+                <!-- Chapter list will be populated here -->
+            </ul>
+        </div>
+        
+        <!-- Chapter Editor -->
+        <div id="chapter-editor" style="display: none;">
+            <h3>Edit Chapter</h3>
+            <div class="form-group">
+                <label for="chapter-number">Chapter Number</label>
+                <input type="number" id="chapter-number" min="1" required>
+            </div>
+            <div class="form-group">
+                <label for="chapter-title">Chapter Title</label>
+                <input type="text" id="chapter-title" required>
+            </div>
+            <div class="form-group">
+                <label for="editor">Chapter Content</label>
+                <div class="editor-toolbar">
+                    <button type="button" class="toolbar-btn" data-command="bold" title="Bold"><b>B</b></button>
+                    <button type="button" class="toolbar-btn" data-command="italic" title="Italic"><i>I</i></button>
+                    <button type="button" class="toolbar-btn" data-command="underline" title="Underline"><u>U</u></button>
+                    <span style="width: 1px; height: 20px; background: #ccc; margin: 0 5px;"></span>
+                    <button type="button" class="toolbar-btn" data-command="heading" title="Heading">H</button>
+                    <button type="button" class="toolbar-btn" data-command="subheading" title="Subheading">H2</button>
+                    <span style="width: 1px; height: 20px; background: #ccc; margin: 0 5px;"></span>
+                    <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="Numbered List">1. List</button>
+                    <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="Bullet List">• List</button>
+                    <span style="width: 1px; height: 20px; background: #ccc; margin: 0 5px;"></span>
+                    <button type="button" class="toolbar-btn" data-command="createLink" title="Insert Link">🔗 Link</button>
+                    <button type="button" class="toolbar-btn" data-command="superscript" title="Superscript">x²</button>
+                    <button type="button" class="toolbar-btn" data-command="subscript" title="Subscript">x₂</button>
+                    <span style="width: 1px; height: 20px; background: #ccc; margin: 0 5px;"></span>
+                    <button type="button" class="toolbar-btn" data-command="insertFootnote" title="Insert Footnote">[fn] Footnote</button>
+                </div>
+                <div id="editor" class="editor" contenteditable="true"></div>
+            </div>
+            
+            <!-- Footnotes -->
+            <div class="form-group">
+                <label>Footnotes</label>
+                <div id="footnotes-container">
+                    <!-- Footnote editors will be added here -->
+                </div>
+                <button type="button" id="add-footnote-btn">Add Footnote</button>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                <button type="button" id="cancel-edit-btn" class="secondary">Cancel</button>
+                <button type="button" id="save-chapter-btn">Save Chapter</button>
+            </div>
+        </div>
+        
+        <!-- Book Settings -->
+        <div id="book-settings" style="display: none;">
+            <h3>Book Settings</h3>
+            <div class="form-group">
+                <label for="book-title">Book Title</label>
+                <input type="text" id="book-title" required>
+            </div>
+            <div class="form-group">
+                <label for="book-author">Author</label>
+                <input type="text" id="book-author" required>
+            </div>
+            <div class="form-group">
+                <label for="cover-image">Cover Image URL (optional)</label>
+                <input type="text" id="cover-image" placeholder="https://example.com/image.jpg">
+            </div>
+            <div class="form-group">
+                <label for="admin-password">Admin Password</label>
+                <input type="password" id="admin-password" placeholder="Leave blank to keep current password">
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <button type="button" id="cancel-settings-btn" class="secondary">Cancel</button>
+                <button type="button" id="save-settings-btn">Save Settings</button>
+            </div>
+        </div>
+        
+        <!-- Admin Footer -->
+        <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+            <button id="book-settings-btn" type="button">Book Settings</button>
+            <button id="logout-btn" type="button" class="secondary">Logout</button>
+        </div>
+    </div>
+    
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Admin Login</h3>
+                <button class="close-panel-button" id="close-login-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-login-btn" class="secondary">Cancel</button>
+                <button id="login-btn">Login</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Link Modal -->
+    <div class="modal" id="link-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Insert Link</h3>
+                <button class="close-panel-button" id="close-link-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="link-text">Link Text</label>
+                    <input type="text" id="link-text">
+                </div>
+                <div class="form-group">
+                    <label for="link-url">URL</label>
+                    <input type="text" id="link-url" placeholder="https://example.com">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-link-btn" class="secondary">Cancel</button>
+                <button id="insert-link-btn">Insert</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+    
     <script>
-        // Book data URL - change this to point to your JSON file
-        const BOOK_DATA_URL = 'book-data.json'; // You'll create this JSON file
+        /* === Global Variables === */
+        // Default admin password
+        const DEFAULT_PASSWORD = 'admin123';
         
         // Book data structure
         let bookData = {
-            title: "Loading...",
-            author: "Please wait",
-            coverImage: "https://via.placeholder.com/800x1200",
-            lastUpdated: "",
+            title: 'My Serial E-Book',
+            author: 'Your Name',
+            coverImage: '',
+            adminPassword: DEFAULT_PASSWORD,
             chapters: []
         };
         
-        // Reading state
-        let currentPage = 0;
+        // Navigation state
+        let currentPageIndex = 0;
         let totalPages = 0;
-        let currentChapter = 0;
-        let userProgress = {
-            lastChapter: 0,
-            lastPage: 0,
-            lastRead: null,
-            readChapters: []
-        };
+        let pagesMap = []; // Maps page indices to chapter/type info
         
-        // Initialize the book
+        // Admin state
+        let currentEditingChapter = null;
+        let footnoteCounter = 1;
+        let savedSelection = null;
+        let savedRange = null;
+        
+        /* === Initialization === */
         document.addEventListener('DOMContentLoaded', function() {
-            // Load user progress
-            loadUserProgress();
+            // Load book data
+            loadBookData();
             
-            // Initialize UI controls
-            initializeUIControls();
+            // Initialize pages
+            initializePages();
             
-            // Fetch book data
-            fetchBookData();
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Hide loading screen (if it was showing)
+            hideLoading();
         });
         
-        // Initialize UI controls
-        function initializeUIControls() {
-            // TOC panel toggle
-            document.getElementById('toc-toggle').addEventListener('click', function() {
-                document.getElementById('toc-panel').classList.toggle('collapsed');
+        /* === Setup Event Listeners === */
+        function setupEventListeners() {
+            // Page navigation
+            document.getElementById('prev-page-btn').addEventListener('click', goToPreviousPage);
+            document.getElementById('next-page-btn').addEventListener('click', goToNextPage);
+            
+            // Touch/swipe for mobile
+            setupSwipeNavigation();
+            
+            // Menu button
+            document.getElementById('menu-button').addEventListener('click', showMenuPanel);
+            document.getElementById('close-menu-btn').addEventListener('click', hideMenuPanel);
+            
+            // Menu items
+            document.getElementById('go-to-cover-btn').addEventListener('click', function() {
+                goToPage(0);
+                hideMenuPanel();
             });
             
-            // Resume reading button
-            document.getElementById('resume-button').addEventListener('click', function() {
-                resumeReading();
+            document.getElementById('go-to-contents-btn').addEventListener('click', function() {
+                goToPage(1);
+                hideMenuPanel();
             });
             
-            // Navigation buttons
-            document.getElementById('prev-btn').addEventListener('click', function(e) {
-                e.stopPropagation();
-                goToPreviousPage();
+            document.getElementById('admin-login-btn').addEventListener('click', function() {
+                showLoginModal();
+                hideMenuPanel();
             });
             
-            document.getElementById('next-btn').addEventListener('click', function(e) {
-                e.stopPropagation();
-                goToNextPage();
+            // Admin panel
+            document.getElementById('close-admin-btn').addEventListener('click', hideAdminPanel);
+            document.getElementById('new-chapter-btn').addEventListener('click', createNewChapter);
+            document.getElementById('cancel-edit-btn').addEventListener('click', showAdminChapterList);
+            document.getElementById('save-chapter-btn').addEventListener('click', saveChapter);
+            document.getElementById('book-settings-btn').addEventListener('click', showBookSettings);
+            document.getElementById('cancel-settings-btn').addEventListener('click', showAdminChapterList);
+            document.getElementById('save-settings-btn').addEventListener('click', saveBookSettings);
+            document.getElementById('logout-btn').addEventListener('click', logoutAdmin);
+            document.getElementById('add-footnote-btn').addEventListener('click', addFootnote);
+            
+            // Login modal
+            document.getElementById('close-login-btn').addEventListener('click', hideLoginModal);
+            document.getElementById('cancel-login-btn').addEventListener('click', hideLoginModal);
+            document.getElementById('login-btn').addEventListener('click', login);
+            document.getElementById('password').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') login();
+            });
+            
+            // Link modal
+            document.getElementById('close-link-btn').addEventListener('click', hideLinkModal);
+            document.getElementById('cancel-link-btn').addEventListener('click', hideLinkModal);
+            document.getElementById('insert-link-btn').addEventListener('click', insertLink);
+            
+            // Editor toolbar
+            document.querySelectorAll('.toolbar-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const command = this.getAttribute('data-command');
+                    executeCommand(command);
+                });
             });
             
             // Keyboard navigation
             document.addEventListener('keydown', function(e) {
-                if(e.key === 'ArrowRight' || e.key === ' ') {
+                // Only respond to key events when not in admin mode
+                if (document.getElementById('admin-panel').classList.contains('active')) {
+                    return;
+                }
+                
+                if (e.key === 'ArrowRight' || e.key === ' ') {
                     goToNextPage();
-                } else if(e.key === 'ArrowLeft') {
+                } else if (e.key === 'ArrowLeft') {
                     goToPreviousPage();
                 }
             });
-            
-            // Swipe navigation for mobile
+        }
+        
+        /* === Setup Swipe Navigation for Mobile === */
+        function setupSwipeNavigation() {
+            const pageContainer = document.getElementById('page-container');
             let touchStartX = 0;
             let touchEndX = 0;
             
-            document.addEventListener('touchstart', function(e) {
+            pageContainer.addEventListener('touchstart', function(e) {
                 touchStartX = e.changedTouches[0].screenX;
             }, false);
             
-            document.addEventListener('touchend', function(e) {
+            pageContainer.addEventListener('touchend', function(e) {
                 touchEndX = e.changedTouches[0].screenX;
                 handleSwipe();
             }, false);
             
             function handleSwipe() {
                 const swipeThreshold = 50;
-                if(touchEndX < touchStartX - swipeThreshold) {
-                    // Swipe left - go forward
+                if (touchEndX < touchStartX - swipeThreshold) {
+                    // Swipe left - go to next page
                     goToNextPage();
                 }
-                if(touchEndX > touchStartX + swipeThreshold) {
-                    // Swipe right - go back
+                if (touchEndX > touchStartX + swipeThreshold) {
+                    // Swipe right - go to previous page
                     goToPreviousPage();
                 }
             }
         }
         
-        // Fetch book data from JSON file
-        function fetchBookData() {
-            fetch(BOOK_DATA_URL)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
+        /* === Data Management === */
+        // Load book data from localStorage
+        function loadBookData() {
+            const savedData = localStorage.getItem('kindleEbookData');
+            if (savedData) {
+                try {
+                    bookData = JSON.parse(savedData);
+                    
+                    // Ensure admin password exists
+                    if (!bookData.adminPassword) {
+                        bookData.adminPassword = DEFAULT_PASSWORD;
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    bookData = data;
-                    initializeBook();
-                    checkForNewChapters();
-                })
-                .catch(error => {
-                    console.error('Error fetching book data:', error);
-                    // Fallback to demo data if fetch fails
-                    loadDemoData();
-                });
+                } catch (e) {
+                    console.error('Error loading book data:', e);
+                }
+            } else {
+                // First time use - save default data
+                saveBookData();
+            }
         }
         
-        // Load demo data if JSON fetch fails
-        function loadDemoData() {
-            bookData = {
-                title: "Serial E-Book Demo",
-                author: "Demo Author",
-                coverImage: "https://via.placeholder.com/800x1200",
-                lastUpdated: new Date().toISOString(),
-                chapters: [
-                    {
-                        number: 1,
-                        title: "Introduction",
-                        publishDate: new Date().toISOString(),
-                        content: "# Introduction\n\nThis is a sample chapter for the serial e-book demo. In a real implementation, you would load chapters from a JSON file.\n\nYou can include **bold text**, *italic text*, and [links](https://example.com).\n\nThis paragraph includes a footnote reference[^1]. And here's another one with a longer explanation[^2].\n\n## A Subheading\n\nMore content goes here. You can add as much text as needed, and it will be automatically paginated with footnotes at the bottom of each page. The system will ensure that each page fits exactly within the viewport without requiring scrolling.\n\nEach paragraph will be carefully placed on the appropriate page, with footnotes always visible at the bottom. If a paragraph would extend beyond the available space, it will be moved to the next page.\n\nThis allows for a reading experience similar to a Kindle, where each page is exactly one screen of content, and the reader simply flips from one page to the next without ever needing to scroll.",
-                        footnotes: [
-                            { id: "1", text: "This is the first footnote. It can contain <a href='https://example.com'>links</a> and basic formatting." },
-                            { id: "2", text: "This is the second footnote, which is longer to demonstrate how longer footnotes are handled. It might contain multiple sentences and explain a complex concept in detail. It can also contain <a href='https://example.com/resource'>links to additional resources</a> for readers who want to explore a topic further." }
-                        ]
-                    },
-                    {
-                        number: 2,
-                        title: "Getting Started",
-                        publishDate: new Date().toISOString(),
-                        content: "# Getting Started\n\nThis is the second chapter of the demo e-book.\n\nYou'll need to create a JSON file similar to this demo data structure to provide real content for your serial publication.\n\nEach week, you can update the JSON file with a new chapter. Here's a reference with a footnote[^1].\n\n## Another Section\n\nThe footnotes will appear at the bottom of each page, not inline. They can contain links and formatting.\n\nMore paragraphs to demonstrate pagination. This content will be split into multiple pages as needed to ensure that everything fits on the screen without scrolling.\n\nEach page will have its own set of footnotes that are referenced on that page. This creates a clean reading experience where all needed information is visible at once.\n\nUsers can simply swipe or tap to move between pages, without having to scroll up and down.",
-                        footnotes: [
-                            { id: "1", text: "Footnotes will be placed at the bottom of each page, not inline. They can contain links and formatting." }
-                        ]
-                    }
-                ]
-            };
-            initializeBook();
+        // Save book data to localStorage
+        function saveBookData() {
+            try {
+                localStorage.setItem('kindleEbookData', JSON.stringify(bookData));
+                return true;
+            } catch (e) {
+                console.error('Error saving book data:', e);
+                alert('Failed to save book data. Local storage may be full.');
+                return false;
+            }
         }
         
-        // Initialize the book with data
-        function initializeBook() {
-            const book = document.getElementById('book');
-            book.innerHTML = '';
+        /* === Page Initialization and Rendering === */
+        // Initialize all pages
+        function initializePages() {
+            // Clear page container
+            const pageContainer = document.getElementById('page-container');
+            pageContainer.innerHTML = '';
             
-            // Create cover page
+            // Reset page mapping
+            pagesMap = [];
+            
+            // Create cover page (page 0)
             createCoverPage();
             
-            // Create TOC page
+            // Create TOC page (page 1)
             createTOCPage();
             
-            // Create chapter pages
-            for(let i = 0; i < bookData.chapters.length; i++) {
+            // Create content pages for each chapter
+            for (let i = 0; i < bookData.chapters.length; i++) {
                 createChapterPages(bookData.chapters[i], i);
             }
             
             // Update total pages
-            totalPages = document.querySelectorAll('.page-wrapper').length;
+            totalPages = pagesMap.length;
             
-            // Initialize navigation
-            updateNavigation();
+            // Now that all pages are created, we need to update the TOC links
+            updateTOCLinks();
             
-            // Update TOC list
-            updateTOCList();
-            
-            // Show resume button if there's saved progress
-            updateProgressDisplay();
-        }
-        
-        // Create cover page
-        function createCoverPage() {
-            const book = document.getElementById('book');
-            
-            const coverWrapper = document.createElement('div');
-            coverWrapper.className = 'page-wrapper';
-            coverWrapper.id = 'cover-wrapper';
-            
-            coverWrapper.innerHTML = `
-                <div class="page cover">
-                    <img src="${bookData.coverImage}" alt="Book Cover" class="cover-image">
-                    <div class="cover-content">
-                        <h1>${bookData.title}</h1>
-                        <h2>By ${bookData.author}</h2>
-                    </div>
-                    <div class="turn-indicator">Tap to open →</div>
-                </div>
-            `;
-            
-            // Add navigation click areas
-            addNavigationAreas(coverWrapper);
-            
-            book.appendChild(coverWrapper);
-        }
-        
-        // Create TOC page
-        function createTOCPage() {
-            const book = document.getElementById('book');
-            
-            const tocWrapper = document.createElement('div');
-            tocWrapper.className = 'page-wrapper';
-            tocWrapper.id = 'toc-wrapper';
-            tocWrapper.style.display = 'none';
-            
-            let tocHTML = `
-                <div class="page content">
-                    <div class="page-content">
-                        <h1>Table of Contents</h1>
-                        <ul style="list-style-type:none; margin-left:20px; line-height:1.8">
-            `;
-            
-            for(let i = 0; i < bookData.chapters.length; i++) {
-                const publishDate = new Date(bookData.chapters[i].publishDate).toLocaleDateString();
-                tocHTML += `<li><a href="#" class="toc-link" data-chapter="${i}">Chapter ${bookData.chapters[i].number}: ${bookData.chapters[i].title}</a> <span style="color: #777; font-size: 0.8em;">(${publishDate})</span></li>`;
+            // Show first page
+            if (totalPages > 0) {
+                showPage(0);
             }
             
-            tocHTML += `
-                        </ul>
-                    </div>
-                    <div class="page-number">Page ii</div>
-                </div>
+            // Update navigation buttons
+            updateNavigation();
+        }
+        
+        // Update the TOC links after all pages are created
+        function updateTOCLinks() {
+            document.querySelectorAll('.chapter-link').forEach(link => {
+                const chapterIndex = parseInt(link.getAttribute('data-chapter-index'));
+                
+                // Find the first page of this chapter
+                const firstPageIndex = pagesMap.findIndex(p => 
+                    p.type === 'chapter' && 
+                    p.chapterIndex === chapterIndex && 
+                    p.pageIndex === 0
+                );
+                
+                if (firstPageIndex >= 0) {
+                    // Set the data-page attribute with the correct page index
+                    link.setAttribute('data-page', firstPageIndex);
+                    
+                    // Add click event listener
+                    link.addEventListener('click', function() {
+                        const pageNumber = parseInt(this.getAttribute('data-page'));
+                        goToPage(pageNumber);
+                    });
+                }
+            });
+        }
+        
+        // Create the cover page
+        function createCoverPage() {
+            const pageContainer = document.getElementById('page-container');
+            
+            const coverPage = document.createElement('div');
+            coverPage.className = 'page cover-page';
+            coverPage.id = 'page-0';
+            
+            // Add cover image if provided
+            let coverContent = '';
+            if (bookData.coverImage) {
+                coverContent = `<img src="${bookData.coverImage}" alt="Book Cover" style="max-width: 80%; max-height: 60%; margin-bottom: 20px;">`;
+            }
+            
+            coverPage.innerHTML = `
+                ${coverContent}
+                <h1>${bookData.title}</h1>
+                <h2>by ${bookData.author}</h2>
+                <div style="margin-top: 40px; font-style: italic; color: #666;">Tap or swipe right to continue</div>
             `;
             
-            tocWrapper.innerHTML = tocHTML;
+            pageContainer.appendChild(coverPage);
             
-            // Add navigation click areas
-            addNavigationAreas(tocWrapper);
+            // Add to pages map
+            pagesMap.push({ type: 'cover', index: 0 });
+        }
+        
+        // Create the table of contents page
+        function createTOCPage() {
+            const pageContainer = document.getElementById('page-container');
             
-            book.appendChild(tocWrapper);
+            const tocPage = document.createElement('div');
+            tocPage.className = 'page toc-page';
+            tocPage.id = 'page-1';
             
-            // Add event listeners for TOC links
-            setTimeout(() => {
-                document.querySelectorAll('.toc-link').forEach(link => {
-                    link.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        const chapterIndex = parseInt(this.getAttribute('data-chapter'));
-                        goToChapter(chapterIndex);
-                    });
-                });
-            }, 0);
+            let tocContent = '<h1>Table of Contents</h1><ul class="toc-list">';
+            
+            for (let i = 0; i < bookData.chapters.length; i++) {
+                const chapter = bookData.chapters[i];
+                
+                // For each chapter, we need to find its first page
+                // We need to calculate this *after* all pages are created
+                // So for now, we'll store the chapter index and update links later
+                tocContent += `<li><span class="chapter-link" data-chapter-index="${i}">Chapter ${chapter.number}: ${chapter.title}</span>`;
+                
+                // Add "new" badge if chapter is less than 7 days old
+                const publishDate = new Date(chapter.publishDate);
+                const now = new Date();
+                const daysDiff = Math.floor((now - publishDate) / (1000 * 60 * 60 * 24));
+                
+                if (daysDiff < 7) {
+                    tocContent += '<span class="new-badge">NEW</span>';
+                }
+                
+                tocContent += '</li>';
+            }
+            
+            tocContent += '</ul>';
+            
+            tocPage.innerHTML = tocContent;
+            pageContainer.appendChild(tocPage);
+            
+            // Add to pages map
+            pagesMap.push({ type: 'toc', index: 0 });
         }
         
         // Create pages for a chapter
         function createChapterPages(chapter, chapterIndex) {
-            const book = document.getElementById('book');
             const content = chapter.content;
             
-            // Parse and paginate content with footnotes at bottom
-            const pages = paginateContentWithFootnotes(content, chapter.footnotes, {
+            // Paginate the content
+            const pages = paginateContent(content, chapter.footnotes || [], {
                 chapterNumber: chapter.number,
                 chapterTitle: chapter.title
             });
             
-            // Create a page wrapper for each content page
-            for(let i = 0; i < pages.length; i++) {
-                const pageWrapper = document.createElement('div');
-                pageWrapper.className = 'page-wrapper';
-                pageWrapper.id = `chapter-${chapterIndex}-page-${i}-wrapper`;
-                pageWrapper.setAttribute('data-chapter', chapterIndex);
-                pageWrapper.setAttribute('data-page', i);
-                pageWrapper.style.display = 'none';
+            // Create a page for each paginated content
+            const pageContainer = document.getElementById('page-container');
+            
+            for (let i = 0; i < pages.length; i++) {
+                const chapterPage = document.createElement('div');
+                chapterPage.className = 'page chapter-page';
+                chapterPage.id = `page-${pagesMap.length}`;
                 
-                pageWrapper.innerHTML = `
-                    <div class="page content">
-                        ${pages[i]}
-                    </div>
+                // Add chapter title to first page of chapter
+                let titleHTML = '';
+                if (i === 0) {
+                    titleHTML = `<h2>Chapter ${chapter.number}: ${chapter.title}</h2>`;
+                }
+                
+                chapterPage.innerHTML = `
+                    ${titleHTML}
+                    <div class="page-content">${pages[i].content}</div>
+                    ${pages[i].footnotes ? `<div class="footnotes">${pages[i].footnotes}</div>` : ''}
+                    <div class="page-number">Page ${pagesMap.length + 1}</div>
                 `;
                 
-                // Add navigation click areas
-                addNavigationAreas(pageWrapper);
+                pageContainer.appendChild(chapterPage);
                 
-                book.appendChild(pageWrapper);
+                // Add to pages map
+                pagesMap.push({
+                    type: 'chapter',
+                    chapterIndex: chapterIndex,
+                    pageIndex: i,
+                    pageNumber: pagesMap.length
+                });
             }
         }
         
-        // Add navigation click areas to a page wrapper
-        function addNavigationAreas(pageWrapper) {
-            const leftNav = document.createElement('div');
-            leftNav.className = 'nav-click-area left';
-            leftNav.setAttribute('data-direction', 'prev');
-            leftNav.addEventListener('click', function(e) {
-                e.stopPropagation();
-                goToPreviousPage();
-            });
+        // Paginate content into pages that fit without scrolling
+        function paginateContent(content, footnotes, options) {
+            // For simplicity, we'll start with a basic pagination
+            // This can be improved with more sophisticated text measurement
             
-            const rightNav = document.createElement('div');
-            rightNav.className = 'nav-click-area right';
-            rightNav.setAttribute('data-direction', 'next');
-            rightNav.addEventListener('click', function(e) {
-                e.stopPropagation();
-                goToNextPage();
-            });
+            // Approximate characters per page based on font size and page dimensions
+            // This is a very rough estimate; a more accurate method would involve
+            // actually measuring rendered text in the DOM
+            const CHARS_PER_PAGE = 1500; // Adjust based on your layout and font size
             
-            pageWrapper.appendChild(leftNav);
-            pageWrapper.appendChild(rightNav);
-        }
-        
-        // Paginate content with footnotes at the bottom - much more conservative page sizing
-        function paginateContentWithFootnotes(content, allFootnotes, options) {
-            const settings = {
-                chapterNumber: options.chapterNumber || 1,
-                chapterTitle: options.chapterTitle || 'Chapter',
-                // Much smaller word count per page to ensure everything fits
-                wordsPerPage: 120 // Smaller count to fit everything on one screen
-            };
+            // Parse and clean the HTML content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
             
-            // Clean and split the content into paragraphs
-            const paragraphs = content.trim().split(/\n\n+/);
+            // Get all paragraphs and elements
+            const elements = Array.from(tempDiv.childNodes);
             
-            // Array to hold all pages
+            // Initialize pages array
             const pages = [];
             
             // Current page data
             let currentPage = {
-                content: [],
-                footnotes: [],
-                wordCount: 0
+                content: '',
+                charCount: 0,
+                footnotes: '',
+                footnoteIds: []
             };
             
-            // Add chapter title to first page
-            currentPage.content.push(`<h1>${settings.chapterTitle}</h1>`);
-            
-            // Process each paragraph
-            for(let i = 0; i < paragraphs.length; i++) {
-                const paragraph = paragraphs[i].trim();
-                if(!paragraph) continue;
+            // Process each element
+            elements.forEach((element, index) => {
+                // Clone the element to avoid modifying the original
+                const clonedElement = element.cloneNode(true);
                 
-                // Format paragraph based on markdown and collect footnotes for this paragraph
-                const { formattedText, footnoteRefs } = formatParagraphWithFootnotes(paragraph, allFootnotes);
+                // Check if element is a text node, paragraph, heading, etc.
+                const elementHTML = clonedElement.outerHTML || clonedElement.textContent;
+                const elementText = clonedElement.textContent || '';
+                const charCount = elementText.length;
                 
-                // Count words in this paragraph
-                const words = paragraph.split(/\s+/).length;
+                // Extract footnote references from this element
+                const footnoteRefs = [];
+                const footnoteRegex = /<sup class="footnote-ref"[^>]*data-id="([^"]+)"[^>]*>.*?<\/sup>/g;
+                let match;
+                while ((match = footnoteRegex.exec(elementHTML)) !== null) {
+                    footnoteRefs.push(match[1]);
+                }
                 
-                // Estimate space needed for footnotes (each footnote takes roughly 30 words worth of space)
-                const footnoteSpace = footnoteRefs.length * 35;
-                
-                // Check if adding this paragraph would exceed the page limit
-                if((currentPage.wordCount + words + footnoteSpace) > settings.wordsPerPage && currentPage.content.length > 0) {
-                    // Create the page with its footnotes
-                    pages.push(createPageWithFootnotes(currentPage, pages.length + 1));
+                // Check if adding this element would exceed the page limit
+                if (currentPage.charCount + charCount > CHARS_PER_PAGE && currentPage.charCount > 0) {
+                    // Complete the current page
+                    pages.push({
+                        content: currentPage.content,
+                        footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                    });
                     
                     // Start a new page
                     currentPage = {
-                        content: [formattedText],
-                        footnotes: [...footnoteRefs],
-                        wordCount: words
+                        content: elementHTML,
+                        charCount: charCount,
+                        footnotes: '',
+                        footnoteIds: [...footnoteRefs]
                     };
                 } else {
                     // Add to current page
-                    currentPage.content.push(formattedText);
-                    currentPage.footnotes.push(...footnoteRefs);
-                    currentPage.wordCount += words;
+                    currentPage.content += elementHTML;
+                    currentPage.charCount += charCount;
+                    currentPage.footnoteIds.push(...footnoteRefs);
                 }
-            }
+            });
             
-            // Add the last page
-            if(currentPage.content.length > 0) {
-                pages.push(createPageWithFootnotes(currentPage, pages.length + 1));
+            // Add the last page if not empty
+            if (currentPage.charCount > 0) {
+                pages.push({
+                    content: currentPage.content,
+                    footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                });
             }
             
             return pages;
         }
         
-        // Format a paragraph with footnote references
-        function formatParagraphWithFootnotes(paragraph, allFootnotes) {
-            let formattedText = '';
-            const footnoteRefs = [];
-            
-            if(paragraph.startsWith('#')) {
-                // Heading
-                const level = (paragraph.match(/^#+/) || [''])[0].length;
-                const headingText = paragraph.replace(/^#+\s*/, '');
-                formattedText = `<h${Math.min(level, 6)}>${headingText}</h${Math.min(level, 6)}>`;
-            } else if(paragraph.startsWith('> ')) {
-                // Blockquote
-                const quoteText = paragraph.replace(/^>\s*/, '');
-                formattedText = `<blockquote>${quoteText}</blockquote>`;
-            } else if(paragraph.startsWith('- ') || paragraph.startsWith('* ')) {
-                // Unordered list
-                const listItems = paragraph.split(/\n- |\n\* /).map(item => item.replace(/^- |^\* /, '').trim());
-                formattedText = '<ul>' + listItems.map(item => `<li>${item}</li>`).join('') + '</ul>';
-            } else if(/^\d+\.\s/.test(paragraph)) {
-                // Ordered list
-                const listItems = paragraph.split(/\n\d+\.\s/).map(item => item.replace(/^\d+\.\s/, '').trim());
-                formattedText = '<ol>' + listItems.map(item => `<li>${item}</li>`).join('') + '</ol>';
-            } else {
-                // Regular paragraph - check for footnotes and links
-                let processedText = paragraph;
-                
-                // Replace footnote references: [^1] -> <sup class="footnote-ref" id="ref1">1</sup>
-                processedText = processedText.replace(/\[\^(\d+)\]/g, (match, id) => {
-                    // Find this footnote in the full list
-                    const footnote = allFootnotes.find(fn => fn.id === id);
-                    if(footnote) {
-                        footnoteRefs.push(footnote);
-                        return `<sup class="footnote-ref" id="ref${id}">${id}</sup>`;
-                    }
-                    return match;
-                });
-                
-                // Replace markdown links: [text](url) -> <a href="url" target="_blank">text</a>
-                processedText = processedText.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>');
-                
-                // Replace emphasis: *text* -> <em>text</em>
-                processedText = processedText.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-                
-// Replace strong: **text** -> <strong>text</strong>
-                processedText = processedText.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-                
-                formattedText = `<p>${processedText}</p>`;
+        // Build footnotes HTML
+        function buildFootnotesHTML(footnoteIds, footnotes) {
+            if (!footnoteIds.length || !footnotes || !footnotes.length) {
+                return '';
             }
             
-            return { formattedText, footnoteRefs };
-        }
-        
-        // Create a page with footnotes at the bottom
-        function createPageWithFootnotes(pageData, pageNumber) {
-            let pageHTML = `
-                <div class="page-content">
-                    ${pageData.content.join('')}
-                </div>
-            `;
+            let html = '';
             
-            // Add footnotes section if there are any footnotes
-            if(pageData.footnotes.length > 0) {
-                pageHTML += `
-                    <div class="footnotes-section">
-                        <h4>Notes</h4>
-                `;
-                
-                // Add each footnote
-                for(let footnote of pageData.footnotes) {
-                    pageHTML += `
-                        <div class="footnote-item">
-                            <div class="footnote-number">${footnote.id}.</div>
-                            <div class="footnote-content">${footnote.text}</div>
-                        </div>
-                    `;
+            // Get footnotes that are referenced on this page
+            const pageFootnotes = footnotes.filter(fn => footnoteIds.includes(fn.id));
+            
+            if (pageFootnotes.length) {
+                for (const footnote of pageFootnotes) {
+                    html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
                 }
-                
-                pageHTML += `</div>`;
             }
             
-            // Add page number
-            pageHTML += `
-                <div class="page-number">Page ${pageNumber}</div>
-            `;
-            
-            return pageHTML;
+            return html;
         }
         
-        // Navigate to a specific page with animation
-        function goToPage(pageIndex) {
-            if(pageIndex < 0 || pageIndex >= totalPages) return;
-            
-            const pageWrappers = document.querySelectorAll('.page-wrapper');
-            const currentWrapper = pageWrappers[currentPage];
-            const targetWrapper = pageWrappers[pageIndex];
-            
-            // Define animation direction
-            const direction = pageIndex > currentPage ? 'forward' : 'backward';
-            
-            // Begin animation
-            if (direction === 'forward') {
-                // Show target off-screen to the right
-                targetWrapper.style.display = 'block';
-                targetWrapper.style.transform = 'translateX(100%)';
-                
-                // Animation timing
-                requestAnimationFrame(() => {
-                    // Slide current left and target to center
-                    currentWrapper.style.transform = 'translateX(-100%)';
-                    targetWrapper.style.transform = 'translateX(0)';
-                    
-                    setTimeout(() => {
-                        // Hide previous page when animation completes
-                        currentWrapper.style.display = 'none';
-                        currentWrapper.style.transform = '';
-                        currentPage = pageIndex;
-                        updateNavigation();
-                        updateCurrentChapter();
-                        saveReadingProgress();
-                    }, 500);
-                });
-            } else {
-                // Show target off-screen to the left
-                targetWrapper.style.display = 'block';
-                targetWrapper.style.transform = 'translateX(-100%)';
-                
-                // Animation timing
-                requestAnimationFrame(() => {
-                    // Slide current right and target to center
-                    currentWrapper.style.transform = 'translateX(100%)';
-                    targetWrapper.style.transform = 'translateX(0)';
-                    
-                    setTimeout(() => {
-                        // Hide previous page when animation completes
-                        currentWrapper.style.display = 'none';
-                        currentWrapper.style.transform = '';
-                        currentPage = pageIndex;
-                        updateNavigation();
-                        updateCurrentChapter();
-                        saveReadingProgress();
-                    }, 500);
-                });
+        /* === Page Navigation === */
+        // Show a specific page
+        function showPage(pageIndex) {
+            if (pageIndex < 0 || pageIndex >= pagesMap.length) {
+                return false;
             }
+            
+            // Get all pages
+            const pages = document.querySelectorAll('.page');
+            
+            // Reset all pages
+            pages.forEach(page => {
+                page.classList.remove('active', 'previous', 'next');
+                page.style.transform = '';
+            });
+            
+            // Get current, previous and next pages
+            const currentPage = document.getElementById(`page-${pageIndex}`);
+            const prevPage = pageIndex > 0 ? document.getElementById(`page-${pageIndex - 1}`) : null;
+            const nextPage = pageIndex < pagesMap.length - 1 ? document.getElementById(`page-${pageIndex + 1}`) : null;
+            
+            // Set classes for animation
+            if (currentPage) {
+                currentPage.classList.add('active');
+            }
+            
+            if (prevPage) {
+                prevPage.classList.add('previous');
+            }
+            
+            if (nextPage) {
+                nextPage.classList.add('next');
+            }
+            
+            // Update current page index
+            currentPageIndex = pageIndex;
+            
+            // Update navigation
+            updateNavigation();
+            
+            return true;
         }
         
         // Go to previous page
         function goToPreviousPage() {
-            if(currentPage > 0) {
-                goToPage(currentPage - 1);
+            if (currentPageIndex > 0) {
+                showPage(currentPageIndex - 1);
             }
         }
         
         // Go to next page
         function goToNextPage() {
-            if(currentPage < totalPages - 1) {
-                goToPage(currentPage + 1);
+            if (currentPageIndex < pagesMap.length - 1) {
+                showPage(currentPageIndex + 1);
             }
         }
         
-        // Go to a specific chapter
-        function goToChapter(chapterIndex) {
-            if(chapterIndex < 0 || chapterIndex >= bookData.chapters.length) return;
-            
-            // Find the first page of the chapter
-            const pageWrappers = document.querySelectorAll('.page-wrapper');
-            
-            for(let i = 0; i < pageWrappers.length; i++) {
-                if(pageWrappers[i].getAttribute('data-chapter') == chapterIndex && 
-                   pageWrappers[i].getAttribute('data-page') == 0) {
-                    goToPage(i);
-                    break;
-                }
-            }
-            
-            // Update current chapter
-            currentChapter = chapterIndex;
-            updateTOCList();
-            
-            // Mark chapter as read
-            if (!userProgress.readChapters.includes(chapterIndex)) {
-                userProgress.readChapters.push(chapterIndex);
-                saveUserProgress();
-            }
+        // Go to a specific page
+        function goToPage(pageIndex) {
+            showPage(pageIndex);
         }
         
-        // Update navigation buttons
+        // Update navigation buttons state
         function updateNavigation() {
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-page-btn');
+            const nextBtn = document.getElementById('next-page-btn');
             
-            prevBtn.style.visibility = currentPage > 0 ? 'visible' : 'hidden';
-            nextBtn.style.visibility = currentPage < totalPages - 1 ? 'visible' : 'hidden';
+            prevBtn.disabled = currentPageIndex <= 0;
+            nextBtn.disabled = currentPageIndex >= pagesMap.length - 1;
         }
         
-        // Update current chapter based on current page
-        function updateCurrentChapter() {
-            const pageWrapper = document.querySelectorAll('.page-wrapper')[currentPage];
-            if(pageWrapper && pageWrapper.hasAttribute('data-chapter')) {
-                currentChapter = parseInt(pageWrapper.getAttribute('data-chapter'));
-                updateTOCList();
+        /* === Admin Functions === */
+        // Show login modal
+        function showLoginModal() {
+            document.getElementById('login-modal').classList.add('active');
+            document.getElementById('password').focus();
+        }
+        
+        // Hide login modal
+        function hideLoginModal() {
+            document.getElementById('login-modal').classList.remove('active');
+            document.getElementById('password').value = '';
+        }
+        
+        // Login
+        function login() {
+            const password = document.getElementById('password').value;
+            
+            if (password === bookData.adminPassword) {
+                hideLoginModal();
+                showAdminPanel();
+                renderAdminChapterList();
+            } else {
+                alert('Incorrect password');
             }
         }
         
-        // Update TOC list highlighting
-        function updateTOCList() {
-            const tocList = document.getElementById('toc-list');
-            tocList.innerHTML = '';
+        // Logout
+        function logoutAdmin() {
+            hideAdminPanel();
+        }
+        
+        // Show admin panel
+        function showAdminPanel() {
+            document.getElementById('admin-panel').classList.add('active');
+            showAdminChapterList();
+        }
+        
+        // Hide admin panel
+        function hideAdminPanel() {
+            document.getElementById('admin-panel').classList.remove('active');
+        }
+        
+        // Show menu panel
+        function showMenuPanel() {
+            document.getElementById('menu-panel').classList.add('active');
+        }
+        
+        // Hide menu panel
+        function hideMenuPanel() {
+            document.getElementById('menu-panel').classList.remove('active');
+        }
+        
+        // Show admin chapter list
+        function showAdminChapterList() {
+            document.getElementById('admin-chapter-list-container').style.display = 'block';
+            document.getElementById('chapter-editor').style.display = 'none';
+            document.getElementById('book-settings').style.display = 'none';
+            renderAdminChapterList();
+        }
+        
+        // Render admin chapter list
+        function renderAdminChapterList() {
+            const chapterList = document.getElementById('admin-chapter-list');
+            chapterList.innerHTML = '';
             
-            for(let i = 0; i < bookData.chapters.length; i++) {
+            if (bookData.chapters.length === 0) {
                 const li = document.createElement('li');
-                let liContent = `Chapter ${bookData.chapters[i].number}: ${bookData.chapters[i].title}`;
+                li.className = 'chapter-list-item';
+                li.textContent = 'No chapters yet. Click "New Chapter" to add one.';
+                chapterList.appendChild(li);
+                return;
+            }
+            
+            // Sort chapters by number
+            const sortedChapters = [...bookData.chapters].sort((a, b) => a.number - b.number);
+            
+            sortedChapters.forEach((chapter, index) => {
+                const actualIndex = bookData.chapters.indexOf(chapter);
+                const li = document.createElement('li');
+                li.className = 'chapter-list-item';
                 
-                // Add "New" badge for chapters published within the last 7 days
-                const publishDate = new Date(bookData.chapters[i].publishDate);
-                const now = new Date();
-                const daysDiff = Math.floor((now - publishDate) / (1000 * 60 * 60 * 24));
+                const publishDate = new Date(chapter.publishDate).toLocaleDateString();
+                li.innerHTML = `
+                    <strong>Chapter ${chapter.number}: ${chapter.title}</strong><br>
+                    <small>Published: ${publishDate}</small>
+                `;
                 
-                if(daysDiff < 7) {
-                    liContent += ` <span class="new-badge">NEW</span>`;
-                }
-                
-                li.innerHTML = liContent;
-                li.addEventListener('click', function() {
-                    goToChapter(i);
+                li.addEventListener('click', () => {
+                    editChapter(actualIndex);
                 });
                 
-                if(i === currentChapter) {
-                    li.classList.add('current');
-                }
+                chapterList.appendChild(li);
+            });
+        }
+        
+        // Create new chapter
+        function createNewChapter() {
+            // Reset form and editor
+            document.getElementById('chapter-number').value = '';
+            document.getElementById('chapter-title').value = '';
+            document.getElementById('editor').innerHTML = '';
+            document.getElementById('footnotes-container').innerHTML = '';
+            
+            // Set next available chapter number
+            let nextNumber = 1;
+            if (bookData.chapters.length > 0) {
+                const maxNumber = Math.max(...bookData.chapters.map(ch => ch.number));
+                nextNumber = maxNumber + 1;
+            }
+            document.getElementById('chapter-number').value = nextNumber;
+            
+            // Reset footnote counter
+            footnoteCounter = 1;
+            
+            // Show editor
+            document.getElementById('admin-chapter-list-container').style.display = 'none';
+            document.getElementById('book-settings').style.display = 'none';
+            document.getElementById('chapter-editor').style.display = 'block';
+            
+            // No chapter being edited
+            currentEditingChapter = null;
+        }
+        
+        // Edit existing chapter
+        function editChapter(chapterIndex) {
+            if (chapterIndex < 0 || chapterIndex >= bookData.chapters.length) {
+                return;
+            }
+            
+            const chapter = bookData.chapters[chapterIndex];
+            
+            // Fill form
+            document.getElementById('chapter-number').value = chapter.number;
+            document.getElementById('chapter-title').value = chapter.title;
+            document.getElementById('editor').innerHTML = chapter.content;
+            
+            // Clear footnotes
+            document.getElementById('footnotes-container').innerHTML = '';
+            
+            // Add footnote editors
+            footnoteCounter = 1;
+            if (chapter.footnotes && chapter.footnotes.length > 0) {
+                let maxFootnoteNumber = 0;
                 
-                tocList.appendChild(li);
-            }
-        }
-        
-        // Save reading progress
-        function saveReadingProgress() {
-            const pageWrapper = document.querySelectorAll('.page-wrapper')[currentPage];
-            if(!pageWrapper) return;
-            
-            if(pageWrapper.hasAttribute('data-chapter')) {
-                userProgress.lastChapter = parseInt(pageWrapper.getAttribute('data-chapter'));
-                userProgress.lastPage = currentPage;
-                userProgress.lastRead = new Date().toISOString();
+                chapter.footnotes.forEach(footnote => {
+                    addFootnoteEditor(footnote.id, footnote.content);
+                    
+                    // Get footnote number for counter tracking
+                    const numberMatch = footnote.number.toString().match(/\d+/);
+                    if (numberMatch) {
+                        const num = parseInt(numberMatch[0]);
+                        maxFootnoteNumber = Math.max(maxFootnoteNumber, num);
+                    }
+                });
                 
-                // Mark chapter as read if not already
-                if(!userProgress.readChapters.includes(userProgress.lastChapter)) {
-                    userProgress.readChapters.push(userProgress.lastChapter);
-                }
-                
-                saveUserProgress();
-                updateProgressDisplay();
+                // Set counter for next footnote
+                footnoteCounter = maxFootnoteNumber + 1;
             }
+            
+            // Show editor
+            document.getElementById('admin-chapter-list-container').style.display = 'none';
+            document.getElementById('book-settings').style.display = 'none';
+            document.getElementById('chapter-editor').style.display = 'block';
+            
+            // Set current editing chapter
+            currentEditingChapter = chapterIndex;
         }
         
-        // Load user progress from localStorage
-        function loadUserProgress() {
-            const savedProgress = localStorage.getItem('ebookProgress');
-            if(savedProgress) {
-                try {
-                    userProgress = JSON.parse(savedProgress);
-                } catch(e) {
-                    console.error('Error loading user progress', e);
-                }
-            }
-        }
-        
-        // Save user progress to localStorage
-        function saveUserProgress() {
-            localStorage.setItem('ebookProgress', JSON.stringify(userProgress));
-        }
-        
-        // Update progress display
-        function updateProgressDisplay() {
-            const progressInfo = document.getElementById('progress-info');
-            const resumeButton = document.getElementById('resume-button');
+        // Save chapter
+        function saveChapter() {
+            // Get form data
+            const number = parseInt(document.getElementById('chapter-number').value);
+            const title = document.getElementById('chapter-title').value.trim();
+            const content = document.getElementById('editor').innerHTML;
             
-            if(userProgress.lastRead) {
-                const lastReadDate = new Date(userProgress.lastRead).toLocaleDateString();
-                const chapterInfo = userProgress.lastChapter >= 0 && userProgress.lastChapter < bookData.chapters.length
-                    ? `Chapter ${bookData.chapters[userProgress.lastChapter].number}: ${bookData.chapters[userProgress.lastChapter].title}`
-                    : 'Unknown chapter';
-                
-                progressInfo.textContent = `Last read: ${lastReadDate}
-                ${chapterInfo}`;
-                resumeButton.style.display = 'block';
-            } else {
-                progressInfo.textContent = 'No reading progress saved yet';
-                resumeButton.style.display = 'none';
-            }
-        }
-        
-        // Resume reading from last position
-        function resumeReading() {
-            if(userProgress.lastPage > 0 && userProgress.lastPage < totalPages) {
-                goToPage(userProgress.lastPage);
-            } else if(userProgress.lastChapter >= 0 && userProgress.lastChapter < bookData.chapters.length) {
-                goToChapter(userProgress.lastChapter);
-            }
-            
-            // Close TOC panel
-            document.getElementById('toc-panel').classList.add('collapsed');
-        }
-        
-        // Check for new chapters
-        function checkForNewChapters() {
-            // If this is the first visit, don't show notification
-            if(!userProgress.lastRead) return;
-            
-            const lastVisit = new Date(userProgress.lastRead);
-            let newChapters = 0;
-            
-            // Count chapters published since last visit
-            for(let i = 0; i < bookData.chapters.length; i++) {
-                const chapterDate = new Date(bookData.chapters[i].publishDate);
-                if(chapterDate > lastVisit && !userProgress.readChapters.includes(i)) {
-                    newChapters++;
-                }
-            }
-            
-            // Show notification if there are new chapters
-            if(newChapters > 0) {
-                alert(`Welcome back! ${newChapters} new chapter${newChapters > 1 ? 's' : ''} have been added since your last visit.`);
-            }
-        }
-// JSON Formatter Functionality
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize JSON formatter
-    const openFormatterBtn = document.getElementById('open-formatter-btn');
-    const closeFormatterBtn = document.getElementById('close-formatter-btn');
-    const formatJsonBtn = document.getElementById('format-json-btn');
-    const copyJsonBtn = document.getElementById('copy-json-btn');
-    const jsonFormatter = document.getElementById('json-formatter');
-    
-    // Open formatter
-    if (openFormatterBtn) {
-        openFormatterBtn.addEventListener('click', function() {
-            jsonFormatter.style.display = 'block';
-        });
-    }
-    
-    // Close formatter
-    if (closeFormatterBtn) {
-        closeFormatterBtn.addEventListener('click', function() {
-            jsonFormatter.style.display = 'none';
-        });
-    }
-    
-    // Format JSON
-    if (formatJsonBtn) {
-        formatJsonBtn.addEventListener('click', function() {
-            const chapterTitle = document.getElementById('chapter-title-input').value;
-            const chapterNumber = document.getElementById('chapter-number-input').value;
-            const chapterText = document.getElementById('chapter-text-input').value;
-            
-            if (!chapterTitle || !chapterNumber || !chapterText) {
+            // Validate
+            if (!number || !title || !content) {
                 alert('Please fill in all fields');
                 return;
             }
             
-            // Generate JSON for a new chapter
-            const jsonOutput = createChapterJSON(chapterTitle, chapterNumber, chapterText);
-            document.getElementById('formatted-json').value = jsonOutput;
-        });
-    }
-    
-    // Copy to clipboard
-    if (copyJsonBtn) {
-        copyJsonBtn.addEventListener('click', function() {
-            const formattedJson = document.getElementById('formatted-json');
-            formattedJson.select();
-            document.execCommand('copy');
+            // Get footnotes
+            const footnotes = [];
+            document.querySelectorAll('.footnote-item').forEach((item, index) => {
+                const id = item.getAttribute('data-id');
+                const editor = document.getElementById(id);
+                if (editor && editor.innerHTML.trim()) {
+                    footnotes.push({
+                        id: id,
+                        number: index + 1,
+                        content: editor.innerHTML
+                    });
+                }
+            });
             
-            // Show feedback
-            const originalText = copyJsonBtn.textContent;
-            copyJsonBtn.textContent = 'Copied!';
-            setTimeout(() => {
-                copyJsonBtn.textContent = originalText;
-            }, 2000);
-        });
-    }
-    
-    // Utility function to create chapter JSON
-    function createChapterJSON(title, number, text) {
-        // Create a chapter object
-        const chapter = {
-            number: parseInt(number),
-            title: title,
-            publishDate: new Date().toISOString(),
-            content: text,
-            footnotes: []
-        };
-        
-        // Format it nicely
-        return JSON.stringify(chapter, null, 2);
-    }
-    
-    // Function to update existing book JSON
-    function updateBookJSON(newChapter) {
-        // Assuming bookData is your global book data
-        if (typeof bookData !== 'undefined') {
-            // Check if chapter with this number already exists
-            const existingIndex = bookData.chapters.findIndex(ch => ch.number === newChapter.number);
+            // Create chapter object
+            const chapter = {
+                number,
+                title,
+                content,
+                footnotes,
+                publishDate: new Date().toISOString()
+            };
             
-            if (existingIndex >= 0) {
+            // Add or update chapter
+            if (currentEditingChapter !== null) {
                 // Update existing chapter
-                bookData.chapters[existingIndex] = newChapter;
+                bookData.chapters[currentEditingChapter] = chapter;
             } else {
-                // Add new chapter
-                bookData.chapters.push(newChapter);
-                // Sort chapters by number
-                bookData.chapters.sort((a, b) => a.number - b.number);
+                // Check for existing chapter number
+                const existingIndex = bookData.chapters.findIndex(ch => ch.number === number);
+                if (existingIndex >= 0) {
+                    if (!confirm(`Chapter ${number} already exists. Do you want to replace it?`)) {
+                        return;
+                    }
+                    bookData.chapters[existingIndex] = chapter;
+                } else {
+                    // Add new chapter
+                    bookData.chapters.push(chapter);
+                }
             }
             
-            // Update lastUpdated field
-            bookData.lastUpdated = new Date().toISOString();
+            // Sort chapters by number
+            bookData.chapters.sort((a, b) => a.number - b.number);
             
-            // Return formatted book data
-            return JSON.stringify(bookData, null, 2);
+            // Save data
+            showLoading();
+            
+            if (saveBookData()) {
+                // Rebuild pages
+                initializePages();
+                
+                // Show success message
+                hideLoading();
+                alert('Chapter saved successfully');
+                
+                // Return to chapter list
+                showAdminChapterList();
+            } else {
+                hideLoading();
+                alert('Failed to save chapter');
+            }
         }
         
-        return null;
-    }
-});
+        // Show book settings
+        function showBookSettings() {
+            // Fill form
+            document.getElementById('book-title').value = bookData.title;
+            document.getElementById('book-author').value = bookData.author;
+            document.getElementById('cover-image').value = bookData.coverImage || '';
+            document.getElementById('admin-password').value = '';
+            
+            // Show settings
+            document.getElementById('admin-chapter-list-container').style.display = 'none';
+            document.getElementById('chapter-editor').style.display = 'none';
+            document.getElementById('book-settings').style.display = 'block';
+        }
+        
+        // Save book settings
+        function saveBookSettings() {
+            // Get form data
+            const title = document.getElementById('book-title').value.trim();
+            const author = document.getElementById('book-author').value.trim();
+            const coverImage = document.getElementById('cover-image').value.trim();
+            const password = document.getElementById('admin-password').value;
+            
+            // Validate
+            if (!title || !author) {
+                alert('Please fill in title and author');
+                return;
+            }
+            
+            // Update book data
+            bookData.title = title;
+            bookData.author = author;
+            bookData.coverImage = coverImage;
+            
+            // Update password if provided
+            if (password) {
+                bookData.adminPassword = password;
+            }
+            
+            // Save data
+            showLoading();
+            
+            if (saveBookData()) {
+                // Rebuild pages
+                initializePages();
+                
+                // Show success message
+                hideLoading();
+                alert('Settings saved successfully');
+                
+                // Return to chapter list
+                showAdminChapterList();
+            } else {
+                hideLoading();
+                alert('Failed to save settings');
+            }
+        }
+        
+        /* === Rich Text Editor Functions === */
+        // Execute editor command
+        function executeCommand(command) {
+            // Focus editor
+            const editor = document.getElementById('editor');
+            editor.focus();
+            
+            switch(command) {
+                case 'bold':
+                case 'italic':
+                case 'underline':
+                case 'insertOrderedList':
+                case 'insertUnorderedList':
+                case 'superscript':
+                case 'subscript':
+                    // Standard commands
+                    document.execCommand(command, false, null);
+                    break;
+                
+                case 'heading':
+                    document.execCommand('formatBlock', false, '<h3>');
+                    break;
+                
+                case 'subheading':
+                    document.execCommand('formatBlock', false, '<h4>');
+                    break;
+                
+                case 'createLink':
+                    saveSelection();
+                    showLinkModal();
+                    break;
+                
+                case 'insertFootnote':
+                    insertFootnoteReference();
+                    break;
+            }
+        }
+        
+        // Save current selection
+        function saveSelection() {
+            if (window.getSelection) {
+                savedSelection = window.getSelection();
+                if (savedSelection.rangeCount) {
+                    savedRange = savedSelection.getRangeAt(0);
+                }
+            }
+        }
+        
+        // Restore saved selection
+        function restoreSelection() {
+            if (savedRange) {
+                if (window.getSelection) {
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(savedRange);
+                }
+            }
+        }
+        
+        // Show link modal
+        function showLinkModal() {
+            // Get selected text
+            const selectedText = savedSelection ? savedSelection.toString() : '';
+            document.getElementById('link-text').value = selectedText;
+            document.getElementById('link-url').value = '';
+            
+            // Show modal
+            document.getElementById('link-modal').classList.add('active');
+            document.getElementById('link-url').focus();
+        }
+        
+        // Hide link modal
+        function hideLinkModal() {
+            document.getElementById('link-modal').classList.remove('active');
+        }
+        
+        // Insert link
+        function insertLink() {
+            const url = document.getElementById('link-url').value.trim();
+            const text = document.getElementById('link-text').value.trim();
+            
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+            
+            // Fix URL format - add https:// if needed
+            let fixedUrl = url;
+            if (!/^https?:\/\//i.test(url)) {
+                fixedUrl = 'https://' + url;
+            }
+            
+            // Hide modal
+            hideLinkModal();
+            
+            // Insert link
+            if (savedRange) {
+                restoreSelection();
+                
+                // If text is provided and no text was selected
+                if (text && savedSelection.toString() === '') {
+                    // Insert new text
+                    const textNode = document.createTextNode(text);
+                    savedRange.deleteContents();
+                    savedRange.insertNode(textNode);
+                    
+                    // Select the new text
+                    savedRange.selectNodeContents(textNode);
+                    
+                    // Update selection
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(savedRange);
+                }
+                
+                // Create link
+                document.execCommand('createLink', false, fixedUrl);
+                
+                // Set target="_blank" to open links in new tab
+                const selection = window.getSelection();
+                if (selection.rangeCount) {
+                    const range = selection.getRangeAt(0);
+                    const linkNode = range.startContainer.parentNode;
+                    if (linkNode.tagName === 'A') {
+                        linkNode.setAttribute('target', '_blank');
+                    }
+                }
+            }
+            
+            // Clear saved selection
+            savedSelection = null;
+            savedRange = null;
+        }
+        
+        // Insert footnote reference
+        function insertFootnoteReference() {
+            // Create footnote ID
+            const footnoteId = 'fn-' + footnoteCounter++;
+            
+            // Create footnote reference element
+            const footnoteRef = document.createElement('sup');
+            footnoteRef.className = 'footnote-ref';
+            footnoteRef.setAttribute('data-id', footnoteId);
+            footnoteRef.innerHTML = `[${footnoteCounter - 1}]`;
+            
+            // Insert at cursor position
+            const editor = document.getElementById('editor');
+            const selection = window.getSelection();
+            
+            if (selection.rangeCount) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(footnoteRef);
+                
+                // Move cursor after footnote
+                range.setStartAfter(footnoteRef);
+                range.setEndAfter(footnoteRef);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            
+            // Add footnote editor
+            addFootnoteEditor(footnoteId);
+        }
+        
+        // Add footnote
+        function addFootnote() {
+            const footnoteId = 'fn-' + footnoteCounter++;
+            addFootnoteEditor(footnoteId);
+        }
+        
+        // Add footnote editor
+        function addFootnoteEditor(footnoteId, content = '') {
+            const container = document.getElementById('footnotes-container');
+            
+            // Create footnote item
+            const footnoteItem = document.createElement('div');
+            footnoteItem.className = 'footnote-item';
+            footnoteItem.setAttribute('data-id', footnoteId);
+            
+            // Create footnote number
+            const footnoteNumber = footnoteCounter - 1;
+            
+            // Create HTML structure
+            footnoteItem.innerHTML = `
+                <div class="footnote-header">
+                    <strong>Footnote ${footnoteNumber}</strong>
+                    <button type="button" class="toolbar-btn remove-footnote-btn" data-id="${footnoteId}">Remove</button>
+                </div>
+                <div class="footnote-editor-toolbar">
+                    <button type="button" class="toolbar-btn" data-command="bold" data-target="${footnoteId}" title="Bold"><b>B</b></button>
+                    <button type="button" class="toolbar-btn" data-command="italic" data-target="${footnoteId}" title="Italic"><i>I</i></button>
+                    <button type="button" class="toolbar-btn" data-command="underline" data-target="${footnoteId}" title="Underline"><u>U</u></button>
+                    <button type="button" class="toolbar-btn" data-command="createLink" data-target="${footnoteId}" title="Link">🔗</button>
+                    <button type="button" class="toolbar-btn" data-command="superscript" data-target="${footnoteId}" title="Superscript">x²</button>
+                    <button type="button" class="toolbar-btn" data-command="subscript" data-target="${footnoteId}" title="Subscript">x₂</button>
+                </div>
+                <div id="${footnoteId}" class="footnote-editor" contenteditable="true">${content}</div>
+            `;
+            
+            // Add to container
+            container.appendChild(footnoteItem);
+            
+            // Add event listeners for toolbar buttons
+            footnoteItem.querySelectorAll('.toolbar-btn[data-target]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const command = this.getAttribute('data-command');
+                    const targetId = this.getAttribute('data-target');
+                    executeFootnoteCommand(command, targetId);
+                });
+            });
+            
+            // Add event listener for remove button
+            footnoteItem.querySelector('.remove-footnote-btn').addEventListener('click', function() {
+                removeFootnote(footnoteId);
+            });
+        }
+        
+        // Execute command on footnote editor
+        function executeFootnoteCommand(command, targetId) {
+            // Focus the target editor
+            const editor = document.getElementById(targetId);
+            editor.focus();
+            
+            if (command === 'createLink') {
+                const url = prompt('Enter URL:', 'https://');
+                if (url) {
+                    // Ensure URL has proper format
+                    let fixedUrl = url;
+                    if (!/^https?:\/\//i.test(url)) {
+                        fixedUrl = 'https://' + url;
+                    }
+                    
+                    document.execCommand('createLink', false, fixedUrl);
+                    
+                    // Set target="_blank" to open links in new tab
+                    const selection = window.getSelection();
+                    if (selection.rangeCount) {
+                        const range = selection.getRangeAt(0);
+                        const linkNode = range.startContainer.parentNode;
+                        if (linkNode.tagName === 'A') {
+                            linkNode.setAttribute('target', '_blank');
+                        }
+                    }
+                }
+            } else {
+                document.execCommand(command, false, null);
+            }
+        }
+        
+        // Remove footnote
+        function removeFootnote(footnoteId) {
+            // Remove footnote item
+            const footnoteItem = document.querySelector(`.footnote-item[data-id="${footnoteId}"]`);
+            if (footnoteItem) {
+                footnoteItem.remove();
+            }
+            
+            // Remove footnote reference
+            const footnoteRef = document.querySelector(`.footnote-ref[data-id="${footnoteId}"]`);
+            if (footnoteRef) {
+                footnoteRef.remove();
+            }
+        }
+        
+        /* === Utility Functions === */
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
     </script>
-
-<!-- JSON Formatter Tool -->
-<div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; box-shadow: 0 0 20px rgba(0,0,0,0.3); z-index: 2000; display: none; width: 90%; max-width: 600px;" id="json-formatter">
-    <h3>Chapter JSON Formatter</h3>
-    <div>
-        <label for="chapter-title-input">Chapter Title:</label>
-        <input type="text" id="chapter-title-input" style="width: 100%; margin-bottom: 10px; padding: 5px;">
-    </div>
-    <div>
-        <label for="chapter-number-input">Chapter Number:</label>
-        <input type="number" id="chapter-number-input" style="width: 100%; margin-bottom: 10px; padding: 5px;" value="1">
-    </div>
-    <div>
-        <label for="chapter-text-input">Paste Chapter Text:</label>
-        <textarea id="chapter-text-input" style="width: 100%; height: 200px; margin-bottom: 10px; padding: 5px; font-family: monospace;"></textarea>
-    </div>
-    <div>
-        <label for="formatted-json">Formatted JSON (Copy this to your JSON file):</label>
-        <textarea id="formatted-json" style="width: 100%; height: 200px; margin-bottom: 10px; padding: 5px; font-family: monospace;" readonly></textarea>
-    </div>
-    <div>
-        <button id="format-json-btn" style="padding: 8px 16px; background: #0066cc; color: white; border: none; border-radius: 4px; cursor: pointer;">Format</button>
-        <button id="copy-json-btn" style="padding: 8px 16px; background: #009933; color: white; border: none; border-radius: 4px; margin-left: 10px; cursor: pointer;">Copy to Clipboard</button>
-        <button id="close-formatter-btn" style="padding: 8px 16px; margin-left: 10px; cursor: pointer;">Close</button>
-    </div>
-</div>
-
-<!-- Button to open the formatter -->
-<button id="open-formatter-btn" style="position: fixed; bottom: 10px; right: 10px; padding: 8px 16px; background: #0066cc; color: white; border: none; border-radius: 4px; z-index: 1000; cursor: pointer;">Format Chapter</button>
 </body>
 </html>
