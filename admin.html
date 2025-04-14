@@ -1270,7 +1270,11 @@
         // Setup event listeners
         function setupEventListeners() {
             // Login button
-            document.getElementById('login-btn').addEventListener('click', login);
+            document.getElementById('login-btn').addEventListener('click', function(e) {
+    e.preventDefault(); // Prevent form submission
+    console.log('Login button clicked');
+    login();
+});
             document.getElementById('password').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     login();
@@ -1349,43 +1353,60 @@
         
         // Login function
         async function login() {
-            const password = document.getElementById('password').value;
-            
-            if (!password) {
-                showNotification('Please enter a password', true);
-                return;
-            }
-            
+    const password = document.getElementById('password').value;
+    
+    if (!password) {
+        showNotification('Please enter a password', true);
+        return;
+    }
+    
+    try {
+        showLoading();
+        console.log('Attempting login, sending password to:', `${API_BASE}/auth`);
+        
+        const response = await fetch(`${API_BASE}/auth`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password }),
+        });
+        
+        console.log('Response status:', response.status);
+        const responseText = await response.text();
+        console.log('Response text:', responseText);
+        
+        if (responseText) {
             try {
-                showLoading();
+                const data = JSON.parse(responseText);
+                console.log('Parsed response:', data);
                 
-                const response = await fetch(`${API_BASE}/auth`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ password }),
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok) {
-                    // Store token in localStorage and global variable
+                if (response.ok && data.token) {
                     authToken = data.token;
                     localStorage.setItem('ebook-admin-token', authToken);
-                    
-                    // Update state and UI
                     isAuthenticated = true;
                     hideLoading();
+                    showNotification('Login successful');
                     showAdminPanel();
                 } else {
                     hideLoading();
                     showNotification(data.error || 'Login failed', true);
                 }
-            } catch (error) {
+            } catch (e) {
+                console.error('Error parsing JSON:', e);
                 hideLoading();
-                console.error('Login error:', error);
-                showNotification('Login failed: Network error', true);
+                showNotification('Invalid response from server', true);
+            }
+        } else {
+            hideLoading();
+            showNotification('Empty response from server', true);
+        }
+    } catch (error) {
+        console.error('Fetch error:', error);
+        hideLoading();
+        showNotification(`Network error: ${error.message}`, true);
+    }
+}
                 
                 // Fallback for development/testing
                 if (password === DEFAULT_PASSWORD) {
