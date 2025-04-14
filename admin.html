@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Book Admin Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f7f7f7;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .admin-header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        .admin-nav {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .admin-content {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .sidebar {
+            width: 300px;
+            border-right: 1px solid #eee;
+            padding-right: 20px;
+        }
+        
+        .main-content {
+            flex: 1;
+        }
+        
+        .section-title {
+            margin-bottom: 20px;
+            font-size: 22px;
+            color: #333;
+        }
+        
+        .chapter-list {
+            list-style-type: none;
+            margin-bottom: 30px;
+        }
+        
+        .chapter-item {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .chapter-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .chapter-item.selected {
+            background-color: #e6f7ff;
+            border-left: 4px solid #1890ff;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+        
+        button {
+            padding: 10px 20px;
+            background-color: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #40a9ff;
+        }
+        
+        button.secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        
+        button.secondary:hover {
+            background-color: #d9d9d9;
+        }
+        
+        button.danger {
+            background-color: #ff4d4f;
+        }
+        
+        button.danger:hover {
+            background-color: #ff7875;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .editor-container {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .editor-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .toolbar-btn {
+            padding: 5px 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .toolbar-btn:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .toolbar-separator {
+            width: 1px;
+            height: 24px;
+            background-color: #ddd;
+            margin: 0 5px;
+        }
+        
+        .editor-content {
+            min-height: 400px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .footnote-section {
+            margin-top: 30px;
+        }
+        
+        .footnote-item {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .footnote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .footnote-editor {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            min-height: 80px;
+            background-color: white;
+        }
+        
+        .footnote-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+            padding: 5px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+        
+        /* Settings panel */
+        .settings-form {
+            max-width: 600px;
+        }
+        
+        /* Login form */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f7f7f7;
+        }
+        
+        .login-form {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-form h1 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #333;
+        }
+        
+        /* Link modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: #1890ff;
+            color: #1890ff;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .loading-overlay.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #1890ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background-color: #52c41a;
+            color: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transform: translateX(calc(100% + 20px));
+            transition: transform 0.3s ease;
+            z-index: 1500;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.error {
+            background-color: #ff4d4f;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Form -->
+    <div class="login-container" id="login-container">
+        <div class="login-form">
+            <h1>Admin Login</h1>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="button" id="login-btn">Login</button>
+        </div>
+    </div>
+    
+    <!-- Admin Panel (hidden initially) -->
+    <div class="container" id="admin-panel" style="display: none;">
+        <div class="admin-header">
+            <h1>E-Book Admin Panel</h1>
+            <div class="admin-nav">
+                <button id="view-book-btn">View Book</button>
+                <button id="settings-btn">Book Settings</button>
+                <button id="logout-btn" class="secondary">Logout</button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="chapters">Chapters</div>
+            <div class="tab" data-tab="settings">Settings</div>
+        </div>
+        
+        <div class="tab-content active" id="chapters-tab">
+            <div class="admin-content">
+                <div class="sidebar">
+                    <h2 class="section-title">Chapters</h2>
+                    <button id="new-chapter-btn" style="margin-bottom: 20px;">New Chapter</button>
+                    <ul class="chapter-list" id="chapter-list">
+                        <!-- Chapter list items will be added here -->
+                    </ul>
+                </div>
+                
+                <div class="main-content">
+                    <div id="editor-section" style="display: none;">
+                        <h2 class="section-title" id="editor-title">New Chapter</h2>
+                        
+                        <div class="form-group">
+                            <label for="chapter-number">Chapter Number</label>
+                            <input type="number" id="chapter-number" min="1" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="chapter-title">Chapter Title</label>
+                            <input type="text" id="chapter-title" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editor">Content</label>
+                            <div class="editor-container">
+                                <div class="editor-toolbar">
+                                    <button type="button" class="toolbar-btn" data-command="bold" title="Bold"><b>B</b></button>
+                                    <button type="button" class="toolbar-btn" data-command="italic" title="Italic"><i>I</i></button>
+                                    <button type="button" class="toolbar-btn" data-command="underline" title="Underline"><u>U</u></button>
+                                    <span class="toolbar-separator"></span>
+                                    <button type="button" class="toolbar-btn" data-command="heading" title="Heading">H1</button>
+                                    <button type="button" class="toolbar-btn" data-command="subheading" title="Subheading">H2</button>
+                                    <span class="toolbar-separator"></span>
+                                    <button type="button" class="toolbar-btn" data-command="insertOrderedList" title="Numbered List">1. List</button>
+                                    <button type="button" class="toolbar-btn" data-command="insertUnorderedList" title="Bullet List">• List</button>
+                                    <span class="toolbar-separator"></span>
+                                    <button type="button" class="toolbar-btn" data-command="createLink" title="Insert Link">🔗 Link</button>
+                                    <button type="button" class="toolbar-btn" data-command="superscript" title="Superscript">x²</button>
+                                    <button type="button" class="toolbar-btn" data-command="subscript" title="Subscript">x₂</button>
+                                    <span class="toolbar-separator"></span>
+                                    <button type="button" class="toolbar-btn" data-command="insertFootnote" title="Insert Footnote">[fn] Footnote</button>
+                                </div>
+                                <div id="editor" class="editor-content" contenteditable="true"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="footnote-section">
+                            <h3 class="section-title">Footnotes</h3>
+                            <div id="footnotes-container">
+                                <!-- Footnote items will be added here -->
+                            </div>
+                            <button type="button" id="add-footnote-btn">Add Footnote</button>
+                        </div>
+                        
+                        <div class="button-group">
+                            <button type="button" id="cancel-edit-btn" class="secondary">Cancel</button>
+                            <button type="button" id="preview-btn" class="secondary">Preview</button>
+                            <button type="button" id="save-chapter-btn">Save Chapter</button>
+                        </div>
+                    </div>
+                    
+                    <div id="welcome-section">
+                        <h2 class="section-title">Welcome to the Admin Panel</h2>
+                        <p>Select a chapter from the list to edit or click "New Chapter" to create a new one.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="settings-tab">
+            <h2 class="section-title">Book Settings</h2>
+            
+            <div class="settings-form">
+                <div class="form-group">
+                    <label for="book-title">Book Title</label>
+                    <input type="text" id="book-title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="book-author">Author</label>
+                    <input type="text" id="book-author" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cover-image">Cover Image URL (optional)</label>
+                    <input type="text" id="cover-image" placeholder="https://example.com/cover.jpg">
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin-password">Admin Password</label>
+                    <input type="password" id="admin-password" placeholder="Leave blank to keep current password">
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" id="save-settings-btn">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Link Modal -->
+    <div class="modal" id="link-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Insert Link</h3>
+                <button class="close-modal" id="close-link-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="link-text">Link Text</label>
+                    <input type="text" id="link-text">
+                </div>
+                <div class="form-group">
+                    <label for="link-url">URL</label>
+                    <input type="text" id="link-url" placeholder="https://example.com">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-link-btn" class="secondary">Cancel</button>
+                <button id="insert-link-btn">Insert</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Preview Modal -->
+    <div class="modal" id="preview-modal">
+        <div class="modal-content" style="width: 95%; max-width: 800px; height: 80vh;">
+            <div class="modal-header">
+                <h3>Chapter Preview</h3>
+                <button class="close-modal" id="close-preview-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="height: calc(100% - 110px); overflow-y: auto;">
+                <div id="preview-content" style="padding: 20px; background-color: #f4f0e8;"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="close-preview-btn">Close Preview</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification">Operation completed successfully!</div>
+    
+    <script>
+        // Constants
+        const API_BASE_URL = '/api';  // Base URL for API calls
+        const DEFAULT_PASSWORD = 'admin123';  // Default admin password
+        
+        // Global variables
+        let bookSettings = {
+            title: 'My Serial E-Book',
+            author: 'Your Name',
+            coverImage: '',
+            adminPassword: DEFAULT_PASSWORD
+        };
+        
+        let chapters = [];  // List of chapters
+        let currentEditingChapter = null;  // Index of chapter being edited
+        let footnoteCounter = 1;  // Counter for generating footnote IDs
+        let savedSelection = null;  // For saving text selection when inserting links
+        let savedRange = null;  // For saving text range when inserting links
+        
+        // Auth state
+        let isAuthenticated = false;
+        
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if already authenticated
+            checkAuthentication();
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Load settings if authenticated
+            if (isAuthenticated) {
+                loadBookSettings();
+                loadChapters();
+            }
+        });
+        
+        // Check if user is authenticated
+        function checkAuthentication() {
+            const token = localStorage.getItem('ebook-admin-token');
+            
+            if (token) {
+                // Verify token with a simple check (real apps would validate on server)
+                try {
+                    const tokenData = JSON.parse(atob(token.split('.')[1]));
+                    const expiry = tokenData.exp * 1000; // Convert to milliseconds
+                    
+                    if (expiry > Date.now()) {
+                        // Token still valid
+                        isAuthenticated = true;
+                        showAdminPanel();
+                        return;
+                    }
+                } catch (e) {
+                    console.error('Error validating token:', e);
+                }
+                
+                // Token invalid or expired
+                localStorage.removeItem('ebook-admin-token');
+            }
+            
+            // Not authenticated
+            isAuthenticated = false;
+            showLoginForm();
+        }
+        
+        // Show login form
+        function showLoginForm() {
+            document.getElementById('login-container').style.display = 'flex';
+            document.getElementById('admin-panel').style.display = 'none';
+        }
+        
+        // Show admin panel
+        function showAdminPanel() {
+            document.getElementById('login-container').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            
+            // Since we're showing the admin panel, make sure we load the latest data
+            loadBookSettings();
+            loadChapters();
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Login button
+            document.getElementById('login-btn').addEventListener('click', login);
+            document.getElementById('password').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    login();
+                }
+            });
+            
+            // Logout button
+            document.getElementById('logout-btn').addEventListener('click', logout);
+            
+            // View book button
+            document.getElementById('view-book-btn').addEventListener('click', function() {
+                window.location.href = '/index.html';
+            });
+            
+            // New chapter button
+            document.getElementById('new-chapter-btn').addEventListener('click', createNewChapter);
+            
+            // Cancel edit button
+            document.getElementById('cancel-edit-btn').addEventListener('click', cancelEdit);
+            
+            // Save chapter button
+            document.getElementById('save-chapter-btn').addEventListener('click', saveChapter);
+            
+            // Preview button
+            document.getElementById('preview-btn').addEventListener('click', previewChapter);
+            document.getElementById('close-preview-btn').addEventListener('click', closePreview);
+            document.getElementById('close-preview-modal').addEventListener('click', closePreview);
+            
+            // Settings button and save settings button
+            document.getElementById('settings-btn').addEventListener('click', function() {
+                document.querySelector('.tab[data-tab="settings"]').click();
+            });
+            document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+            
+            // Add footnote button
+            document.getElementById('add-footnote-btn').addEventListener('click', addFootnote);
+            
+            // Link modal buttons
+            document.getElementById('close-link-modal').addEventListener('click', closeLinkModal);
+            document.getElementById('cancel-link-btn').addEventListener('click', closeLinkModal);
+            document.getElementById('insert-link-btn').addEventListener('click', insertLink);
+            
+            // Editor toolbar buttons
+            document.querySelectorAll('.toolbar-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const command = this.getAttribute('data-command');
+                    executeCommand(command);
+                });
+            });
+            
+            // Tab navigation
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    activateTab(tabId);
+                });
+            });
+        }
+        
+        // Activate a tab
+        function activateTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Deactivate all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activate the selected tab
+            document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+        }
+        
+        // Login function
+        function login() {
+            const password = document.getElementById('password').value;
+            
+            // Show loading
+            showLoading();
+            
+            // For the demo, we'll check against the stored password or default
+            loadBookSettings()
+                .then(() => {
+                    if (password === bookSettings.adminPassword) {
+                        // Create a simple token
+                        const token = createToken();
+                        localStorage.setItem('ebook-admin-token', token);
+                        
+                        // Update state and UI
+                        isAuthenticated = true;
+                        hideLoading();
+                        showAdminPanel();
+                    } else {
+                        hideLoading();
+                        showNotification('Incorrect password', true);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading settings:', error);
+                    hideLoading();
+                    
+                    // If we can't load settings, fall back to default password
+                    if (password === DEFAULT_PASSWORD) {
+                        const token = createToken();
+                        localStorage.setItem('ebook-admin-token', token);
+                        
+                        isAuthenticated = true;
+                        showAdminPanel();
+                    } else {
+                        showNotification('Incorrect password', true);
+                    }
+                });
+        }
+        
+        // Create a simple token (not secure, just for demo)
+        function createToken() {
+            const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+            const payload = btoa(JSON.stringify({
+                exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24 hours
+                user: 'admin'
+            }));
+            const signature = btoa('signature'); // This would be a real signature in a production app
+            
+            return `${header}.${payload}.${signature}`;
+        }
+        
+        // Logout function
+        function logout() {
+            localStorage.removeItem('ebook-admin-token');
+            isAuthenticated = false;
+            showLoginForm();
+        }
+        
+        // Load book settings
+        async function loadBookSettings() {
+            try {
+                showLoading();
+                
+                // In a real app, this would be an API call
+                // For now, we'll use localStorage for demo purposes
+                const settings = localStorage.getItem('book-settings');
+                
+                if (settings) {
+                    bookSettings = JSON.parse(settings);
+                    
+                    // Make sure we have a default password if none is set
+                    if (!bookSettings.adminPassword) {
+                        bookSettings.adminPassword = DEFAULT_PASSWORD;
+                    }
+                }
+                
+                // Update settings form
+                document.getElementById('book-title').value = bookSettings.title;
+                document.getElementById('book-author').value = bookSettings.author;
+                document.getElementById('cover-image').value = bookSettings.coverImage || '';
+                document.getElementById('admin-password').value = '';
+                
+                hideLoading();
+                return Promise.resolve();
+            } catch (error) {
+                hideLoading();
+                console.error('Error loading book settings:', error);
+                return Promise.reject(error);
+            }
+        }
+        
+        // Save book settings
+        async function saveSettings() {
+            try {
+                showLoading();
+                
+                // Get form values
+                const title = document.getElementById('book-title').value.trim();
+                const author = document.getElementById('book-author').value.trim();
+                const coverImage = document.getElementById('cover-image').value.trim();
+                const password = document.getElementById('admin-password').value;
+                
+                // Validate
+                if (!title || !author) {
+                    hideLoading();
+                    showNotification('Please fill in required fields', true);
+                    return;
+                }
+                
+                // Update settings
+                bookSettings.title = title;
+                bookSettings.author = author;
+                bookSettings.coverImage = coverImage;
+                
+                // Update password if provided
+                if (password) {
+                    bookSettings.adminPassword = password;
+                }
+                
+                // Save to localStorage (for demo)
+                localStorage.setItem('book-settings', JSON.stringify(bookSettings));
+                
+                // Update book-meta.json via API in real app
+                await writeBookMetaFile();
+                
+                hideLoading();
+                showNotification('Settings saved successfully');
+            } catch (error) {
+                hideLoading();
+                console.error('Error saving settings:', error);
+                showNotification('Error saving settings', true);
+            }
+        }
+        
+        // Write the book metadata file
+        async function writeBookMetaFile() {
+            // In a real app, this would be an API call to update the file
+            // For demo, we'll simulate writing to a file
+            const metaData = {
+                title: bookSettings.title,
+                author: bookSettings.author,
+                coverImage: bookSettings.coverImage || '',
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Just simulating the file write for now
+            console.log('Writing book-meta.json:', metaData);
+            
+            // In a real implementation with Netlify, you'd use Netlify Functions
+            // to update the actual file in the repository
+            
+            return Promise.resolve();
+        }
+        
+        // Load chapters
+        async function loadChapters() {
+            try {
+                showLoading();
+                
+                // In a real app, this would be an API call
+                // For now, we'll use localStorage for demo purposes
+                const chaptersList = localStorage.getItem('chapters-list');
+                
+                if (chaptersList) {
+                    chapters = JSON.parse(chaptersList);
+                }
+                
+                // Render chapter list
+                renderChapterList();
+                
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                console.error('Error loading chapters:', error);
+                showNotification('Error loading chapters', true);
+            }
+        }
+        
+        // Render chapter list
+        function renderChapterList() {
+            const chapterList = document.getElementById('chapter-list');
+            chapterList.innerHTML = '';
+            
+            if (chapters.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'No chapters yet. Click "New Chapter" to add one.';
+                chapterList.appendChild(li);
+                return;
+            }
+            
+            // Sort chapters by number
+            const sortedChapters = [...chapters].sort((a, b) => a.number - b.number);
+            
+            // Create list items
+            sortedChapters.forEach((chapter, index) => {
+                const li = document.createElement('li');
+                li.className = 'chapter-item';
+                li.setAttribute('data-index', chapters.indexOf(chapter));
+                
+                const publishDate = new Date(chapter.publishDate).toLocaleDateString();
+                
+                li.innerHTML = `
+                    <strong>Chapter ${chapter.number}: ${chapter.title}</strong>
+                    <div><small>Published: ${publishDate}</small></div>
+                `;
+                
+                li.addEventListener('click', function() {
+                    const chapterIndex = parseInt(this.getAttribute('data-index'));
+                    editChapter(chapterIndex);
+                });
+                
+                chapterList.appendChild(li);
+            });
+        }
+        
+        // Create new chapter
+        function createNewChapter() {
+            // Reset form
+            document.getElementById('editor-title').textContent = 'New Chapter';
+            document.getElementById('chapter-number').value = '';
+            document.getElementById('chapter-title').value = '';
+            document.getElementById('editor').innerHTML = '';
+            document.getElementById('footnotes-container').innerHTML = '';
+            
+            // Set next available chapter number
+            let nextNumber = 1;
+            if (chapters.length > 0) {
+                const maxNumber = Math.max(...chapters.map(ch => ch.number));
+                nextNumber = maxNumber + 1;
+            }
+            document.getElementById('chapter-number').value = nextNumber;
+            
+            // Reset footnote counter
+            footnoteCounter = 1;
+            
+            // Show editor
+            document.getElementById('welcome-section').style.display = 'none';
+            document.getElementById('editor-section').style.display = 'block';
+            
+            // No chapter being edited
+            currentEditingChapter = null;
+        }
+        
+        // Edit existing chapter
+        function editChapter(chapterIndex) {
+            if (chapterIndex < 0 || chapterIndex >= chapters.length) {
+                return;
+            }
+            
+            const chapter = chapters[chapterIndex];
+            
+            // Set form values
+            document.getElementById('editor-title').textContent = `Edit Chapter ${chapter.number}`;
+            document.getElementById('chapter-number').value = chapter.number;
+            document.getElementById('chapter-title').value = chapter.title;
+            document.getElementById('editor').innerHTML = chapter.content;
+            
+            // Clear footnotes
+            document.getElementById('footnotes-container').innerHTML = '';
+            
+            // Add footnote editors
+            footnoteCounter = 1;
+            if (chapter.footnotes && chapter.footnotes.length > 0) {
+                let maxFootnoteNumber = 0;
+                
+                chapter.footnotes.forEach(footnote => {
+                    addFootnoteEditor(footnote.id, footnote.content);
+                    
+                    // Get footnote number for counter tracking
+                    const numberMatch = footnote.number.toString().match(/\d+/);
+                    if (numberMatch) {
+                        const num = parseInt(numberMatch[0]);
+                        maxFootnoteNumber = Math.max(maxFootnoteNumber, num);
+                    }
+                });
+                
+                // Set counter for next footnote
+                footnoteCounter = maxFootnoteNumber + 1;
+            }
+            
+            // Show editor
+            document.getElementById('welcome-section').style.display = 'none';
+            document.getElementById('editor-section').style.display = 'block';
+            
+            // Highlight selected chapter in list
+            document.querySelectorAll('.chapter-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            document.querySelector(`.chapter-item[data-index="${chapterIndex}"]`).classList.add('selected');
+            
+            // Set current editing chapter
+            currentEditingChapter = chapterIndex;
+        }
+        
+        // Cancel editing
+        function cancelEdit() {
+            document.getElementById('editor-section').style.display = 'none';
+            document.getElementById('welcome-section').style.display = 'block';
+            
+            // Deselect all chapters
+            document.querySelectorAll('.chapter-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            currentEditingChapter = null;
+        }
+        
+        // Save chapter
+        async function saveChapter() {
+            try {
+                showLoading();
+                
+                // Get form values
+                const number = parseInt(document.getElementById('chapter-number').value);
+                const title = document.getElementById('chapter-title').value.trim();
+                const content = document.getElementById('editor').innerHTML;
+                
+                // Validate
+                if (!number || !title || !content) {
+                    hideLoading();
+                    showNotification('Please fill in all required fields', true);
+                    return;
+                }
+                
+                // Get footnotes
+                const footnotes = [];
+                document.querySelectorAll('.footnote-item').forEach((item, index) => {
+                    const id = item.getAttribute('data-id');
+                    const editor = document.getElementById(id);
+                    if (editor && editor.innerHTML.trim()) {
+                        footnotes.push({
+                            id: id,
+                            number: index + 1,
+                            content: editor.innerHTML
+                        });
+                    }
+                });
+                
+                // Create chapter object
+                const chapter = {
+                    number,
+                    title,
+                    content,
+                    footnotes,
+                    publishDate: new Date().toISOString()
+                };
+                
+                // Add or update chapter
+                if (currentEditingChapter !== null) {
+                    // Update existing chapter
+                    chapters[currentEditingChapter] = chapter;
+                } else {
+                    // Check for existing chapter number
+                    const existingIndex = chapters.findIndex(ch => ch.number === number);
+                    if (existingIndex >= 0) {
+                        if (!confirm(`Chapter ${number} already exists. Do you want to replace it?`)) {
+                            hideLoading();
+                            return;
+                        }
+                        chapters[existingIndex] = chapter;
+                    } else {
+                        // Add new chapter
+                        chapters.push(chapter);
+                    }
+                }
+                
+                // Sort chapters
+                chapters.sort((a, b) => a.number - b.number);
+                
+                // Save to localStorage (for demo)
+                localStorage.setItem('chapters-list', JSON.stringify(chapters));
+                
+                // Write the chapter file
+                await writeChapterFile(chapter);
+                
+                // Update chapters.json file
+                await writeChaptersListFile();
+                
+                // Rebuild the book
+                // In a real implementation, this might trigger a Netlify build
+                
+                // Update UI
+                renderChapterList();
+                
+                // Show success message
+                hideLoading();
+                showNotification('Chapter saved successfully');
+                
+                // Return to welcome screen
+                cancelEdit();
+            } catch (error) {
+                hideLoading();
+                console.error('Error saving chapter:', error);
+                showNotification('Error saving chapter', true);
+            }
+        }
+        
+        // Write a chapter to its file
+        async function writeChapterFile(chapter) {
+            // In a real app, this would be an API call to create/update a file
+            // For demo, we'll simulate writing to a file
+            
+            // Create a unique filename for the chapter
+            const filename = `chapter-${chapter.number.toString().padStart(2, '0')}.json`;
+            
+            // Just simulating the file write for now
+            console.log(`Writing chapter file: data/chapters/${filename}`, chapter);
+            
+            // In a real implementation with Netlify, you'd use Netlify Functions
+            // to create or update the actual file in the repository
+            
+            return Promise.resolve();
+        }
+        
+        // Write the chapters list file
+        async function writeChaptersListFile() {
+            // In a real app, this would be an API call to update the file
+            
+            // Create the chapters list data
+            const chaptersListData = chapters.map(chapter => ({
+                number: chapter.number,
+                title: chapter.title,
+                file: `chapter-${chapter.number.toString().padStart(2, '0')}.json`,
+                publishDate: chapter.publishDate
+            }));
+            
+            // Just simulating the file write for now
+            console.log('Writing chapters.json:', chaptersListData);
+            
+            // In a real implementation with Netlify, you'd use Netlify Functions
+            // to update the actual file in the repository
+            
+            return Promise.resolve();
+        }
+        
+        // Preview chapter
+        function previewChapter() {
+            // Get chapter data
+            const title = document.getElementById('chapter-title').value.trim();
+            const number = parseInt(document.getElementById('chapter-number').value) || 0;
+            const content = document.getElementById('editor').innerHTML;
+            
+            // Get footnotes
+            const footnotes = [];
+            document.querySelectorAll('.footnote-item').forEach((item, index) => {
+                const id = item.getAttribute('data-id');
+                const editor = document.getElementById(id);
+                if (editor && editor.innerHTML.trim()) {
+                    footnotes.push({
+                        id: id,
+                        number: index + 1,
+                        content: editor.innerHTML
+                    });
+                }
+            });
+            
+            // Create preview content
+            const previewContent = document.getElementById('preview-content');
+            
+            // Style the preview content to look like the book
+            previewContent.innerHTML = `
+                <h2 style="text-align: center; margin-bottom: 30px;">Chapter ${number}: ${title}</h2>
+                <div>${content}</div>
+            `;
+            
+            // Add footnotes if any
+            if (footnotes.length > 0) {
+                let footnotesHtml = '<div style="border-top: 1px solid #ccc; margin-top: 30px; padding-top: 20px;">';
+                
+                footnotes.forEach(footnote => {
+                    footnotesHtml += `
+                        <div style="margin-bottom: 10px;">
+                            <sup>${footnote.number}</sup> ${footnote.content}
+                        </div>
+                    `;
+                });
+                
+                footnotesHtml += '</div>';
+                previewContent.innerHTML += footnotesHtml;
+            }
+            
+            // Show the preview modal
+            document.getElementById('preview-modal').classList.add('active');
+        }
+        
+        // Close preview
+        function closePreview() {
+            document.getElementById('preview-modal').classList.remove('active');
+        }
+        
+        // Add footnote
+        function addFootnote() {
+            const footnoteId = 'fn-' + footnoteCounter++;
+            addFootnoteEditor(footnoteId);
+        }
+        
+        // Add footnote editor
+        function addFootnoteEditor(footnoteId, content = '') {
+            const container = document.getElementById('footnotes-container');
+            
+            // Create footnote item
+            const footnoteItem = document.createElement('div');
+            footnoteItem.className = 'footnote-item';
+            footnoteItem.setAttribute('data-id', footnoteId);
+            
+            // Create footnote number
+            const footnoteNumber = footnoteCounter - 1;
+            
+            // Create HTML structure
+            footnoteItem.innerHTML = `
+                <div class="footnote-header">
+                    <strong>Footnote ${footnoteNumber}</strong>
+                    <button type="button" class="toolbar-btn remove-footnote-btn" data-id="${footnoteId}">Remove</button>
+                </div>
+                <div class="footnote-toolbar">
+                    <button type="button" class="toolbar-btn" data-command="bold" data-target="${footnoteId}" title="Bold"><b>B</b></button>
+                    <button type="button" class="toolbar-btn" data-command="italic" data-target="${footnoteId}" title="Italic"><i>I</i></button>
+                    <button type="button" class="toolbar-btn" data-command="underline" data-target="${footnoteId}" title="Underline"><u>U</u></button>
+                    <button type="button" class="toolbar-btn" data-command="createLink" data-target="${footnoteId}" title="Link">🔗</button>
+                    <button type="button" class="toolbar-btn" data-command="superscript" data-target="${footnoteId}" title="Superscript">x²</button>
+                    <button type="button" class="toolbar-btn" data-command="subscript" data-target="${footnoteId}" title="Subscript">x₂</button>
+                </div>
+                <div id="${footnoteId}" class="footnote-editor" contenteditable="true">${content}</div>
+            `;
+            
+            // Add to container
+            container.appendChild(footnoteItem);
+            
+            // Add event listeners for toolbar buttons
+            footnoteItem.querySelectorAll('.toolbar-btn[data-target]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const command = this.getAttribute('data-command');
+                    const targetId = this.getAttribute('data-target');
+                    executeFootnoteCommand(command, targetId);
+                });
+            });
+            
+            // Add event listener for remove button
+            footnoteItem.querySelector('.remove-footnote-btn').addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                removeFootnote(id);
+            });
+        }
+        
+        // Execute command on footnote editor
+        function executeFootnoteCommand(command, targetId) {
+            // Focus the target editor
+            const editor = document.getElementById(targetId);
+            editor.focus();
+            
+            if (command === 'createLink') {
+                // Save current selection
+                savedSelection = window.getSelection();
+                if (savedSelection.rangeCount) {
+                    savedRange = savedSelection.getRangeAt(0);
+                }
+                
+                // Show link modal
+                showLinkModal();
+            } else {
+                document.execCommand(command, false, null);
+            }
+        }
+        
+        // Remove footnote
+        function removeFootnote(footnoteId) {
+            // Remove footnote item
+            const footnoteItem = document.querySelector(`.footnote-item[data-id="${footnoteId}"]`);
+            if (footnoteItem) {
+                footnoteItem.remove();
+            }
+            
+            // Remove footnote reference
+            const footnoteRef = document.querySelector(`.footnote-ref[data-id="${footnoteId}"]`);
+            if (footnoteRef) {
+                footnoteRef.remove();
+            }
+        }
+        
+        // Execute editor command
+        function executeCommand(command) {
+            // Focus editor
+            const editor = document.getElementById('editor');
+            editor.focus();
+            
+            switch(command) {
+                case 'bold':
+                case 'italic':
+                case 'underline':
+                case 'insertOrderedList':
+                case 'insertUnorderedList':
+                case 'superscript':
+                case 'subscript':
+                    // Standard commands
+                    document.execCommand(command, false, null);
+                    break;
+                
+                case 'heading':
+                    document.execCommand('formatBlock', false, '<h3>');
+                    break;
+                
+                case 'subheading':
+                    document.execCommand('formatBlock', false, '<h4>');
+                    break;
+                
+                case 'createLink':
+                    // Save current selection
+                    savedSelection = window.getSelection();
+                    if (savedSelection.rangeCount) {
+                        savedRange = savedSelection.getRangeAt(0);
+                    }
+                    
+                    // Show link modal
+                    showLinkModal();
+                    break;
+                
+                case 'insertFootnote':
+                    insertFootnoteReference();
+                    break;
+            }
+        }
+        
+        // Insert footnote reference
+        function insertFootnoteReference() {
+            // Create footnote ID
+            const footnoteId = 'fn-' + footnoteCounter++;
+            
+            // Create footnote reference element
+            const footnoteRef = document.createElement('sup');
+            footnoteRef.className = 'footnote-ref';
+            footnoteRef.setAttribute('data-id', footnoteId);
+            footnoteRef.innerHTML = `[${footnoteCounter - 1}]`;
+            
+            // Insert at cursor position
+            const editor = document.getElementById('editor');
+            const selection = window.getSelection();
+            
+            if (selection.rangeCount) {
+                const range = selection.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(footnoteRef);
+                
+                // Move cursor after footnote
+                range.setStartAfter(footnoteRef);
+                range.setEndAfter(footnoteRef);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+            
+            // Add footnote editor
+            addFootnoteEditor(footnoteId);
+        }
+        
+        // Show link modal
+        function showLinkModal() {
+            // Get selected text
+            const selectedText = savedSelection ? savedSelection.toString() : '';
+            document.getElementById('link-text').value = selectedText;
+            document.getElementById('link-url').value = '';
+            
+            // Show modal
+            document.getElementById('link-modal').classList.add('active');
+            
+            // Focus URL field
+            document.getElementById('link-url').focus();
+        }
+        
+        // Close link modal
+        function closeLinkModal() {
+            document.getElementById('link-modal').classList.remove('active');
+        }
+        
+        // Insert link
+        function insertLink() {
+            const url = document.getElementById('link-url').value.trim();
+            const text = document.getElementById('link-text').value.trim();
+            
+            if (!url) {
+                showNotification('Please enter a URL', true);
+                return;
+            }
+            
+            // Fix URL format if needed
+            let fixedUrl = url;
+            if (!/^https?:\/\//i.test(url)) {
+                fixedUrl = 'https://' + url;
+            }
+            
+            // Hide modal
+            closeLinkModal();
+            
+            // Insert link
+            if (savedRange) {
+                // Restore selection
+                if (window.getSelection) {
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(savedRange);
+                    
+                    // If text is provided and no text was selected
+                    if (text && selection.toString() === '') {
+                        // Insert new text
+                        const textNode = document.createTextNode(text);
+                        savedRange.deleteContents();
+                        savedRange.insertNode(textNode);
+                        
+                        // Select the new text
+                        savedRange.selectNodeContents(textNode);
+                        
+                        // Update selection
+                        selection.removeAllRanges();
+                        selection.addRange(savedRange);
+                    }
+                    
+                    // Create link
+                    document.execCommand('createLink', false, fixedUrl);
+                    
+                    // Set target="_blank" to open links in new tab
+                    if (selection.rangeCount) {
+                        const range = selection.getRangeAt(0);
+                        const linkNode = range.startContainer.parentNode;
+                        if (linkNode.tagName === 'A') {
+                            linkNode.setAttribute('target', '_blank');
+                            linkNode.setAttribute('rel', 'noopener noreferrer');
+                        }
+                    }
+                }
+            }
+            
+            // Clear saved selection
+            savedSelection = null;
+            savedRange = null;
+        }
+        
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.add('active');
+        }
+        
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.remove('active');
+        }
+        
+        // Show notification
+        function showNotification(message, isError = false) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            
+            if (isError) {
+                notification.classList.add('error');
+            } else {
+                notification.classList.remove('error');
+            }
+            
+            notification.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
