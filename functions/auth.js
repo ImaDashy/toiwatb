@@ -1,3 +1,7 @@
+exports.handler = async function(event, context) {
+  console.log('Auth function called with method:', event.httpMethod);
+  console.log('Request body:', event.body);
+
 const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET;
