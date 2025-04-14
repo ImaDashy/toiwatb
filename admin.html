@@ -1183,7 +1183,23 @@
     <div class="notification" id="notification">Operation completed successfully!</div>
     
     <script>
-        console.log('Admin script loaded at:', new Date().toISOString());
+        // Add this at the top of your script section
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin script loaded successfully');
+    
+    // Test login button
+    const loginBtn = document.getElementById('login-btn');
+    if (loginBtn) {
+        console.log('Login button found');
+        loginBtn.addEventListener('click', function(e) {
+            console.log('Login button clicked!');
+            e.preventDefault();
+            login();
+        });
+    } else {
+        console.error('Login button not found!');
+    }
+});
         // Constants
         const API_BASE = '/api'; // Path to our Netlify Functions
         const DEFAULT_PASSWORD = 'admin123';  // Default admin password (fallback only)
