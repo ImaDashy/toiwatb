@@ -1,0 +1,18 @@
+{
+  "number": 1,
+  "title": "Introduction",
+  "publishDate": "2023-06-01T12:00:00Z",
+  "content": "<h3>Introduction</h3><p>This is the first chapter of my serial e-book. Each week, I'll be adding a new chapter.</p><p>You can include <strong>bold text</strong>, <em>italic text</em>, and <a href=\"https://example.com\" target=\"_blank\" rel=\"noopener noreferrer\">links to external sites</a>.</p><p>This paragraph includes a footnote reference<sup class=\"footnote-ref\" data-id=\"fn-1\">[1]</sup>. Footnotes appear at the bottom of the page.</p><h4>A Subheading</h4><p>More content goes here. You could reference another footnote<sup class=\"footnote-ref\" data-id=\"fn-2\">[2]</sup> that contains links.</p><p>The system automatically paginates content so readers can easily navigate through your book.</p>",
+  "footnotes": [
+    {
+      "id": "fn-1",
+      "number": 1,
+      "content": "This is the first footnote. It can contain <a href=\"https://example.com/resource1\" target=\"_blank\" rel=\"noopener noreferrer\">links</a> and basic formatting."
+    },
+    {
+      "id": "fn-2",
+      "number": 2,
+      "content": "This is the second footnote with another <a href=\"https://example.com/resource2\" target=\"_blank\" rel=\"noopener noreferrer\">link</a>."
+    }
+  ]
+}
