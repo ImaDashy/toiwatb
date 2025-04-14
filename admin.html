@@ -1183,6 +1183,7 @@
     <div class="notification" id="notification">Operation completed successfully!</div>
     
     <script>
+        console.log('Admin script loaded at:', new Date().toISOString());
         // Constants
         const API_BASE = '/api'; // Path to our Netlify Functions
         const DEFAULT_PASSWORD = 'admin123';  // Default admin password (fallback only)
@@ -1352,17 +1353,18 @@
         }
         
         // Login function
-        async function login() {
-    const password = document.getElementById('password').value;
-    
-    if (!password) {
-        showNotification('Please enter a password', true);
-        return;
-    }
-    
+       // Login function 
+async function login() {
     try {
+        const password = document.getElementById('password').value;
+        
+        if (!password) {
+            showNotification('Please enter a password', true);
+            return;
+        }
+        
         showLoading();
-        console.log('Attempting login, sending password to:', `${API_BASE}/auth`);
+        console.log('Login attempt with password');
         
         const response = await fetch(`${API_BASE}/auth`, {
             method: 'POST',
@@ -1372,41 +1374,48 @@
             body: JSON.stringify({ password }),
         });
         
-        console.log('Response status:', response.status);
-        const responseText = await response.text();
-        console.log('Response text:', responseText);
+        const data = await response.json();
+        console.log('Login response:', data);
         
-        if (responseText) {
-            try {
-                const data = JSON.parse(responseText);
-                console.log('Parsed response:', data);
-                
-                if (response.ok && data.token) {
-                    authToken = data.token;
-                    localStorage.setItem('ebook-admin-token', authToken);
-                    isAuthenticated = true;
-                    hideLoading();
-                    showNotification('Login successful');
-                    showAdminPanel();
-                } else {
-                    hideLoading();
-                    showNotification(data.error || 'Login failed', true);
-                }
-            } catch (e) {
-                console.error('Error parsing JSON:', e);
-                hideLoading();
-                showNotification('Invalid response from server', true);
-            }
+        if (response.ok && data.token) {
+            // Store token in localStorage and global variable
+            authToken = data.token;
+            localStorage.setItem('ebook-admin-token', authToken);
+            
+            // Update state and UI
+            isAuthenticated = true;
+            hideLoading();
+            showNotification('Login successful');
+            showAdminPanel();
         } else {
             hideLoading();
-            showNotification('Empty response from server', true);
+            showNotification(data.error || 'Login failed', true);
         }
     } catch (error) {
-        console.error('Fetch error:', error);
+        console.error('Login error:', error);
         hideLoading();
-        showNotification(`Network error: ${error.message}`, true);
+        showNotification(`Login error: ${error.message}`, true);
     }
 }
+
+// Make sure the login button handler prevents default form submission
+document.getElementById('login-btn').addEventListener('click', function(e) {
+    // Prevent form submission if this is in a form
+    if (e && e.preventDefault) {
+        e.preventDefault();
+    }
+    console.log('Login button clicked');
+    login();
+});
+
+// Also handle Enter key in password field
+document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        console.log('Enter key pressed in password field');
+        login();
+    }
+});
                 
                 // Fallback for development/testing
                 if (password === DEFAULT_PASSWORD) {
