@@ -1,15 +1,11 @@
 const jwt = require('jsonwebtoken');
-
-exports.handler = async function(event, context) {
-  console.log('Auth function called with method:', event.httpMethod);
-  console.log('Request body:', event.body);
-
-const jwt = require('jsonwebtoken');
-
 const JWT_SECRET = process.env.JWT_SECRET;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 exports.handler = async function(event, context) {
+  console.log('Auth function called with method:', event.httpMethod);
+  console.log('Request body:', event.body);
+  
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
@@ -44,25 +40,17 @@ exports.handler = async function(event, context) {
         statusCode: 500,
         body: JSON.stringify({ error: 'Server configuration error' })
       };
-    } }
+    }
     
     // Generate JWT token
-    try {
-      console.log('Signing JWT token');
-      const token = jwt.sign({ admin: true }, jwtSecret, { expiresIn: '24h' });
-      console.log('Token generated successfully');
-      
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ token })
-      };
-    } catch (jwtError) {
-      console.error('JWT signing error:', jwtError);
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: 'Failed to generate token' })
-      };
-    }
+    console.log('Signing JWT token');
+    const token = jwt.sign({ admin: true }, jwtSecret, { expiresIn: '24h' });
+    console.log('Token generated successfully');
+    
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ token })
+    };
   } catch (error) {
     console.error('General error in auth function:', error);
     return {
