@@ -1,0 +1,9 @@
+{
+  "name": "ebook-netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for E-Book System",
+  "dependencies": {
+    "axios": "^0.24.0",
+    "jsonwebtoken": "^8.5.1"
+  }
+}
