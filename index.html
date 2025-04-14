@@ -206,6 +206,24 @@
             background-color: #555;
         }
         
+        /* Touch navigation areas */
+        .touch-nav-area {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 40%;
+            z-index: 5;
+            display: none; /* Hidden by default, shown on mobile */
+        }
+        
+        .touch-nav-left {
+            left: 0;
+        }
+        
+        .touch-nav-right {
+            right: 0;
+        }
+        
         .page-number {
             font-size: 14px;
             text-align: center;
@@ -352,6 +370,16 @@
                 width: 100%;
                 max-width: none;
             }
+            
+            /* Hide navigation buttons on mobile */
+            .page-nav-controls {
+                display: none;
+            }
+            
+            /* Show touch navigation areas on mobile */
+            .touch-nav-area {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -364,6 +392,10 @@
             <div class="page-container" id="page-container">
                 <!-- Pages will be dynamically added here -->
             </div>
+            
+            <!-- Touch Navigation Areas for Mobile -->
+            <div class="touch-nav-area touch-nav-left" id="touch-nav-left"></div>
+            <div class="touch-nav-area touch-nav-right" id="touch-nav-right"></div>
             
             <!-- Page Navigation Controls -->
             <div class="page-nav-controls" id="page-nav-controls">
@@ -507,12 +539,15 @@
         
         /* === Setup Event Listeners === */
         function setupEventListeners() {
-            // Page navigation
+            // Page navigation buttons
             document.getElementById('prev-page-btn').addEventListener('click', goToPreviousPage);
             document.getElementById('next-page-btn').addEventListener('click', goToNextPage);
             
             // Touch/swipe for mobile
             setupSwipeNavigation();
+            
+            // Touch tap areas for mobile
+            setupTapNavigation();
             
             // Menu button
             document.getElementById('menu-button').addEventListener('click', showMenuPanel);
@@ -540,6 +575,23 @@
                 } else if (e.key === 'ArrowLeft') {
                     goToPreviousPage();
                 }
+            });
+        }
+        
+        /* === Setup Tap Navigation for Mobile === */
+        function setupTapNavigation() {
+            // Left tap area for previous page
+            const leftTapArea = document.getElementById('touch-nav-left');
+            leftTapArea.addEventListener('click', function(e) {
+                e.preventDefault();
+                goToPreviousPage();
+            });
+            
+            // Right tap area for next page
+            const rightTapArea = document.getElementById('touch-nav-right');
+            rightTapArea.addEventListener('click', function(e) {
+                e.preventDefault();
+                goToNextPage();
             });
         }
         
@@ -937,6 +989,46 @@
         function hideLoading() {
             document.getElementById('loading-overlay').style.display = 'none';
         }
+        
+        // Check if device is mobile
+        function isMobileDevice() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Add mobile-specific features if on mobile device
+        function setupMobileFeatures() {
+            if (isMobileDevice()) {
+                // Make sure tap areas are visible
+                document.getElementById('touch-nav-left').style.display = 'block';
+                document.getElementById('touch-nav-right').style.display = 'block';
+                
+                // Hide navigation buttons
+                document.getElementById('page-nav-controls').style.display = 'none';
+                
+                // Add a mobile class to the body for additional styling
+                document.body.classList.add('mobile-device');
+            } else {
+                // Show navigation buttons on desktop
+                document.getElementById('page-nav-controls').style.display = 'flex';
+                
+                // Hide tap areas on desktop
+                document.getElementById('touch-nav-left').style.display = 'none';
+                document.getElementById('touch-nav-right').style.display = 'none';
+                
+                // Remove mobile class if exists
+                document.body.classList.remove('mobile-device');
+            }
+        }
+        
+        // Update mobile features when window resizes
+        window.addEventListener('resize', function() {
+            setupMobileFeatures();
+        });
+        
+        // Call setupMobileFeatures after DOM content loaded to initialize mobile view
+        document.addEventListener('DOMContentLoaded', function() {
+            setupMobileFeatures();
+        });
     </script>
 </body>
 </html>
