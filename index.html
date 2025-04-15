@@ -90,47 +90,46 @@
             font-size: 18px;
         }
         
-
         /* Cover page with full image */
-.cover-image-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-
-.full-cover-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* This ensures the image covers the entire container */
-}
-
-.cover-text-overlay {
-    position: absolute;
-    bottom: 20%;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    color: white; /* Text color that stands out on your cover */
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Text shadow for better visibility */
-    padding: 20px;
-}
-
-.page-hint {
-    position: absolute;
-    bottom: 30px;
-    left: 0;
-    width: 100%;
-    text-align: center;
-    font-style: italic;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 14px;
-}
+        .cover-image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .full-cover-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* This ensures the image covers the entire container */
+        }
+        
+        .cover-text-overlay {
+            position: absolute;
+            bottom: 20%;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            color: white; /* Text color that stands out on your cover */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Text shadow for better visibility */
+            padding: 20px;
+        }
+        
+        .page-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-style: italic;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
         
         .cover-page {
             text-align: center;
@@ -197,6 +196,8 @@
             margin-top: 20px;
             padding-top: 20px;
             font-size: 14px;
+            position: relative;
+            z-index: 50; /* Higher z-index to ensure clickability */
         }
         
         .footnote-ref {
@@ -205,6 +206,20 @@
             color: #0066cc;
             cursor: pointer;
             text-decoration: none;
+            position: relative;
+            z-index: 25; /* Higher z-index to ensure clickability */
+        }
+        
+        .footnote-item {
+            position: relative;
+            z-index: 50;
+            margin-bottom: 10px;
+        }
+        
+        /* Footnote highlight */
+        .footnote-highlight {
+            background-color: rgba(24, 144, 255, 0.2);
+            transition: background-color 0.5s ease;
         }
         
         /* Navigation Controls */
@@ -383,6 +398,37 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Dedication page styles */
+        .dedication-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .dedication-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 25% 10% 25% 10%;
+            font-style: italic;
+            color: #333;
+        }
+        
+        .dedication-top {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: auto;
+        }
+        
+        .dedication-bottom {
+            text-align: center;
+            font-size: 20px;
+            margin-top: auto;
+        }
+        
         /* Mobile Optimizations */
         @media (max-width: 768px) {
             .page {
@@ -422,37 +468,6 @@
                 display: block;
             }
         }
-
-        /* Dedication page styles */
-.dedication-page {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.dedication-content {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 25% 10% 25% 10%;
-    font-style: italic;
-    color: #333;
-}
-
-.dedication-top {
-    text-align: center;
-    font-size: 20px;
-    margin-bottom: auto;
-}
-
-.dedication-bottom {
-    text-align: center;
-    font-size: 20px;
-    margin-top: auto;
-}
     </style>
 </head>
 <body>
@@ -651,50 +666,85 @@
         }
         
         /* === Setup Tap Navigation for Mobile === */
-/* === Setup Tap Navigation for Mobile === */
-function setupTapNavigation() {
-    // Left tap area for previous page
-    const leftTapArea = document.getElementById('touch-nav-left');
-    leftTapArea.addEventListener('click', function(e) {
-        // Don't trigger page turn if clicking on a link or footnote reference
-        if (e.target.tagName === 'A' || 
-            e.target.classList.contains('footnote-ref') || 
-            e.target.closest('.footnotes')) {
-            return;
+        function setupTapNavigation() {
+            // Left tap area for previous page
+            const leftTapArea = document.getElementById('touch-nav-left');
+            leftTapArea.addEventListener('click', function(e) {
+                // Check if clicked on a link, footnote reference, or within footnotes
+                if (isInteractiveElement(e.target)) {
+                    // Allow the event to continue (clicking the link)
+                    return true;
+                }
+                
+                e.preventDefault();
+                goToPreviousPage();
+            });
+            
+            // Right tap area for next page
+            const rightTapArea = document.getElementById('touch-nav-right');
+            rightTapArea.addEventListener('click', function(e) {
+                // Check if clicked on a link, footnote reference, or within footnotes
+                if (isInteractiveElement(e.target)) {
+                    // Allow the event to continue (clicking the link)
+                    return true;
+                }
+                
+                e.preventDefault();
+                goToNextPage();
+            });
         }
         
-        e.preventDefault();
-        goToPreviousPage();
-    });
-    
-    // Right tap area for next page
-    const rightTapArea = document.getElementById('touch-nav-right');
-    rightTapArea.addEventListener('click', function(e) {
-        // Don't trigger page turn if clicking on a link or footnote reference
-        if (e.target.tagName === 'A' || 
-            e.target.classList.contains('footnote-ref') || 
-            e.target.closest('.footnotes')) {
-            return;
+        // Helper function to check if an element is an interactive element that should not trigger page turns
+        function isInteractiveElement(element) {
+            // Check if element or any of its parents is a link, footnote reference, or within footnotes
+            let currentElement = element;
+            
+            while (currentElement) {
+                // If element is a link or footnote reference
+                if (currentElement.tagName === 'A' || 
+                    currentElement.classList.contains('footnote-ref')) {
+                    return true;
+                }
+                
+                // If element is inside footnotes section
+                if (currentElement.classList && 
+                    (currentElement.classList.contains('footnotes') || 
+                     currentElement.classList.contains('footnote-item'))) {
+                    return true;
+                }
+                
+                // Move up to parent element
+                currentElement = currentElement.parentElement;
+            }
+            
+            return false;
         }
-        
-        e.preventDefault();
-        goToNextPage();
-    });
-}
         
         /* === Setup Swipe Navigation for Mobile === */
         function setupSwipeNavigation() {
             const pageContainer = document.getElementById('page-container');
             let touchStartX = 0;
             let touchEndX = 0;
+            let isSwiping = false;
             
             pageContainer.addEventListener('touchstart', function(e) {
+                // Don't initiate swipe if touching an interactive element
+                if (isInteractiveElement(e.target)) {
+                    isSwiping = false;
+                    return;
+                }
+                
                 touchStartX = e.changedTouches[0].screenX;
+                isSwiping = true;
             }, false);
             
             pageContainer.addEventListener('touchend', function(e) {
+                // Skip if not swiping (e.g., if touching a link)
+                if (!isSwiping) return;
+                
                 touchEndX = e.changedTouches[0].screenX;
                 handleSwipe();
+                isSwiping = false;
             }, false);
             
             function handleSwipe() {
@@ -711,98 +761,97 @@ function setupTapNavigation() {
         }
         
         /* === Page Initialization and Rendering === */
-       // Initialize all pages
-function initializePages() {
-    return new Promise((resolve) => {
-        // Clear page container
-        const pageContainer = document.getElementById('page-container');
-        pageContainer.innerHTML = '';
-        
-        // Reset page mapping
-        pagesMap = [];
-        
-        // Create cover page (page 0)
-        createCoverPage();
-        
-        // Create dedication page (page 1)
-        createDedicationPage();
-        
-        // Create TOC page (now page 2)
-        createTOCPage();
-        
-        // Create content pages for each chapter
-        for (let i = 0; i < bookData.chapters.length; i++) {
-            createChapterPages(bookData.chapters[i], i);
+        // Initialize all pages
+        function initializePages() {
+            return new Promise((resolve) => {
+                // Clear page container
+                const pageContainer = document.getElementById('page-container');
+                pageContainer.innerHTML = '';
+                
+                // Reset page mapping
+                pagesMap = [];
+                
+                // Create cover page (page 0)
+                createCoverPage();
+                
+                // Create dedication page (page 1)
+                createDedicationPage();
+                
+                // Create TOC page (now page 2)
+                createTOCPage();
+                
+                // Create content pages for each chapter
+                for (let i = 0; i < bookData.chapters.length; i++) {
+                    createChapterPages(bookData.chapters[i], i);
+                }
+                
+                // Update total pages
+                totalPages = pagesMap.length;
+                
+                // Now that all pages are created, we need to update the TOC links
+                updateTOCLinks();
+                
+                // Setup footnote references and links after all pages are created
+                setupFootnoteReferences();
+                setupExternalLinks();
+                
+                // Show first page
+                if (totalPages > 0) {
+                    showPage(0);
+                }
+                
+                // Update navigation buttons
+                updateNavigation();
+                
+                // Initialize mobile features
+                setupMobileFeatures();
+                
+                resolve();
+            });
         }
-        
-        // Update total pages
-        totalPages = pagesMap.length;
-
-        // Setup footnote references after all pages are created
-        setupFootnoteReferences();
-
-        // Add to initializePages
-setupExternalLinks();
-        
-        // Now that all pages are created, we need to update the TOC links
-        updateTOCLinks();
-        
-        // Show first page
-        if (totalPages > 0) {
-            showPage(0);
-        }
-        
-        // Update navigation buttons
-        updateNavigation();
-        
-        resolve();
-    });
-}
         
         // Create the cover page with just the image
-function createCoverPage() {
-    const pageContainer = document.getElementById('page-container');
-    
-    const coverPage = document.createElement('div');
-    coverPage.className = 'page cover-page';
-    coverPage.id = 'page-0';
-    
-    // Full-screen cover image only
-    coverPage.innerHTML = `
-        <div class="cover-image-container">
-            <img src="/Cover1.png" alt="${bookData.title} Cover" class="full-cover-image">
-        </div>
-        // <div class="page-hint">Tap or swipe right to continue</div>
-    `;
-    
-    pageContainer.appendChild(coverPage);
-    
-    // Add to pages map
-    pagesMap.push({ type: 'cover', index: 0 });
-}
-
-// Create the dedication page (to be added to your initializePages function)
-function createDedicationPage() {
-    const pageContainer = document.getElementById('page-container');
-    
-    const dedicationPage = document.createElement('div');
-    dedicationPage.className = 'page dedication-page';
-    dedicationPage.id = 'page-1'; // This will become page 1
-    
-    dedicationPage.innerHTML = `
-        <div class="dedication-content">
-            <p class="dedication-top">And so am I.</p>
-            <p class="dedication-bottom">For everyone, but especially you.</p>
-        </div>
-    `;
-    
-    pageContainer.appendChild(dedicationPage);
-    
-    // Add to pages map
-    pagesMap.push({ type: 'dedication', index: 0 });
-}
-
-
+        function createCoverPage() {
+            const pageContainer = document.getElementById('page-container');
+            
+            const coverPage = document.createElement('div');
+            coverPage.className = 'page cover-page';
+            coverPage.id = 'page-0';
+            
+            // Full-screen cover image only
+            coverPage.innerHTML = `
+                <div class="cover-image-container">
+                    <img src="/Cover1.png" alt="${bookData.title} Cover" class="full-cover-image">
+                </div>
+            `;
+            
+            pageContainer.appendChild(coverPage);
+            
+            // Add to pages map
+            pagesMap.push({ type: 'cover', index: 0 });
+        }
+        
+        // Create the dedication page
+        function createDedicationPage() {
+            const pageContainer = document.getElementById('page-container');
+            
+            const dedicationPage = document.createElement('div');
+            dedicationPage.className = 'page dedication-page';
+            dedicationPage.id = 'page-1'; // This will become page 1
+            
+            dedicationPage.innerHTML = `
+                <div class="dedication-content">
+                    <p class="dedication-top">And so am I.</p>
+                    <p class="dedication-bottom">For everyone, but especially you.</p>
+                </div>
+            `;
+            
+            pageContainer.appendChild(dedicationPage);
+            
+            // Add to pages map
+            pagesMap.push({ type: 'dedication', index: 0 });
+        }
+        
         // Create the table of contents page
         function createTOCPage() {
             const pageContainer = document.getElementById('page-container');
@@ -859,7 +908,9 @@ function createDedicationPage() {
                     link.setAttribute('data-page', firstPageIndex);
                     
                     // Add click event listener
-                    link.addEventListener('click', function() {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
                         const pageNumber = parseInt(this.getAttribute('data-page'));
                         goToPage(pageNumber);
                     });
@@ -910,21 +961,49 @@ function createDedicationPage() {
             }
         }
         
-// Setup external links to prevent triggering page turns
-function setupExternalLinks() {
-    // Find all links in footnotes
-    document.querySelectorAll('.footnotes a').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.stopPropagation(); // Stop the click from bubbling up to the tap areas
-            
-            // Optional: open in new tab
-            if (!this.getAttribute('target')) {
-                this.setAttribute('target', '_blank');
-            }
-        });
-    });
-}
-
+        // Function to setup footnote references after pages are created
+        function setupFootnoteReferences() {
+            // Find all footnote references
+            document.querySelectorAll('.footnote-ref').forEach(ref => {
+                ref.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation(); // Stop the click from bubbling up to the tap areas
+                    
+                    // Get the footnote ID
+                    const footnoteId = this.getAttribute('data-id');
+                    
+                    // Find the footnote
+                    const footnote = document.getElementById(footnoteId);
+                    
+                    // If footnote exists, scroll to it
+                    if (footnote) {
+                        footnote.scrollIntoView({ behavior: 'smooth' });
+                        
+                        // Add a highlight effect
+                        footnote.classList.add('footnote-highlight');
+                        setTimeout(() => {
+                            footnote.classList.remove('footnote-highlight');
+                        }, 2000);
+                    }
+                });
+            });
+        }
+        
+        // Setup external links to prevent triggering page turns
+        function setupExternalLinks() {
+            // Find all links in footnotes
+            document.querySelectorAll('.footnotes a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Stop the click from bubbling up to the tap areas
+                    
+                    // Optional: open in new tab
+                    if (!this.getAttribute('target')) {
+                        this.setAttribute('target', '_blank');
+                        this.setAttribute('rel', 'noopener noreferrer');
+                    }
+                });
+            });
+        }
         
         // Paginate content into pages that fit without scrolling
         function paginateContent(content, footnotes, options) {
@@ -1025,35 +1104,6 @@ function setupExternalLinks() {
             
             return html;
         }
-
-// Function to setup footnote references after pages are created
-function setupFootnoteReferences() {
-    // Find all footnote references
-    document.querySelectorAll('.footnote-ref').forEach(ref => {
-        ref.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation(); // Stop the click from bubbling up to the tap areas
-            
-            // Get the footnote ID
-            const footnoteId = this.getAttribute('data-id');
-            
-            // Find the footnote
-            const footnote = document.getElementById(footnoteId);
-            
-            // If footnote exists, scroll to it
-            if (footnote) {
-                footnote.scrollIntoView({ behavior: 'smooth' });
-                
-                // Add a highlight effect
-                footnote.classList.add('footnote-highlight');
-                setTimeout(() => {
-                    footnote.classList.remove('footnote-highlight');
-                }, 2000);
-            }
-        });
-    });
-}
-
         
         /* === Page Navigation === */
         // Show a specific page
@@ -1180,11 +1230,6 @@ function setupFootnoteReferences() {
         
         // Update mobile features when window resizes
         window.addEventListener('resize', function() {
-            setupMobileFeatures();
-        });
-        
-        // Call setupMobileFeatures after DOM content loaded to initialize mobile view
-        document.addEventListener('DOMContentLoaded', function() {
             setupMobileFeatures();
         });
     </script>
