@@ -651,21 +651,36 @@
         }
         
         /* === Setup Tap Navigation for Mobile === */
-        function setupTapNavigation() {
-            // Left tap area for previous page
-            const leftTapArea = document.getElementById('touch-nav-left');
-            leftTapArea.addEventListener('click', function(e) {
-                e.preventDefault();
-                goToPreviousPage();
-            });
-            
-            // Right tap area for next page
-            const rightTapArea = document.getElementById('touch-nav-right');
-            rightTapArea.addEventListener('click', function(e) {
-                e.preventDefault();
-                goToNextPage();
-            });
+/* === Setup Tap Navigation for Mobile === */
+function setupTapNavigation() {
+    // Left tap area for previous page
+    const leftTapArea = document.getElementById('touch-nav-left');
+    leftTapArea.addEventListener('click', function(e) {
+        // Don't trigger page turn if clicking on a link or footnote reference
+        if (e.target.tagName === 'A' || 
+            e.target.classList.contains('footnote-ref') || 
+            e.target.closest('.footnotes')) {
+            return;
         }
+        
+        e.preventDefault();
+        goToPreviousPage();
+    });
+    
+    // Right tap area for next page
+    const rightTapArea = document.getElementById('touch-nav-right');
+    rightTapArea.addEventListener('click', function(e) {
+        // Don't trigger page turn if clicking on a link or footnote reference
+        if (e.target.tagName === 'A' || 
+            e.target.classList.contains('footnote-ref') || 
+            e.target.closest('.footnotes')) {
+            return;
+        }
+        
+        e.preventDefault();
+        goToNextPage();
+    });
+}
         
         /* === Setup Swipe Navigation for Mobile === */
         function setupSwipeNavigation() {
@@ -722,6 +737,12 @@ function initializePages() {
         
         // Update total pages
         totalPages = pagesMap.length;
+
+        // Setup footnote references after all pages are created
+        setupFootnoteReferences();
+
+        // Add to initializePages
+setupExternalLinks();
         
         // Now that all pages are created, we need to update the TOC links
         updateTOCLinks();
@@ -889,6 +910,22 @@ function createDedicationPage() {
             }
         }
         
+// Setup external links to prevent triggering page turns
+function setupExternalLinks() {
+    // Find all links in footnotes
+    document.querySelectorAll('.footnotes a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.stopPropagation(); // Stop the click from bubbling up to the tap areas
+            
+            // Optional: open in new tab
+            if (!this.getAttribute('target')) {
+                this.setAttribute('target', '_blank');
+            }
+        });
+    });
+}
+
+        
         // Paginate content into pages that fit without scrolling
         function paginateContent(content, footnotes, options) {
             // For simplicity, we'll start with a basic pagination
@@ -988,6 +1025,35 @@ function createDedicationPage() {
             
             return html;
         }
+
+// Function to setup footnote references after pages are created
+function setupFootnoteReferences() {
+    // Find all footnote references
+    document.querySelectorAll('.footnote-ref').forEach(ref => {
+        ref.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation(); // Stop the click from bubbling up to the tap areas
+            
+            // Get the footnote ID
+            const footnoteId = this.getAttribute('data-id');
+            
+            // Find the footnote
+            const footnote = document.getElementById(footnoteId);
+            
+            // If footnote exists, scroll to it
+            if (footnote) {
+                footnote.scrollIntoView({ behavior: 'smooth' });
+                
+                // Add a highlight effect
+                footnote.classList.add('footnote-highlight');
+                setTimeout(() => {
+                    footnote.classList.remove('footnote-highlight');
+                }, 2000);
+            }
+        });
+    });
+}
+
         
         /* === Page Navigation === */
         // Show a specific page
