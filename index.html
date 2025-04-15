@@ -381,6 +381,37 @@
                 display: block;
             }
         }
+
+        /* Dedication page styles */
+.dedication-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dedication-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 25% 10% 25% 10%;
+    font-style: italic;
+    color: #333;
+}
+
+.dedication-top {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: auto;
+}
+
+.dedication-bottom {
+    text-align: center;
+    font-size: 20px;
+    margin-top: auto;
+}
     </style>
 </head>
 <body>
@@ -560,7 +591,7 @@
             });
             
             document.getElementById('go-to-contents-btn').addEventListener('click', function() {
-                goToPage(1);
+                goToPage(2);
                 hideMenuPanel();
             });
             
@@ -624,72 +655,92 @@
         }
         
         /* === Page Initialization and Rendering === */
-        // Initialize all pages
-        function initializePages() {
-            return new Promise((resolve) => {
-                // Clear page container
-                const pageContainer = document.getElementById('page-container');
-                pageContainer.innerHTML = '';
-                
-                // Reset page mapping
-                pagesMap = [];
-                
-                // Create cover page (page 0)
-                createCoverPage();
-                
-                // Create TOC page (page 1)
-                createTOCPage();
-                
-                // Create content pages for each chapter
-                for (let i = 0; i < bookData.chapters.length; i++) {
-                    createChapterPages(bookData.chapters[i], i);
-                }
-                
-                // Update total pages
-                totalPages = pagesMap.length;
-                
-                // Now that all pages are created, we need to update the TOC links
-                updateTOCLinks();
-                
-                // Show first page
-                if (totalPages > 0) {
-                    showPage(0);
-                }
-                
-                // Update navigation buttons
-                updateNavigation();
-                
-                resolve();
-            });
+       // Initialize all pages
+function initializePages() {
+    return new Promise((resolve) => {
+        // Clear page container
+        const pageContainer = document.getElementById('page-container');
+        pageContainer.innerHTML = '';
+        
+        // Reset page mapping
+        pagesMap = [];
+        
+        // Create cover page (page 0)
+        createCoverPage();
+        
+        // Create dedication page (page 1)
+        createDedicationPage();
+        
+        // Create TOC page (now page 2)
+        createTOCPage();
+        
+        // Create content pages for each chapter
+        for (let i = 0; i < bookData.chapters.length; i++) {
+            createChapterPages(bookData.chapters[i], i);
         }
         
-        // Create the cover page
-        function createCoverPage() {
-            const pageContainer = document.getElementById('page-container');
-            
-            const coverPage = document.createElement('div');
-            coverPage.className = 'page cover-page';
-            coverPage.id = 'page-0';
-            
-            // Add cover image if provided
-            let coverContent = '';
-            if (bookData.coverImage) {
-                coverContent = `<img src="${bookData.coverImage}" alt="Book Cover" style="max-width: 80%; max-height: 60%; margin-bottom: 20px;">`;
-            }
-            
-            coverPage.innerHTML = `
-                ${coverContent}
-                <h1>${bookData.title}</h1>
-                <h2>by ${bookData.author}</h2>
-                <div style="margin-top: 40px; font-style: italic; color: #666;">Tap or swipe right to continue</div>
-            `;
-            
-            pageContainer.appendChild(coverPage);
-            
-            // Add to pages map
-            pagesMap.push({ type: 'cover', index: 0 });
+        // Update total pages
+        totalPages = pagesMap.length;
+        
+        // Now that all pages are created, we need to update the TOC links
+        updateTOCLinks();
+        
+        // Show first page
+        if (totalPages > 0) {
+            showPage(0);
         }
         
+        // Update navigation buttons
+        updateNavigation();
+        
+        resolve();
+    });
+}
+        
+        // Create the cover page with just the image
+function createCoverPage() {
+    const pageContainer = document.getElementById('page-container');
+    
+    const coverPage = document.createElement('div');
+    coverPage.className = 'page cover-page';
+    coverPage.id = 'page-0';
+    
+    // Full-screen cover image only
+    coverPage.innerHTML = `
+        <div class="cover-image-container">
+            <img src="/Cover1.png" alt="${bookData.title} Cover" class="full-cover-image">
+        </div>
+        // <div class="page-hint">Tap or swipe right to continue</div>
+    `;
+    
+    pageContainer.appendChild(coverPage);
+    
+    // Add to pages map
+    pagesMap.push({ type: 'cover', index: 0 });
+}
+
+// Create the dedication page (to be added to your initializePages function)
+function createDedicationPage() {
+    const pageContainer = document.getElementById('page-container');
+    
+    const dedicationPage = document.createElement('div');
+    dedicationPage.className = 'page dedication-page';
+    dedicationPage.id = 'page-1'; // This will become page 1
+    
+    dedicationPage.innerHTML = `
+        <div class="dedication-content">
+            <p class="dedication-top">And so am I.</p>
+            <p class="dedication-bottom">For everyone, but especially you.</p>
+        </div>
+    `;
+    
+    pageContainer.appendChild(dedicationPage);
+    
+    // Add to pages map
+    pagesMap.push({ type: 'dedication', index: 0 });
+}
+
+
         // Create the table of contents page
         function createTOCPage() {
             const pageContainer = document.getElementById('page-container');
