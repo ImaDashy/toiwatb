@@ -747,15 +747,20 @@ function setupTapNavigation() {
         
         // Get click position relative to window width
         const clickX = e.clientX;
+        const clickY = e.clientY;
         const windowWidth = window.innerWidth;
-        const relativePosition = clickX / windowWidth;
+        const windowHeight = window.innerHeight;
         
-        // Ignore clicks on the edges (those are handled by the dedicated tap areas)
-        // Only focus on the middle ~50% of the screen
-        if (relativePosition > 0.25 && relativePosition < 0.75) {
+        // Calculate relative positions (0-1 range)
+        const relativeX = clickX / windowWidth;
+        const relativeY = clickY / windowHeight;
+        
+        // Only consider the middle horizontal area (between 25% and 75% of width)
+        // AND only the top 20% of the screen height
+        if (relativeX > 0.25 && relativeX < 0.75 && relativeY < 0.2) {
             e.preventDefault();
             
-            // Middle area tap shows the menu
+            // Show menu when top-middle area is tapped
             if (isMobileDevice()) {
                 showMenuPanel();
             }
