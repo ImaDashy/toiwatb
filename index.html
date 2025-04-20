@@ -662,44 +662,55 @@
         
         /* === Setup Event Listeners === */
         function setupEventListeners() {
-            // Page navigation buttons
-            document.getElementById('prev-page-btn').addEventListener('click', goToPreviousPage);
-            document.getElementById('next-page-btn').addEventListener('click', goToNextPage);
-            
-            // Touch/swipe for mobile
-            setupSwipeNavigation();
-            
-            // Touch tap areas for mobile
-            setupTapNavigation();
-            
-            // Menu button
-            document.getElementById('menu-button').addEventListener('click', showMenuPanel);
-            document.getElementById('close-menu-btn').addEventListener('click', hideMenuPanel);
-            
-            // Menu items
-            document.getElementById('go-to-cover-btn').addEventListener('click', function() {
-                goToPage(0);
-                hideMenuPanel();
-            });
-            
-            document.getElementById('go-to-contents-btn').addEventListener('click', function() {
-                goToPage(2);
-                hideMenuPanel();
-            });
-            
-            document.getElementById('admin-page-link').addEventListener('click', function() {
-                window.location.href = 'admin.html';
-            });
-            
-            // Keyboard navigation
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'ArrowRight' || e.key === ' ') {
-                    goToNextPage();
-                } else if (e.key === 'ArrowLeft') {
-                    goToPreviousPage();
-                }
-            });
+    // Page navigation buttons
+    document.getElementById('prev-page-btn').addEventListener('click', goToPreviousPage);
+    document.getElementById('next-page-btn').addEventListener('click', goToNextPage);
+    
+    // Touch/swipe for mobile
+    setupSwipeNavigation();
+    
+    // Touch tap areas for mobile
+    setupTapNavigation();
+    
+    // Menu button
+    document.getElementById('menu-button').addEventListener('click', showMenuPanel);
+    document.getElementById('close-menu-btn').addEventListener('click', hideMenuPanel);
+    
+    // Menu items
+    document.getElementById('go-to-cover-btn').addEventListener('click', function() {
+        goToPage(0);
+        hideMenuPanel();
+    });
+    
+    document.getElementById('go-to-contents-btn').addEventListener('click', function() {
+        goToPage(2);
+        hideMenuPanel();
+    });
+    
+    document.getElementById('admin-page-link').addEventListener('click', function() {
+        window.location.href = 'admin.html';
+    });
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+            goToNextPage();
+        } else if (e.key === 'ArrowLeft') {
+            goToPreviousPage();
         }
+    });
+    
+    // Font size controls
+    document.getElementById('increase-font-btn').addEventListener('click', function() {
+        changeFontSize(fontSizeStep);
+        hideMenuPanel();
+    });
+    
+    document.getElementById('decrease-font-btn').addEventListener('click', function() {
+        changeFontSize(-fontSizeStep);
+        hideMenuPanel();
+    });
+}
         
         /* === Setup Tap Navigation for Mobile === */
         function setupTapNavigation() {
@@ -1258,31 +1269,33 @@
         function isMobileDevice() {
             return window.innerWidth <= 768;
         }
+
+        
         
         // Add mobile-specific features if on mobile device
         function setupMobileFeatures() {
-            if (isMobileDevice()) {
-                // Make sure tap areas are visible
-                document.getElementById('touch-nav-left').style.display = 'block';
-                document.getElementById('touch-nav-right').style.display = 'block';
-                
-                // Hide navigation buttons
-                document.getElementById('page-nav-controls').style.display = 'none';
-                
-                // Add a mobile class to the body for additional styling
-                document.body.classList.add('mobile-device');
-            } else {
-                // Show navigation buttons on desktop
-                document.getElementById('page-nav-controls').style.display = 'flex';
-                
-                // Hide tap areas on desktop
-                document.getElementById('touch-nav-left').style.display = 'none';
-                document.getElementById('touch-nav-right').style.display = 'none';
-                
-                // Remove mobile class if exists
-                document.body.classList.remove('mobile-device');
-            }
-        }
+    if (isMobileDevice()) {
+        // Make sure tap areas are visible
+        document.getElementById('touch-nav-left').style.display = 'block';
+        document.getElementById('touch-nav-right').style.display = 'block';
+        
+        // Hide navigation buttons
+        document.getElementById('page-nav-controls').style.display = 'none';
+        
+        // Add a mobile class to the body for additional styling
+        document.body.classList.add('mobile-device');
+    } else {
+        // Show navigation buttons on desktop
+        document.getElementById('page-nav-controls').style.display = 'flex';
+        
+        // Hide tap areas on desktop
+        document.getElementById('touch-nav-left').style.display = 'none';
+        document.getElementById('touch-nav-right').style.display = 'none';
+        
+        // Remove mobile class if exists
+        document.body.classList.remove('mobile-device');
+    }
+}
         
         // Update mobile features when window resizes
         window.addEventListener('resize', function() {
@@ -1294,22 +1307,6 @@
         const minFontSize = 80;    // 80% minimum
         const maxFontSize = 200;   // 200% maximum
         const fontSizeStep = 10;   // Change in 10% increments
-        
-        // Updated setupEventListeners function
-        function setupEventListeners() {
-            // Your existing event listeners...
-            
-            // Font size controls
-            document.getElementById('increase-font-btn').addEventListener('click', function() {
-                changeFontSize(fontSizeStep);
-                hideMenuPanel();
-            });
-            
-            document.getElementById('decrease-font-btn').addEventListener('click', function() {
-                changeFontSize(-fontSizeStep);
-                hideMenuPanel();
-            });
-        }
         
         // Function to change the font size
         function changeFontSize(delta) {
