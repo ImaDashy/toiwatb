@@ -267,7 +267,7 @@
             position: absolute;
             top: 0;
             height: 100%;
-            width: 40%;
+            width: 25%;
             z-index: 5;
             display: none; /* Hidden by default, shown on mobile */
         }
@@ -279,6 +279,11 @@
         .touch-nav-right {
             right: 0;
         }
+
+        /* Optional: add visual indicator for tap areas that's only visible when touched */
+.touch-nav-area:active {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle visual feedback */
+}
         
         .page-number {
             font-size: 14px;
@@ -713,59 +718,81 @@
 }
         
         /* === Setup Tap Navigation for Mobile === */
-        function setupTapNavigation() {
-            // Left tap area for previous page
-            const leftTapArea = document.getElementById('touch-nav-left');
-            leftTapArea.addEventListener('click', function(e) {
-                // Check if clicked on a link, footnote reference, or within footnotes
-                if (isInteractiveElement(e.target)) {
-                    // Allow the event to continue (clicking the link)
-                    return true;
-                }
-                
-                e.preventDefault();
-                goToPreviousPage();
-            });
-            
-            // Right tap area for next page
-            const rightTapArea = document.getElementById('touch-nav-right');
-            rightTapArea.addEventListener('click', function(e) {
-                // Check if clicked on a link, footnote reference, or within footnotes
-                if (isInteractiveElement(e.target)) {
-                    // Allow the event to continue (clicking the link)
-                    return true;
-                }
-                
-                e.preventDefault();
-                goToNextPage();
-            });
+function setupTapNavigation() {
+    // Left tap area for previous page
+    const leftTapArea = document.getElementById('touch-nav-left');
+    leftTapArea.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        goToPreviousPage();
+    });
+    
+    // Right tap area for next page
+    const rightTapArea = document.getElementById('touch-nav-right');
+    rightTapArea.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        goToNextPage();
+    });
+    
+    // Optional: Add middle tap area for menu access
+    // This can help users access the menu from anywhere on the screen
+    const pageContainer = document.getElementById('page-container');
+    pageContainer.addEventListener('click', function(e) {
+        // Only handle clicks in the middle area, not sides or interactive elements
+        if (isInteractiveElement(e.target)) {
+            // Let the click proceed naturally for interactive elements
+            return true;
         }
+        
+        // Get click position relative to window width
+        const clickX = e.clientX;
+        const windowWidth = window.innerWidth;
+        const relativePosition = clickX / windowWidth;
+        
+        // Ignore clicks on the edges (those are handled by the dedicated tap areas)
+        // Only focus on the middle ~50% of the screen
+        if (relativePosition > 0.25 && relativePosition < 0.75) {
+            e.preventDefault();
+            
+            // Middle area tap shows the menu
+            if (isMobileDevice()) {
+                showMenuPanel();
+            }
+        }
+    });
+}
         
         // Helper function to check if an element is an interactive element that should not trigger page turns
         function isInteractiveElement(element) {
-            // Check if element or any of its parents is a link, footnote reference, or within footnotes
-            let currentElement = element;
-            
-            while (currentElement) {
-                // If element is a link or footnote reference
-                if (currentElement.tagName === 'A' || 
-                    currentElement.classList.contains('footnote-ref')) {
-                    return true;
-                }
-                
-                // If element is inside footnotes section
-                if (currentElement.classList && 
-                    (currentElement.classList.contains('footnotes') || 
-                     currentElement.classList.contains('footnote-item'))) {
-                    return true;
-                }
-                
-                // Move up to parent element
-                currentElement = currentElement.parentElement;
-            }
-            
-            return false;
+    // Use native DOM methods to check if the click should be interactive
+    let currentElement = element;
+    
+    while (currentElement) {
+        // Check for links, buttons, inputs, and other interactive elements
+        if (currentElement.tagName === 'A' || 
+            currentElement.tagName === 'BUTTON' ||
+            currentElement.tagName === 'INPUT' ||
+            currentElement.tagName === 'SELECT' ||
+            currentElement.tagName === 'TEXTAREA' ||
+            currentElement.classList.contains('footnote-ref') ||
+            currentElement.classList.contains('footnotes') ||
+            currentElement.classList.contains('footnote-item')) {
+            return true;
         }
+        
+        // Also check for elements with onclick attributes or event listeners
+        if (currentElement.hasAttribute('onclick') || 
+            currentElement.getAttribute('role') === 'button') {
+            return true;
+        }
+        
+        // Move up to parent element
+        currentElement = currentElement.parentElement;
+    }
+    
+    return false;
+}
         
         /* === Setup Swipe Navigation for Mobile === */
         function setupSwipeNavigation() {
