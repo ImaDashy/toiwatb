@@ -866,62 +866,15 @@ function initializePages() {
             currentFontSize = parseInt(savedFontSize);
         }
         
-        // Clear page container
-        const pageContainer = document.getElementById('page-container');
-        pageContainer.innerHTML = '';
-        
-        // Reset page mapping
-        pagesMap = [];
-        
-        // Create cover page (page 0)
-        createCoverPage();
-        
-        // Create dedication page (page 1)
-        createDedicationPage();
-        
-        // Create TOC page (now page 2)
-        createTOCPage();
-        
-        // Adjust characters per page based on font size
-        const scaleFactor = 100 / currentFontSize;
-        const adjustedCharsPerPage = Math.floor(1550 * scaleFactor);
-        
-        // Create content pages for each chapter
-        for (let i = 0; i < bookData.chapters.length; i++) {
-            createChapterPages(bookData.chapters[i], i, adjustedCharsPerPage);
-        }
-        
-        // Update total pages
-        totalPages = pagesMap.length;
-        
-        // Now that all pages are created, we need to update the TOC links
-        updateTOCLinks();
-        
-        // Setup footnote references and links
-        setupFootnoteReferences();
-        setupExternalLinks();
-        
-        // Apply current font size
-        document.querySelectorAll('.page-content').forEach(content => {
-            content.style.fontSize = `${currentFontSize}%`;
+        // Start with fresh pagination
+        regeneratePages().then(() => {
+            // Show first page
+            if (totalPages > 0) {
+                showPage(0);
+            }
+            
+            resolve();
         });
-        
-        document.querySelectorAll('.footnotes').forEach(footnotes => {
-            footnotes.style.fontSize = `${currentFontSize * 0.8}%`;
-        });
-        
-        // Show first page
-        if (totalPages > 0) {
-            showPage(0);
-        }
-        
-        // Update navigation buttons
-        updateNavigation();
-        
-        // Initialize mobile features
-        setupMobileFeatures();
-        
-        resolve();
     });
 }
         
@@ -1479,13 +1432,20 @@ function createChapterPages(chapter, chapterIndex, charsPerPage = 1550) {
         const minFontSize = 80;    // 80% minimum
         const maxFontSize = 200;   // 200% maximum
         const fontSizeStep = 10;   // Change in 10% increments
+        let forceRedraw = false;
         
         // Function to change the font size
 function changeFontSize(delta) {
+    // Only proceed if there's actually a change
+    if (delta === 0 && !forceRedraw) return;
+    
+    // Show loading overlay while we repaginate
+    showLoading();
+    
     // Update current font size with bounds checking
     currentFontSize = Math.max(minFontSize, Math.min(maxFontSize, currentFontSize + delta));
     
-    // Save preference to localStorage for persistence before we repaginate
+    // Save preference to localStorage for persistence
     localStorage.setItem('ebook-font-size', currentFontSize);
     
     // Remember which chapter and position we're currently viewing
@@ -1494,18 +1454,29 @@ function changeFontSize(delta) {
     // Completely regenerate all pages with the new font size
     regeneratePages().then(() => {
         // After regeneration, try to go back to approximately where we were reading
-        if (currentPage && currentPage.type === 'chapter') {
-            // Find the first page of the same chapter
-            const newPageIndex = pagesMap.findIndex(p => 
-                p.type === 'chapter' && 
-                p.chapterIndex === currentPage.chapterIndex
-            );
+        if (currentPage) {
+            let newPageIndex = 0;
             
-            if (newPageIndex >= 0) {
-                // Go to that chapter (might not be the exact same position, but at least the same chapter)
-                showPage(newPageIndex);
+            if (currentPage.type === 'chapter') {
+                // Find the first page of the same chapter
+                newPageIndex = pagesMap.findIndex(p => 
+                    p.type === 'chapter' && 
+                    p.chapterIndex === currentPage.chapterIndex
+                );
+                
+                if (newPageIndex < 0) newPageIndex = 0;
+            } else {
+                // For non-chapter pages (cover, dedication, TOC), go to the same type
+                newPageIndex = pagesMap.findIndex(p => p.type === currentPage.type);
+                if (newPageIndex < 0) newPageIndex = 0;
             }
+            
+            // Go to that page
+            showPage(newPageIndex);
         }
+        
+        // Hide loading overlay
+        hideLoading();
     });
 }
 
@@ -1518,16 +1489,6 @@ async function regeneratePages() {
     
     // Reset page mapping but keep the chapter data
     pagesMap = [];
-    
-    // First, apply the font size to our measuring element
-    // This is necessary for accurate character count estimation
-    const measuringElement = document.createElement('div');
-    measuringElement.style.position = 'absolute';
-    measuringElement.style.visibility = 'hidden';
-    measuringElement.style.width = isMobileDevice() ? '320px' : '600px'; // Approximate content width
-    measuringElement.style.fontSize = `${currentFontSize}%`;
-    measuringElement.style.lineHeight = '1.6';
-    document.body.appendChild(measuringElement);
     
     // Create cover page (page 0)
     createCoverPage();
@@ -1544,18 +1505,17 @@ async function regeneratePages() {
     const scaleFactor = 100 / currentFontSize; // Inverse relationship
     const adjustedCharsPerPage = Math.floor(BASELINE_CHARS * scaleFactor);
     
+    console.log(`Font size: ${currentFontSize}%, Adjusted chars per page: ${adjustedCharsPerPage}`);
+    
     // Create content pages for each chapter with the new font size
     for (let i = 0; i < bookData.chapters.length; i++) {
         createChapterPages(bookData.chapters[i], i, adjustedCharsPerPage);
     }
     
-    // Clean up the measuring element
-    document.body.removeChild(measuringElement);
-    
     // Update total pages
     totalPages = pagesMap.length;
     
-    // Update the TOC links
+    // Now that all pages are created, we need to update the TOC links
     updateTOCLinks();
     
     // Setup footnote references and links
@@ -1571,21 +1531,32 @@ async function regeneratePages() {
         footnotes.style.fontSize = `${currentFontSize * 0.8}%`;
     });
     
-    // Update navigation
+    // Update navigation buttons
     updateNavigation();
+    
+    // Initialize mobile features
+    setupMobileFeatures();
     
     return Promise.resolve();
 }
         
         // Load saved font size preference
-        function loadUserPreferences() {
-            // Get saved font size (if any)
-            const savedFontSize = localStorage.getItem('ebook-font-size');
-            if (savedFontSize) {
-                currentFontSize = parseInt(savedFontSize);
-                changeFontSize(0); // Apply the saved size (delta of 0 just applies current size)
-            }
-        }
+function loadUserPreferences() {
+    // Get saved font size (if any)
+    const savedFontSize = localStorage.getItem('ebook-font-size');
+    if (savedFontSize) {
+        currentFontSize = parseInt(savedFontSize);
+        
+        // Apply font size directly to elements without repagination
+        document.querySelectorAll('.page-content').forEach(content => {
+            content.style.fontSize = `${currentFontSize}%`;
+        });
+        
+        document.querySelectorAll('.footnotes').forEach(footnotes => {
+            footnotes.style.fontSize = `${currentFontSize * 0.8}%`;
+        });
+    }
+}
         
     </script>
 </body>
