@@ -11,9 +11,6 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Georgia', serif;
-            text-rendering: optimizeLegibility;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
         
         body {
@@ -66,9 +63,8 @@
             overflow: auto;
             display: flex;
             flex-direction: column;
-            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            transition: transform 0.3s ease;
             transform: translateX(100%);
-            will-change: transform;
         }
         
         .page.active {
@@ -92,22 +88,6 @@
             overflow: hidden;
             line-height: 1.7;
             font-size: 18px;
-            overflow-wrap: break-word;
-            word-wrap: break-word;
-            hyphens: auto;
-        }
-        
-        .page-content p {
-            margin-bottom: 1em;
-        }
-        
-        .page-content p:last-child {
-            margin-bottom: 0;
-        }
-        
-        .page-content h1, .page-content h2, .page-content h3 {
-            margin-bottom: 0.7em;
-            line-height: 1.3;
         }
         
         /* Cover page with full image */
@@ -218,8 +198,6 @@
             font-size: 14px;
             position: relative;
             z-index: 50; /* Higher z-index to ensure clickability */
-            line-height: 1.5;
-            color: #444;
         }
         
         .footnote-ref {
@@ -230,35 +208,18 @@
             text-decoration: none;
             position: relative;
             z-index: 25; /* Higher z-index to ensure clickability */
-            transition: color 0.2s;
-            margin: 0 2px;
-        }
-        
-        .footnote-ref:hover {
-            color: #004499;
         }
         
         .footnote-item {
             position: relative;
             z-index: 50;
-            margin-bottom: 12px;
-            padding-left: 20px;
-            text-indent: -20px;
-        }
-        
-        .footnote-item:last-child {
-            margin-bottom: 0;
+            margin-bottom: 10px;
         }
         
         /* Footnote highlight */
         .footnote-highlight {
-            animation: highlight-pulse 2s ease;
-        }
-        
-        @keyframes highlight-pulse {
-            0% { background-color: rgba(24, 144, 255, 0.0); }
-            25% { background-color: rgba(24, 144, 255, 0.2); }
-            100% { background-color: rgba(24, 144, 255, 0.0); }
+            background-color: rgba(24, 144, 255, 0.2);
+            transition: background-color 0.5s ease;
         }
         
         /* Navigation Controls */
@@ -411,7 +372,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -422,16 +383,16 @@
         .spinner {
             width: 50px;
             height: 50px;
-            border: 3px solid rgba(0, 102, 204, 0.2);
-            border-top: 3px solid #0066cc;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #0066cc;
             border-radius: 50%;
-            animation: spin 1s cubic-bezier(0.4, 0.2, 0.6, 0.8) infinite;
+            animation: spin 1s linear infinite;
         }
         
         .loading-text {
             margin-top: 20px;
             font-size: 16px;
-            color: #333;
+            color: #fff;
         }
         
         @keyframes spin {
@@ -470,57 +431,28 @@
             margin-top: auto;
         }
         
-        /* Measurement container (hidden) */
-        .measure-container {
-            position: absolute;
-            visibility: hidden;
-            pointer-events: none;
-            left: -9999px;
-            top: -9999px;
-            overflow: auto;
-        }
-        
-        /* Hardware acceleration for mobile devices */
-        .use-hardware-acceleration .page {
-            transform: translateZ(0);
-            backface-visibility: hidden;
-            perspective: 1000px;
-        }
-        
         /* Mobile Optimizations */
-        @media (max-width: 480px) {
-            /* Extra small screens */
+        @media (max-width: 768px) {
             .page {
-                padding: 15px;
+                padding: 20px;
             }
             
             .page-content {
                 font-size: 16px;
-                line-height: 1.5;
-            }
-            
-            .footnotes {
-                font-size: 0.75em;
+                line-height: 1.6;
             }
             
             .cover-page h1 {
-                font-size: 24px;
+                font-size: 28px;
             }
             
             .cover-page h2 {
-                font-size: 18px;
-            }
-        }
-        
-        @media (min-width: 481px) and (max-width: 768px) {
-            /* Small screens */
-            .page {
-                padding: 25px;
+                font-size: 20px;
             }
             
-            .page-content {
-                font-size: 17px;
-                line-height: 1.6;
+            .chapter-page h2 {
+                font-size: 20px;
+                margin-bottom: 20px;
             }
             
             .panel {
@@ -536,144 +468,6 @@
             /* Show touch navigation areas on mobile */
             .touch-nav-area {
                 display: block;
-            }
-        }
-        
-        @media (min-width: 769px) and (max-width: 1024px) {
-            /* Medium screens */
-            .page {
-                padding: 30px;
-            }
-        }
-        
-        @media (min-width: 1025px) {
-            /* Large screens */
-            .page {
-                padding: 40px;
-            }
-            
-            .page-content {
-                font-size: 19px;
-                line-height: 1.8;
-            }
-        }
-        
-        /* High-contrast mode for better accessibility */
-        @media (prefers-contrast: high) {
-            body {
-                background-color: white;
-                color: black;
-            }
-            
-            .page {
-                background-color: white;
-                color: black;
-            }
-            
-            .footnote-ref {
-                color: #0000EE;
-            }
-            
-            .page-nav-button {
-                background-color: black;
-                color: white;
-            }
-        }
-        
-        /* Dark mode support */
-        @media (prefers-color-scheme: dark) {
-            body {
-                background-color: #121212;
-                color: #e0e0e0;
-            }
-            
-            .ereader {
-                background-color: #121212;
-                color: #e0e0e0;
-            }
-            
-            .page {
-                background-color: #121212;
-                color: #e0e0e0;
-            }
-            
-            .footnotes {
-                border-top-color: #444;
-                color: #aaa;
-            }
-            
-            .page-nav-button {
-                background-color: #333;
-            }
-            
-            .menu-button {
-                background-color: #333;
-            }
-            
-            .panel {
-                background-color: #1e1e1e;
-                color: #e0e0e0;
-            }
-            
-            .panel-header {
-                border-bottom-color: #444;
-            }
-            
-            .menu-item {
-                border-bottom-color: #444;
-            }
-            
-            .menu-item:hover {
-                background-color: #333;
-            }
-            
-            .loading-overlay {
-                background-color: rgba(18, 18, 18, 0.9);
-            }
-            
-            .loading-text {
-                color: #e0e0e0;
-            }
-            
-            .spinner {
-                border-color: rgba(30, 144, 255, 0.2);
-                border-top-color: #1e90ff;
-            }
-        }
-        
-        /* Print styles for when users want to print pages */
-        @media print {
-            body {
-                background-color: white;
-            }
-            
-            .page {
-                position: relative;
-                transform: none !important;
-                page-break-after: always;
-                page-break-inside: avoid;
-                display: block !important;
-                width: 100%;
-                height: auto;
-                overflow: visible;
-                background-color: white;
-                color: black;
-            }
-            
-            .page-nav-controls, 
-            .menu-button, 
-            .touch-nav-area {
-                display: none !important;
-            }
-            
-            .footnote-ref {
-                color: black;
-                text-decoration: none;
-            }
-            
-            .footnotes {
-                border-top: 1px solid black;
-                color: black;
             }
         }
 
@@ -760,10 +554,6 @@
         <div class="loading-text">Loading your book...</div>
     </div>
     
-    <!-- Accessibility announcement container for screen readers -->
-    <div id="orientation-announcement" aria-live="polite" class="sr-only" 
-         style="position: absolute; width: 1px; height: 1px; overflow: hidden;"></div>
-    
     <script>
         /* === Global Variables === */
         // Book data structure
@@ -788,94 +578,93 @@
         const fontSizeStep = 10;   // Change in 10% increments
         let forceRedraw = false;
         
-        // Store viewport dimensions to detect real changes
-        let lastWidth = window.innerWidth;
-        let lastHeight = window.innerHeight;
-        
-        /* === Utility Functions === */
-        // Function to get viewport dimensions
-        function getViewportDimensions() {
-            return {
-                width: window.innerWidth,
-                height: window.innerHeight
-            };
-        }
-        
-        // Function to get page content dimensions
-        function getPageContentDimensions() {
-            // Get page element
-            const pageEl = document.querySelector('.page');
+        /* === Initialization === */
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show loading screen
+            showLoading();
             
-            if (!pageEl) {
-                // Default dimensions if no page exists yet
-                const viewport = getViewportDimensions();
-                
-                // Conservative estimates based on viewport
-                return {
-                    width: viewport.width - 80, // 40px padding on each side
-                    height: viewport.height - 120 // 40px padding top and bottom, plus space for navigation
-                };
-            }
-            
-            // Get computed styles
-            const styles = window.getComputedStyle(pageEl);
-            
-            // Calculate content area dimensions
-            const width = pageEl.clientWidth - 
-                        parseInt(styles.paddingLeft) - 
-                        parseInt(styles.paddingRight);
-            
-            const height = pageEl.clientHeight - 
-                        parseInt(styles.paddingTop) - 
-                        parseInt(styles.paddingBottom);
-            
-            // Apply a safety margin (95% of available space)
-            return {
-                width: width * 0.95,
-                height: height * 0.95
-            };
-        }
+            // Load book metadata
+            loadBookMetadata()
+                .then(() => {
+                    // Initialize pages
+                    return initializePages();
+                })
+                .then(() => {
+                    // Setup event listeners
+                    setupEventListeners();
+                    
+                    // Hide loading screen
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error('Error loading book:', error);
+                    hideLoading();
+                    alert('Error loading book data. Please try refreshing the page.');
+                });
+        });
         
-        // Calculate maximum footnote height (as percentage of page)
-        function getMaxFootnoteHeight() {
-            const contentDimensions = getPageContentDimensions();
-            // Allow footnotes to use up to 1/3 of the page height
-            return contentDimensions.height / 3;
-        }
-        
-        // Function to check if we're on a mobile device with limited screen space
-        function isLimitedScreenSpace() {
-            const viewport = getViewportDimensions();
-            // Consider limited screen space if either dimension is small
-            return viewport.width < 600 || viewport.height < 700;
-        }
-        
-        // Helper debounce function to prevent excessive recalculations during resize
-        function debounce(func, wait) {
-            let timeout;
-            return function() {
-                const context = this;
-                const args = arguments;
-                clearTimeout(timeout);
-                timeout = setTimeout(function() {
-                    func.apply(context, args);
-                }, wait);
-            };
-        }
-        
-        // Safely append and measure element
-        function safeAppendAndMeasure(container, element) {
-            // Store current innerHTML
-            const originalHTML = container.innerHTML;
-            
+        /* === Load Book Data === */
+        // Load book metadata from book-meta.json
+        async function loadBookMetadata() {
             try {
-                // Append the element
-                container.appendChild(element);
-                // Get dimensions
-                const height = container.offsetHeight;
-                const width = container.offsetWidth;
-                return { height, width, success: true };
-            } catch (e) {
+                const response = await fetch('data/book-meta.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load book metadata (${response.status})`);
+                }
+                
+                const metadata = await response.json();
+                bookData.title = metadata.title;
+                bookData.author = metadata.author;
+                bookData.coverImage = metadata.coverImage || '';
+                
+                // Load chapter list
+                return loadChaptersList();
+            } catch (error) {
+                console.error('Error loading book metadata:', error);
+                return Promise.reject(error);
+            }
+        }
+        
+        // Load list of chapters from chapters.json
+        async function loadChaptersList() {
+            try {
+                const response = await fetch('data/chapters.json');
+                if (!response.ok) {
+                    throw new Error(`Failed to load chapters list (${response.status})`);
+                }
+                
+                const chaptersData = await response.json();
+                totalChaptersToLoad = chaptersData.length;
+                
+                // Load each chapter content
+                const promises = chaptersData.map(chapterInfo => loadChapterContent(chapterInfo));
+                
+                return Promise.all(promises);
+            } catch (error) {
+                console.error('Error loading chapters list:', error);
+                return Promise.reject(error);
+            }
+        }
+        
+        // Load individual chapter content
+        async function loadChapterContent(chapterInfo) {
+            try {
+                const response = await fetch(`data/chapters/${chapterInfo.file}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load chapter ${chapterInfo.number} (${response.status})`);
+                }
+                
+                const chapterData = await response.json();
+                
+                // Add chapter to book data
+                bookData.chapters.push(chapterData);
+                chaptersLoaded++;
+                
+                // Sort chapters by number
+                bookData.chapters.sort((a, b) => a.number - b.number);
+                
+                return Promise.resolve();
+            } catch (error) {
                 console.error(`Error loading chapter ${chapterInfo.number}:`, error);
                 return Promise.reject(error);
             }
@@ -930,13 +719,6 @@
             document.getElementById('decrease-font-btn').addEventListener('click', function() {
                 changeFontSize(-fontSizeStep);
                 hideMenuPanel();
-            });
-            
-            // Handle window resize and orientation change
-            window.addEventListener('resize', debounce(recalculatePageDimensions, 250));
-            window.addEventListener('orientationchange', function() {
-                // Allow time for orientation change to complete
-                setTimeout(handleOrientationChange, 300);
             });
         }
         
@@ -1089,254 +871,19 @@
                     currentFontSize = parseInt(savedFontSize);
                 }
                 
-                // Get last read position if any
-                const lastPageIndex = localStorage.getItem('ebook-last-page');
-                
                 // Start with fresh pagination
                 regeneratePages().then(() => {
-                    // Show first page or last read page
+                    // Show first page
                     if (totalPages > 0) {
-                        if (lastPageIndex && parseInt(lastPageIndex) < totalPages) {
-                            showPage(parseInt(lastPageIndex));
-                        } else {
-                            showPage(0);
-                        }
+                        showPage(0);
                     }
-                    
-                    // Add page change tracking to save reading position
-                    document.addEventListener('pageChanged', function(e) {
-                        if (e.detail && typeof e.detail.pageIndex !== 'undefined') {
-                            localStorage.setItem('ebook-last-page', e.detail.pageIndex);
-                        }
-                    });
                     
                     resolve();
                 });
             });
         }
-
-        // Update the regeneratePages function to properly initialize elements before pagination
-        async function regeneratePages() {
-            // Show loading screen
-            showLoading();
-            
-            // Clear page container
-            const pageContainer = document.getElementById('page-container');
-            pageContainer.innerHTML = '';
-            
-            // Reset page mapping but keep the chapter data
-            pagesMap = [];
-            
-            // We need at least one page element to exist for measurements
-            // Create a temporary page to get sizing information
-            const tempPage = document.createElement('div');
-            tempPage.className = 'page';
-            tempPage.style.visibility = 'hidden';
-            tempPage.style.position = 'absolute';
-            tempPage.style.fontSize = `${currentFontSize}%`;
-            pageContainer.appendChild(tempPage);
-            
-            // Create cover page (page 0)
-            createCoverPage();
-            
-            // Create dedication page (page 1)
-            createDedicationPage();
-            
-            // Create TOC page (now page 2)
-            createTOCPage();
-            
-            // Create content pages for each chapter with the new pagination system
-            for (let i = 0; i < bookData.chapters.length; i++) {
-                createChapterPages(bookData.chapters[i], i);
-            }
-            
-            // Remove temporary page
-            if (tempPage.parentNode) {
-                pageContainer.removeChild(tempPage);
-            }
-            
-            // Update total pages
-            totalPages = pagesMap.length;
-            
-            // Now that all pages are created, we need to update the TOC links
-            updateTOCLinks();
-            
-            // Setup footnote references and links
-            setupFootnoteReferences();
-            setupExternalLinks();
-            
-            // Apply current font size to all content
-            document.querySelectorAll('.page-content').forEach(content => {
-                content.style.fontSize = `${currentFontSize}%`;
-            });
-            
-            document.querySelectorAll('.footnotes').forEach(footnotes => {
-                footnotes.style.fontSize = `${currentFontSize * 0.8}%`;
-            });
-            
-            // Update navigation buttons
-            updateNavigation();
-            
-            // Initialize mobile features
-            setupMobileFeatures();
-            
-            // Hide loading screen
-            hideLoading();
-            
-            return Promise.resolve();
-        }error('Error measuring element:', e);
-                return { height: 0, width: 0, success: false };
-            } finally {
-                // Reset to original state to prevent memory leaks
-                container.innerHTML = originalHTML;
-            }
-        }
         
-        /* === Initialization === */
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show loading screen
-            showLoading();
-            
-            // Apply hardware acceleration if appropriate
-            applyHardwareAcceleration();
-            
-            // Load book metadata
-            loadBookMetadata()
-                .then(() => {
-                    // Setup event listeners (do this first so resize handling works correctly)
-                    setupEventListeners();
-                    
-                    // Initialize pages
-                    return initializePages();
-                })
-                .then(() => {
-                    // Register a resize observer for all pages
-                    setupResizeObserver();
-                    
-                    // Hide loading screen
-                    hideLoading();
-                })
-                .catch(error => {
-                    console.error('Error loading book:', error);
-                    hideLoading();
-                    alert('Error loading book data. Please try refreshing the page.');
-                });
-        });
-        
-        // Function to setup a resize observer for dynamic content adjustment
-        function setupResizeObserver() {
-            // Only setup if ResizeObserver is available
-            if (typeof ResizeObserver !== 'undefined') {
-                const observer = new ResizeObserver(debounce(() => {
-                    // Only repaginate if there's been a significant change in viewport dimensions
-                    const currentWidth = window.innerWidth;
-                    const currentHeight = window.innerHeight;
-                    
-                    if (Math.abs(currentWidth - lastWidth) > 50 || 
-                        Math.abs(currentHeight - lastHeight) > 50) {
-                        
-                        // Store current dimensions
-                        lastWidth = currentWidth;
-                        lastHeight = currentHeight;
-                        
-                        // Recalculate
-                        recalculatePageDimensions();
-                    }
-                }, 300));
-                
-                // Observe the entire ereader container
-                const ereader = document.getElementById('ereader');
-                if (ereader) {
-                    observer.observe(ereader);
-                }
-            }
-        }
-        
-        // Function to determine if we should use hardware acceleration
-        function shouldUseHardwareAcceleration() {
-            // Check for mobile devices that benefit from hardware acceleration
-            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            
-            // Check for low-end devices where hardware acceleration might cause problems
-            const isLowEnd = navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2;
-            
-            // Enable for mobile devices unless they're very low-end
-            return isMobile && !isLowEnd;
-        }
-        
-        // Apply hardware acceleration settings
-        function applyHardwareAcceleration() {
-            if (shouldUseHardwareAcceleration()) {
-                // Add a class to use hardware acceleration for transitions
-                document.body.classList.add('use-hardware-acceleration');
-            }
-        }
-        
-        /* === Load Book Data === */
-        // Load book metadata from book-meta.json
-        async function loadBookMetadata() {
-            try {
-                const response = await fetch('data/book-meta.json');
-                if (!response.ok) {
-                    throw new Error(`Failed to load book metadata (${response.status})`);
-                }
-                
-                const metadata = await response.json();
-                bookData.title = metadata.title;
-                bookData.author = metadata.author;
-                bookData.coverImage = metadata.coverImage || '';
-                
-                // Load chapter list
-                return loadChaptersList();
-            } catch (error) {
-                console.error('Error loading book metadata:', error);
-                return Promise.reject(error);
-            }
-        }
-        
-        // Load list of chapters from chapters.json
-        async function loadChaptersList() {
-            try {
-                const response = await fetch('data/chapters.json');
-                if (!response.ok) {
-                    throw new Error(`Failed to load chapters list (${response.status})`);
-                }
-                
-                const chaptersData = await response.json();
-                totalChaptersToLoad = chaptersData.length;
-                
-                // Load each chapter content
-                const promises = chaptersData.map(chapterInfo => loadChapterContent(chapterInfo));
-                
-                return Promise.all(promises);
-            } catch (error) {
-                console.error('Error loading chapters list:', error);
-                return Promise.reject(error);
-            }
-        }
-        
-        // Load individual chapter content
-        async function loadChapterContent(chapterInfo) {
-            try {
-                const response = await fetch(`data/chapters/${chapterInfo.file}`);
-                if (!response.ok) {
-                    throw new Error(`Failed to load chapter ${chapterInfo.number} (${response.status})`);
-                }
-                
-                const chapterData = await response.json();
-                
-                // Add chapter to book data
-                bookData.chapters.push(chapterData);
-                chaptersLoaded++;
-                
-                // Sort chapters by number
-                bookData.chapters.sort((a, b) => a.number - b.number);
-                
-                return Promise.resolve();
-            } catch (error) {
-                console.
-
-// Create the cover page with just the image
+        // Create the cover page with just the image
         function createCoverPage() {
             const pageContainer = document.getElementById('page-container');
             
@@ -1444,415 +991,15 @@
             });
         }
         
-        // Enhanced pagination function
-        function enhancedPaginateContent(content, footnotes, options) {
-            // Create a testing container for measuring content
-            const testContainer = document.createElement('div');
-            testContainer.className = 'page-content';
-            testContainer.style.position = 'absolute';
-            testContainer.style.visibility = 'hidden';
-            testContainer.style.overflow = 'auto';
-            testContainer.style.width = `${getPageContentDimensions().width}px`;
-            testContainer.style.fontSize = `${currentFontSize}%`;
-            document.body.appendChild(testContainer);
-            
-            // Create a testing container for footnotes
-            const footnoteContainer = document.createElement('div');
-            footnoteContainer.className = 'footnotes';
-            footnoteContainer.style.position = 'absolute';
-            footnoteContainer.style.visibility = 'hidden';
-            footnoteContainer.style.width = `${getPageContentDimensions().width}px`;
-            footnoteContainer.style.fontSize = `${currentFontSize * 0.8}%`;
-            document.body.appendChild(footnoteContainer);
-            
-            // Parse and prepare content
-            const contentDiv = document.createElement('div');
-            contentDiv.innerHTML = content;
-            const contentElements = Array.from(contentDiv.childNodes);
-            
-            // Initialize pages array and current page data
-            const pages = [];
-            let currentPage = {
-                content: [],
-                footnoteIds: []
-            };
-            
-            // Get maximum content height and footnote height
-            const maxContentHeight = getPageContentDimensions().height * 0.9; // 90% of available height
-            const maxFootnoteHeight = getMaxFootnoteHeight();
-            
-            // Process each content element
-            for (let i = 0; i < contentElements.length; i++) {
-                const element = contentElements[i];
-                
-                // Skip empty nodes
-                if (element.nodeType === 3 && !element.textContent.trim()) {
-                    continue;
-                }
-                
-                // Process the element - check if it fits on current page
-                processElement(element);
-            }
-            
-            // Add any remaining content as the last page
-            if (currentPage.content.length > 0) {
-                pages.push({
-                    content: currentPage.content.map(el => el.outerHTML || el.textContent).join(''),
-                    footnotes: buildEnhancedFootnotesHTML(currentPage.footnoteIds, footnotes)
-                });
-            }
-            
-            // Clean up test containers
-            document.body.removeChild(testContainer);
-            document.body.removeChild(footnoteContainer);
-            
-            return pages;
-            
-            // Function to process an individual element
-            function processElement(element) {
-                // Extract footnote references from this element
-                const footnoteRefs = extractFootnoteRefs(element);
-                
-                // Clone the element for testing
-                const elementClone = element.cloneNode(true);
-                
-                // Check if adding this element exceeds page height
-                if (!willElementFit(elementClone, footnoteRefs)) {
-                    // Element won't fit - create a new page with current content
-                    if (currentPage.content.length > 0) {
-                        pages.push({
-                            content: currentPage.content.map(el => el.outerHTML || el.textContent).join(''),
-                            footnotes: buildEnhancedFootnotesHTML(currentPage.footnoteIds, footnotes)
-                        });
-                        
-                        // Reset current page
-                        currentPage = {
-                            content: [],
-                            footnoteIds: []
-                        };
-                        
-                        // Now check if the element fits on a new empty page
-                        if (!willElementFit(elementClone, footnoteRefs)) {
-                            // Still doesn't fit - we need to split this element
-                            splitElement(element, footnoteRefs);
-                            return;
-                        }
-                    } else {
-                        // If current page is empty but element still doesn't fit,
-                        // we must split the element
-                        splitElement(element, footnoteRefs);
-                        return;
-                    }
-                }
-                
-                // Element fits, add it to current page
-                currentPage.content.push(element);
-                currentPage.footnoteIds.push(...footnoteRefs);
-            }
-            
-            // Function to check if an element will fit on the current page
-            function willElementFit(element, footnoteRefs) {
-                // Clear test container
-                testContainer.innerHTML = '';
-                
-                // Add all current page content to test container
-                currentPage.content.forEach(el => {
-                    testContainer.appendChild(el.cloneNode(true));
-                });
-                
-                // Add the new element
-                testContainer.appendChild(element);
-                
-                // Measure content height
-                const contentHeight = testContainer.scrollHeight;
-                
-                // Now check if footnotes will fit
-                const combinedFootnoteIds = [...currentPage.footnoteIds, ...footnoteRefs];
-                if (combinedFootnoteIds.length > 0) {
-                    // Clear footnote container
-                    footnoteContainer.innerHTML = '';
-                    
-                    // Add footnotes HTML
-                    footnoteContainer.innerHTML = buildEnhancedFootnotesHTML(combinedFootnoteIds, footnotes);
-                    
-                    // Measure footnote height
-                    const footnoteHeight = footnoteContainer.scrollHeight;
-                    
-                    // Check if content + footnotes exceeds maximum height
-                    return (contentHeight + footnoteHeight) <= (maxContentHeight - 20); // 20px buffer
-                }
-                
-                // No footnotes, just check content height
-                return contentHeight <= maxContentHeight;
-            }
-            
-            // Function to split a complex element that doesn't fit
-            function splitElement(element, footnoteRefs) {
-                // Different splitting strategies based on element type
-                if (element.nodeType === 3 || element.childNodes.length === 0) {
-                    // Text node or element without children
-                    splitTextNode(element, footnoteRefs);
-                } else if (element.nodeName === 'P' || element.nodeName === 'DIV') {
-                    // Paragraph or div - split by child nodes
-                    splitParagraph(element, footnoteRefs);
-                } else {
-                    // For other elements, try a generic approach
-                    splitGenericElement(element, footnoteRefs);
-                }
-            }
-            
-            // Function to split a text node or simple element
-            function splitTextNode(element, footnoteRefs) {
-                const text = element.textContent;
-                const tagName = element.nodeName || 'P';
-                
-                // Try to find the optimal split point using binary search
-                let low = 0;
-                let high = text.length;
-                let mid = 0;
-                let bestSplit = 0;
-                
-                while (low <= high) {
-                    mid = Math.floor((low + high) / 2);
-                    
-                    // Create a test element with partial text
-                    const testEl = document.createElement(tagName);
-                    testEl.textContent = text.substring(0, mid);
-                    
-                    // Check if this portion fits
-                    testContainer.innerHTML = '';
-                    currentPage.content.forEach(el => {
-                        testContainer.appendChild(el.cloneNode(true));
-                    });
-                    testContainer.appendChild(testEl);
-                    
-                    const fits = testContainer.scrollHeight <= maxContentHeight;
-                    
-                    if (fits) {
-                        bestSplit = mid;
-                        low = mid + 1;
-                    } else {
-                        high = mid - 1;
-                    }
-                }
-                
-                // Find a good breaking point near our binary search result
-                const breakAt = findOptimalBreakPoint(text, bestSplit);
-                
-                // Create two new elements with split content
-                const firstPart = document.createElement(tagName);
-                firstPart.textContent = text.substring(0, breakAt);
-                
-                const secondPart = document.createElement(tagName);
-                secondPart.textContent = text.substring(breakAt).trim();
-                
-                // Add first part to current page
-                currentPage.content.push(firstPart);
-                
-                // Footnotes go with the first occurrence of their reference
-                currentPage.footnoteIds.push(...footnoteRefs);
-                
-                // Create new page with first part content
-                pages.push({
-                    content: currentPage.content.map(el => el.outerHTML || el.textContent).join(''),
-                    footnotes: buildEnhancedFootnotesHTML(currentPage.footnoteIds, footnotes)
-                });
-                
-                // Start new page with second part
-                currentPage = {
-                    content: [],
-                    footnoteIds: []
-                };
-                
-                // Process second part (it might need further splitting)
-                processElement(secondPart);
-            }
-            
-            // Function to split a paragraph by its child nodes
-            function splitParagraph(paragraph, footnoteRefs) {
-                const children = Array.from(paragraph.childNodes);
-                
-                // Create two new paragraphs for split content
-                const firstPart = document.createElement(paragraph.nodeName);
-                const secondPart = document.createElement(paragraph.nodeName);
-                
-                // Copy attributes from original paragraph
-                Array.from(paragraph.attributes || []).forEach(attr => {
-                    firstPart.setAttribute(attr.name, attr.value);
-                    secondPart.setAttribute(attr.name, attr.value);
-                });
-                
-                // Find optimal split point among child nodes
-                let splitIndex = findOptimalChildSplit(paragraph);
-                
-                // Distribute children between the two parts
-                children.forEach((child, index) => {
-                    if (index < splitIndex) {
-                        firstPart.appendChild(child.cloneNode(true));
-                    } else {
-                        secondPart.appendChild(child.cloneNode(true));
-                    }
-                });
-                
-                // Add first part to current page
-                if (firstPart.hasChildNodes()) {
-                    currentPage.content.push(firstPart);
-                    currentPage.footnoteIds.push(...footnoteRefs);
-                    
-                    // Create page with first part
-                    pages.push({
-                        content: currentPage.content.map(el => el.outerHTML || el.textContent).join(''),
-                        footnotes: buildEnhancedFootnotesHTML(currentPage.footnoteIds, footnotes)
-                    });
-                }
-                
-                // Start new page with second part
-                currentPage = {
-                    content: [],
-                    footnoteIds: []
-                };
-                
-                // Process second part if it has content
-                if (secondPart.hasChildNodes()) {
-                    processElement(secondPart);
-                }
-            }
-            
-            // Function to find the optimal split point among paragraph children
-            function findOptimalChildSplit(paragraph) {
-                const children = Array.from(paragraph.childNodes);
-                
-                // Try each possible split point
-                for (let i = 1; i < children.length; i++) {
-                    const testParagraph = document.createElement(paragraph.nodeName);
-                    
-                    // Add children up to this point
-                    for (let j = 0; j < i; j++) {
-                        testParagraph.appendChild(children[j].cloneNode(true));
-                    }
-                    
-                    // Test if this fits
-                    testContainer.innerHTML = '';
-                    currentPage.content.forEach(el => {
-                        testContainer.appendChild(el.cloneNode(true));
-                    });
-                    testContainer.appendChild(testParagraph);
-                    
-                    if (testContainer.scrollHeight > maxContentHeight) {
-                        // This is too much, use previous split point
-                        return Math.max(1, i - 1);
-                    }
-                }
-                
-                // If we get here, we couldn't find a good split point
-                // Return halfway point as fallback
-                return Math.floor(children.length / 2);
-            }
-            
-            // Generic element splitting for other element types
-            function splitGenericElement(element, footnoteRefs) {
-                // Create a text-only version and split that
-                const textContent = element.textContent;
-                
-                // Create a simple paragraph with the same text
-                const paragraph = document.createElement('p');
-                paragraph.textContent = textContent;
-                
-                // Split this text paragraph
-                splitTextNode(paragraph, footnoteRefs);
-            }
-            
-            // Find the optimal breaking point in text (at word boundaries)
-            function findOptimalBreakPoint(text, index) {
-                // If we're already at a space, that's perfect
-                if (text[index] === ' ') {
-                    return index + 1; // Include the space in first part
-                }
-                
-                // Look for nearby spaces
-                const nextSpace = text.indexOf(' ', index);
-                const prevSpace = text.lastIndexOf(' ', index);
-                
-                // If no spaces found, just use the original index
-                if (nextSpace === -1 && prevSpace === -1) {
-                    return index;
-                }
-                
-                // Choose the closest space
-                if (nextSpace === -1) {
-                    return prevSpace + 1; // Include the space in first part
-                }
-                
-                if (prevSpace === -1) {
-                    return nextSpace + 1; // Include the space in first part
-                }
-                
-                // Choose the closer space
-                if ((index - prevSpace) <= (nextSpace - index)) {
-                    return prevSpace + 1;
-                } else {
-                    return nextSpace + 1;
-                }
-            }
-            
-            // Extract footnote references from an element
-            function extractFootnoteRefs(element) {
-                const footnoteRefs = [];
-                const elementHTML = element.outerHTML || element.textContent;
-                
-                // Use regex to find footnote references
-                const footnoteRegex = /<sup class="footnote-ref"[^>]*data-id="([^"]+)"[^>]*>.*?<\/sup>/g;
-                let match;
-                
-                while ((match = footnoteRegex.exec(elementHTML)) !== null) {
-                    footnoteRefs.push(match[1]);
-                }
-                
-                return footnoteRefs;
-            }
-        }
-
-        // Helper function to build enhanced footnotes HTML
-        function buildEnhancedFootnotesHTML(footnoteIds, footnotes) {
-            if (!footnoteIds || !footnoteIds.length || !footnotes || !footnotes.length) {
-                return '';
-            }
-            
-            // Deduplicate footnote IDs
-            const uniqueIds = [...new Set(footnoteIds)];
-            
-            // Get footnotes that are referenced on this page
-            const pageFootnotes = footnotes.filter(fn => uniqueIds.includes(fn.id));
-            
-            if (!pageFootnotes.length) {
-                return '';
-            }
-            
-            // Sort footnotes by their number
-            pageFootnotes.sort((a, b) => a.number - b.number);
-            
-            let html = '';
-            
-            // Build footnotes HTML
-            for (const footnote of pageFootnotes) {
-                html += `<div id="${footnote.id}" class="footnote-item">
-                    <sup>${footnote.number}</sup> ${footnote.content}
-                </div>`;
-            }
-            
-            return html;
-        }
-
-        // Create chapter pages using enhanced pagination
-        function createChapterPages(chapter, chapterIndex) {
-            // Get the content and footnotes
+        // Create pages for a chapter with improved footnote handling
+        function createChapterPages(chapter, chapterIndex, charsPerPage = 1550) {
             const content = chapter.content;
-            const footnotes = chapter.footnotes || [];
             
-            // Use enhanced pagination
-            const pages = enhancedPaginateContent(content, footnotes, {
+            // Paginate the content with the adjusted character count
+            const pages = paginateContent(content, chapter.footnotes || [], {
                 chapterNumber: chapter.number,
-                chapterTitle: chapter.title
+                chapterTitle: chapter.title,
+                charsPerPage: charsPerPage
             });
             
             // Create a page for each paginated content
@@ -1881,7 +1028,8 @@
                 pagesMap.push({
                     type: 'chapter',
                     chapterIndex: chapterIndex,
-                    pageIndex: i
+                    pageIndex: i,
+                    pageNumber: pagesMap.length
                 });
             }
         }
@@ -1930,29 +1078,270 @@
             });
         }
         
-        // Add mobile-specific features if on mobile device
-        function setupMobileFeatures() {
-            if (isMobileDevice()) {
-                // Make sure tap areas are visible
-                document.getElementById('touch-nav-left').style.display = 'block';
-                document.getElementById('touch-nav-right').style.display = 'block';
+        // Improved paginate content function that handles footnotes better
+        function paginateContent(content, footnotes, options) {
+            // Get the character count per page from options (or use default)
+            const CHARS_PER_PAGE = options.charsPerPage || 1550;
+            
+            // Parse and clean the HTML content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            
+            // Get all paragraphs and elements
+            const elements = Array.from(tempDiv.childNodes);
+            
+            // Initialize pages array
+            const pages = [];
+            
+            // Current page data
+            let currentPage = {
+                content: '',
+                charCount: 0,
+                footnotes: '',
+                footnoteIds: []
+            };
+            
+            // Process each element
+            for (let i = 0; i < elements.length; i++) {
+                const element = elements[i];
+                const elementHTML = element.outerHTML || element.textContent;
+                const elementText = element.textContent || '';
                 
-                // Hide navigation buttons
-                document.getElementById('page-nav-controls').style.display = 'none';
+                // Skip empty elements
+                if (!elementText.trim()) {
+                    continue;
+                }
                 
-                // Add a mobile class to the body for additional styling
-                document.body.classList.add('mobile-device');
-            } else {
-                // Show navigation buttons on desktop
-                document.getElementById('page-nav-controls').style.display = 'flex';
+                // Extract footnote references from this element
+                const footnoteRefs = [];
+                const footnoteRegex = /<sup class="footnote-ref"[^>]*data-id="([^"]+)"[^>]*>.*?<\/sup>/g;
+                let match;
+                while ((match = footnoteRegex.exec(elementHTML)) !== null) {
+                    footnoteRefs.push(match[1]);
+                }
                 
-                // Hide tap areas on desktop
-                document.getElementById('touch-nav-left').style.display = 'none';
-                document.getElementById('touch-nav-right').style.display = 'none';
+                // Calculate the footnote text length (for better pagination with footnotes)
+                let footnoteTextLength = 0;
+                if (footnoteRefs.length > 0) {
+                    const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
+                    pageFootnotes.forEach(fn => {
+                        // Add the length of footnote content plus some overhead
+                        footnoteTextLength += (fn.content.length + 20);
+                    });
+                    
+                    // Scale down footnote text length since it's smaller font
+                    footnoteTextLength = Math.floor(footnoteTextLength * 0.8);
+                }
                 
-                // Remove mobile class if exists
-                document.body.classList.remove('mobile-device');
+                // Total length including element and its footnotes
+                const totalLength = elementText.length + footnoteTextLength;
+                
+                // Check if this is a block element like paragraph, heading, etc.
+                const isBlockElement = element.nodeType === 1 && 
+                    ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'BLOCKQUOTE'].includes(element.tagName);
+                
+                // If this is a block element and it's too large for a single page, we need to split it
+                if (isBlockElement && totalLength > CHARS_PER_PAGE) {
+                    // We'll split this large paragraph into smaller chunks
+                    splitLargeElement(element, footnotes, footnoteRefs);
+                } else {
+                    // Normal element handling
+                    // If adding this element would exceed the page limit, start a new page
+                    if (currentPage.charCount + totalLength > CHARS_PER_PAGE && currentPage.charCount > 0) {
+                        // Complete the current page
+                        pages.push({
+                            content: currentPage.content,
+                            footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                        });
+                        
+                        // Start a new page
+                        currentPage = {
+                            content: elementHTML,
+                            charCount: totalLength,
+                            footnotes: '',
+                            footnoteIds: [...footnoteRefs]
+                        };
+                    } else {
+                        // Add to current page
+                        currentPage.content += elementHTML;
+                        currentPage.charCount += totalLength;
+                        currentPage.footnoteIds.push(...footnoteRefs);
+                    }
+                }
             }
+            
+            // Add the last page if not empty
+            if (currentPage.charCount > 0) {
+                pages.push({
+                    content: currentPage.content,
+                    footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                });
+            }
+            
+            return pages;
+            
+            // Helper function to split large elements
+            function splitLargeElement(element, footnotes, footnoteRefs) {
+                // Get the HTML content
+                const html = element.outerHTML;
+                const text = element.textContent;
+                
+                // If it's a simple element without children, we can safely split by characters
+                if (element.children.length === 0) {
+                    let remainingText = text;
+                    let remainingHTML = html;
+                    
+                    // Handle footnotes - we'll keep them all with the first part
+                    let footnoteTextLength = 0;
+                    if (footnoteRefs.length > 0) {
+                        const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
+                        pageFootnotes.forEach(fn => {
+                            footnoteTextLength += (fn.content.length + 20);
+                        });
+                        footnoteTextLength = Math.floor(footnoteTextLength * 0.8);
+                    }
+                    
+                    // Adjust available characters to account for footnotes
+                    const effectiveCharsPerPage = CHARS_PER_PAGE - footnoteTextLength;
+                    
+                    while (remainingText.length > 0) {
+                        // Calculate how much text we can fit on the current page
+                        const availableChars = effectiveCharsPerPage - currentPage.charCount;
+                        
+                        if (availableChars <= 0) {
+                            // Current page is full, start a new one
+                            pages.push({
+                                content: currentPage.content,
+                                footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                            });
+                            
+                            currentPage = {
+                                content: '',
+                                charCount: 0,
+                                footnotes: '',
+                                footnoteIds: []
+                            };
+                            continue;
+                        }
+                        
+                        // Determine how much text to take
+                        const charsToTake = Math.min(availableChars, remainingText.length);
+                        
+                        // Find a good breaking point (prefer spaces)
+                        let breakPoint = charsToTake;
+                        if (charsToTake < remainingText.length) {
+                            // Find the last space within our limit
+                            const lastSpace = remainingText.lastIndexOf(' ', charsToTake);
+                            if (lastSpace > charsToTake / 2) { // Only use space if it's not too far back
+                                breakPoint = lastSpace + 1; // Include the space in the first part
+                            }
+                        }
+                        
+                        // Get the text for this page
+                        const textForPage = remainingText.substring(0, breakPoint);
+                        remainingText = remainingText.substring(breakPoint);
+                        
+                        // Create HTML for this chunk
+                        let chunkHTML;
+                        if (remainingText.length > 0) {
+                            // This is a partial paragraph, so wrap in appropriate tags
+                            // Get the opening tag
+                            const tagMatch = html.match(/<([a-z0-9]+)[^>]*>/i);
+                            if (tagMatch) {
+                                const tagName = tagMatch[1];
+                                chunkHTML = `<${tagName}>${textForPage}</${tagName}>`;
+                            } else {
+                                chunkHTML = `<p>${textForPage}</p>`;
+                            }
+                        } else {
+                            // This is the last part, use the remaining HTML
+                            chunkHTML = remainingHTML;
+                        }
+                        
+                        // Add to current page
+                        currentPage.content += chunkHTML;
+                        currentPage.charCount += textForPage.length;
+                        
+                        // Only add footnote refs to the first part
+                        if (remainingText.length > 0 && currentPage.content === chunkHTML) {
+                            currentPage.footnoteIds.push(...footnoteRefs);
+                            // Only add footnote length to the first part
+                            currentPage.charCount += footnoteTextLength;
+                        }
+                        
+                        // If we've filled this page and there's more text, create a new page
+                        if (remainingText.length > 0) {
+                            pages.push({
+                                content: currentPage.content,
+                                footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                            });
+                            
+                            currentPage = {
+                                content: '',
+                                charCount: 0,
+                                footnotes: '',
+                                footnoteIds: []
+                            };
+                        }
+                    }
+                } else {
+                    // Complex element with children - fall back to simple add without splitting
+                    // This is a limitation - for perfect results we'd need more complex parsing
+                    
+                    // Calculate total length with footnotes
+                    let footnoteTextLength = 0;
+                    if (footnoteRefs.length > 0) {
+                        const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
+                        pageFootnotes.forEach(fn => {
+                            footnoteTextLength += (fn.content.length + 20);
+                        });
+                        footnoteTextLength = Math.floor(footnoteTextLength * 0.8);
+                    }
+                    
+                    const totalLength = text.length + footnoteTextLength;
+                    
+                    if (currentPage.charCount + totalLength > CHARS_PER_PAGE && currentPage.charCount > 0) {
+                        // Complete the current page
+                        pages.push({
+                            content: currentPage.content,
+                            footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                        });
+                        
+                        // Start a new page
+                        currentPage = {
+                            content: html,
+                            charCount: totalLength,
+                            footnotes: '',
+                            footnoteIds: [...footnoteRefs]
+                        };
+                    } else {
+                        // Add to current page
+                        currentPage.content += html;
+                        currentPage.charCount += totalLength;
+                        currentPage.footnoteIds.push(...footnoteRefs);
+                    }
+                }
+            }
+        }
+        
+        // Build footnotes HTML
+        function buildFootnotesHTML(footnoteIds, footnotes) {
+            if (!footnoteIds.length || !footnotes || !footnotes.length) {
+                return '';
+            }
+            
+            let html = '';
+            
+            // Get footnotes that are referenced on this page
+            const pageFootnotes = footnotes.filter(fn => footnoteIds.includes(fn.id));
+            
+            if (pageFootnotes.length) {
+                for (const footnote of pageFootnotes) {
+                    html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
+                }
+            }
+            
+            return html;
         }
         
         /* === Page Navigation === */
@@ -1994,34 +1383,11 @@
                 nextPage.classList.add('next');
             }
             
-            // Optimize page loading by ensuring more distant pages are not in memory
-            // Preload/keep only adjacent pages for better performance
-            pages.forEach(page => {
-                const pageId = page.id;
-                const pageNum = parseInt(pageId.replace('page-', ''));
-                
-                // Only keep current page and adjacent pages in active rendering
-                if (Math.abs(pageNum - pageIndex) > 2) {
-                    page.style.display = 'none';
-                } else {
-                    page.style.display = '';
-                }
-            });
-            
             // Update current page index
             currentPageIndex = pageIndex;
             
             // Update navigation
             updateNavigation();
-            
-            // Dispatch custom event for page change
-            const pageChangedEvent = new CustomEvent('pageChanged', {
-                detail: {
-                    pageIndex: pageIndex,
-                    pageInfo: pagesMap[pageIndex]
-                }
-            });
-            document.dispatchEvent(pageChangedEvent);
             
             return true;
         }
@@ -2065,7 +1431,52 @@
             document.getElementById('menu-panel').classList.remove('active');
         }
         
-        /* === Font Size Functions === */
+        /* === Utility Functions === */
+        // Show loading overlay
+        function showLoading() {
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        
+        // Hide loading overlay
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+        
+        // Check if device is mobile
+        function isMobileDevice() {
+            return window.innerWidth <= 768;
+        }
+        
+        // Add mobile-specific features if on mobile device
+        function setupMobileFeatures() {
+            if (isMobileDevice()) {
+                // Make sure tap areas are visible
+                document.getElementById('touch-nav-left').style.display = 'block';
+                document.getElementById('touch-nav-right').style.display = 'block';
+                
+                // Hide navigation buttons
+                document.getElementById('page-nav-controls').style.display = 'none';
+                
+                // Add a mobile class to the body for additional styling
+                document.body.classList.add('mobile-device');
+            } else {
+                // Show navigation buttons on desktop
+                document.getElementById('page-nav-controls').style.display = 'flex';
+                
+                // Hide tap areas on desktop
+                document.getElementById('touch-nav-left').style.display = 'none';
+                document.getElementById('touch-nav-right').style.display = 'none';
+                
+                // Remove mobile class if exists
+                document.body.classList.remove('mobile-device');
+            }
+        }
+        
+        // Update mobile features when window resizes
+        window.addEventListener('resize', function() {
+            setupMobileFeatures();
+        });
+        
         // Function to change the font size
         function changeFontSize(delta) {
             // Only proceed if there's actually a change
@@ -2112,75 +1523,101 @@
             });
         }
         
-        // Function to recalculate page dimensions when window resizes or orientation changes
-        function recalculatePageDimensions() {
-            // Only proceed if there's been a significant change
-            const currentWidth = window.innerWidth;
-            const currentHeight = window.innerHeight;
+        // Function to regenerate all pages
+        async function regeneratePages() {
+            // Clear page container
+            const pageContainer = document.getElementById('page-container');
+            pageContainer.innerHTML = '';
             
-            if (Math.abs(currentWidth - lastWidth) > 50 || 
-                Math.abs(currentHeight - lastHeight) > 50 || 
-                forceRedraw) {
-                
-                // Update stored dimensions
-                lastWidth = currentWidth;
-                lastHeight = currentHeight;
-                
-                // Force a repagination with current font size
-                forceRedraw = true;
-                changeFontSize(0); // No change in font size, but will trigger repagination
-                forceRedraw = false;
-            }
-        }
-        
-        // Function to handle orientation changes
-        function handleOrientationChange() {
-            // Don't repaginate immediately, wait for orientation change to settle
-            setTimeout(() => {
-                // Get new viewport dimensions
-                const viewport = getViewportDimensions();
-                
-                // Store dimensions to detect if further changes are needed
-                lastWidth = viewport.width;
-                lastHeight = viewport.height;
-                
-                // Force repagination
-                recalculatePageDimensions();
-                
-                // Announce orientation change for screen readers
-                const announcement = document.getElementById('orientation-announcement');
-                if (!announcement) {
-                    const newAnnouncement = document.createElement('div');
-                    newAnnouncement.id = 'orientation-announcement';
-                    newAnnouncement.setAttribute('aria-live', 'polite');
-                    newAnnouncement.style.position = 'absolute';
-                    newAnnouncement.style.width = '1px';
-                    newAnnouncement.style.height = '1px';
-                    newAnnouncement.style.overflow = 'hidden';
-                    document.body.appendChild(newAnnouncement);
+            // Reset page mapping but keep the chapter data
+            pagesMap = [];
+            
+            // Create cover page (page 0)
+            createCoverPage();
+            
+            // Create dedication page (page 1)
+            createDedicationPage();
+            
+            // Create TOC page (now page 2)
+            createTOCPage();
+            
+            // Recalculate the CHARS_PER_PAGE constant based on the current font size
+            // This is a very rough approximation
+            const BASELINE_CHARS = 1550; // Our original character count at 100% font size
+            const scaleFactor = 100 / currentFontSize; // Inverse relationship
+            const adjustedCharsPerPage = Math.floor(BASELINE_CHARS * scaleFactor);
+            
+            console.log(`Font size: ${currentFontSize}%, Adjusted chars per page: ${adjustedCharsPerPage}`);
+            
+            try {
+                // Create content pages for each chapter with the new font size
+                for (let i = 0; i < bookData.chapters.length; i++) {
+                    createChapterPages(bookData.chapters[i], i, adjustedCharsPerPage);
                 }
                 
-                const orientationType = window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
-                document.getElementById('orientation-announcement').textContent = 
-                    `Screen orientation changed to ${orientationType}. Content has been adjusted accordingly.`;
-            }, 500); // Wait 500ms for the orientation change to complete
+                // Update total pages
+                totalPages = pagesMap.length;
+                
+                // Now that all pages are created, we need to update the TOC links
+                updateTOCLinks();
+                
+                // Setup footnote references and links
+                setupFootnoteReferences();
+                setupExternalLinks();
+                
+                // Apply current font size to all content
+                document.querySelectorAll('.page-content').forEach(content => {
+                    content.style.fontSize = `${currentFontSize}%`;
+                });
+                
+                document.querySelectorAll('.footnotes').forEach(footnotes => {
+                    footnotes.style.fontSize = `${currentFontSize * 0.8}%`;
+                });
+                
+                // Update navigation buttons
+                updateNavigation();
+                
+                // Initialize mobile features
+                setupMobileFeatures();
+            } catch (error) {
+                console.error('Error during page generation:', error);
+                // Add fallback content if there's an error
+                if (pagesMap.length === 0) {
+                    const errorPage = document.createElement('div');
+                    errorPage.className = 'page';
+                    errorPage.id = 'page-0';
+                    errorPage.innerHTML = `
+                        <div class="page-content">
+                            <h2>Error Loading Content</h2>
+                            <p>There was an error generating book pages. Please try refreshing the page.</p>
+                            <p>Error details: ${error.message}</p>
+                        </div>
+                    `;
+                    pageContainer.appendChild(errorPage);
+                    pagesMap.push({ type: 'error', index: 0 });
+                    totalPages = 1;
+                }
+            }
+            
+            return Promise.resolve();
         }
         
-        /* === Utility Functions === */
-        // Show loading overlay
-        function showLoading() {
-            document.getElementById('loading-overlay').style.display = 'flex';
-        }
-        
-        // Hide loading overlay
-        function hideLoading() {
-            document.getElementById('loading-overlay').style.display = 'none';
-        }
-        
-        // Check if device is mobile
-        function isMobileDevice() {
-            return window.innerWidth <= 768 || 
-                   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Load saved font size preference
+        function loadUserPreferences() {
+            // Get saved font size (if any)
+            const savedFontSize = localStorage.getItem('ebook-font-size');
+            if (savedFontSize) {
+                currentFontSize = parseInt(savedFontSize);
+                
+                // Apply font size directly to elements without repagination
+                document.querySelectorAll('.page-content').forEach(content => {
+                    content.style.fontSize = `${currentFontSize}%`;
+                });
+                
+                document.querySelectorAll('.footnotes').forEach(footnotes => {
+                    footnotes.style.fontSize = `${currentFontSize * 0.8}%`;
+                });
+            }
         }
     </script>
 </body>
