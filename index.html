@@ -1120,27 +1120,18 @@
                     footnoteRefs.push(match[1]);
                 }
                 
-// Calculate the footnote text length with better scaling
-let footnoteTextLength = 0;
-if (footnoteRefs.length > 0) {
-    const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
-    pageFootnotes.forEach(fn => {
-        // Add the length of footnote content plus some overhead for HTML
-        const contentLength = fn.content.length;
-        // Add 50% more for HTML tags and formatting
-        const estimatedHtmlOverhead = Math.floor(contentLength * 0.5);
-        footnoteTextLength += (contentLength + estimatedHtmlOverhead + 30); // 30 for margins and padding
-    });
-    
-    // Scale down footnote text length based on font size ratio
-    const footnoteToContentRatio = currentFontSize * 0.8 / currentFontSize;
-    // Add extra space for line height and margins
-    const layoutAdjustment = 1.2; // Line height and spacing adjustment
-    footnoteTextLength = Math.floor(footnoteTextLength * footnoteToContentRatio * layoutAdjustment);
-    
-    // Add fixed overhead for the footnote section itself (border, padding, etc.)
-    footnoteTextLength += 100;
-}
+                // Calculate the footnote text length (for better pagination with footnotes)
+                let footnoteTextLength = 0;
+                if (footnoteRefs.length > 0) {
+                    const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
+                    pageFootnotes.forEach(fn => {
+                        // Add the length of footnote content plus some overhead
+                        footnoteTextLength += (fn.content.length + 20);
+                    });
+                    
+                    // Scale down footnote text length since it's smaller font
+                    footnoteTextLength = Math.floor(footnoteTextLength * 0.8);
+                }
                 
                 // Total length including element and its footnotes
                 const totalLength = elementText.length + footnoteTextLength;
@@ -1200,27 +1191,15 @@ if (footnoteRefs.length > 0) {
                     let remainingText = text;
                     let remainingHTML = html;
                     
-// Handle footnotes - we'll keep them all with the first part
-let footnoteTextLength = 0;
-if (footnoteRefs.length > 0) {
-    const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
-    pageFootnotes.forEach(fn => {
-        // Add the length of footnote content plus some overhead for HTML
-        const contentLength = fn.content.length;
-        // Add 50% more for HTML tags and formatting
-        const estimatedHtmlOverhead = Math.floor(contentLength * 0.5);
-        footnoteTextLength += (contentLength + estimatedHtmlOverhead + 30);
-    });
-    
-    // Scale down footnote text length based on font size ratio
-    const footnoteToContentRatio = currentFontSize * 0.8 / currentFontSize;
-    // Add extra space for line height and margins
-    const layoutAdjustment = 1.2;
-    footnoteTextLength = Math.floor(footnoteTextLength * footnoteToContentRatio * layoutAdjustment);
-    
-    // Add fixed overhead for the footnote section itself
-    footnoteTextLength += 100;
-}
+                    // Handle footnotes - we'll keep them all with the first part
+                    let footnoteTextLength = 0;
+                    if (footnoteRefs.length > 0) {
+                        const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
+                        pageFootnotes.forEach(fn => {
+                            footnoteTextLength += (fn.content.length + 20);
+                        });
+                        footnoteTextLength = Math.floor(footnoteTextLength * 0.8);
+                    }
                     
                     // Adjust available characters to account for footnotes
                     const effectiveCharsPerPage = CHARS_PER_PAGE - footnoteTextLength;
@@ -1309,27 +1288,15 @@ if (footnoteRefs.length > 0) {
                     // Complex element with children - fall back to simple add without splitting
                     // This is a limitation - for perfect results we'd need more complex parsing
                     
-// Calculate total length with footnotes
-let footnoteTextLength = 0;
-if (footnoteRefs.length > 0) {
-    const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
-    pageFootnotes.forEach(fn => {
-        // Add the length of footnote content plus some overhead for HTML
-        const contentLength = fn.content.length;
-        // Add 50% more for HTML tags and formatting
-        const estimatedHtmlOverhead = Math.floor(contentLength * 0.5);
-        footnoteTextLength += (contentLength + estimatedHtmlOverhead + 30);
-    });
-    
-    // Scale down footnote text length based on font size ratio
-    const footnoteToContentRatio = currentFontSize * 0.8 / currentFontSize;
-    // Add extra space for line height and margins
-    const layoutAdjustment = 1.2;
-    footnoteTextLength = Math.floor(footnoteTextLength * footnoteToContentRatio * layoutAdjustment);
-    
-    // Add fixed overhead for the footnote section itself
-    footnoteTextLength += 100;
-}
+                    // Calculate total length with footnotes
+                    let footnoteTextLength = 0;
+                    if (footnoteRefs.length > 0) {
+                        const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
+                        pageFootnotes.forEach(fn => {
+                            footnoteTextLength += (fn.content.length + 20);
+                        });
+                        footnoteTextLength = Math.floor(footnoteTextLength * 0.8);
+                    }
                     
                     const totalLength = text.length + footnoteTextLength;
                     
