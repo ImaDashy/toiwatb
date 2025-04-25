@@ -52,20 +52,39 @@
         }
         
         /* Individual Page */
-        .page {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            padding: 40px;
-            background-color: #f4f0e8;
-            overflow: auto;
+.page {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    padding: 30px; /* Smaller default padding */
+    background-color: #f4f0e8;
+    overflow: auto;
             display: flex;
             flex-direction: column;
             transition: transform 0.3s ease;
             transform: translateX(100%);
         }
+
+        /* Adjust padding for different screen sizes */
+@media (max-width: 375px) {
+    .page {
+        padding: 15px;
+    }
+}
+
+@media (min-width: 376px) and (max-width: 480px) {
+    .page {
+        padding: 20px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .page {
+        padding: 25px;
+    }
+}
         
         .page.active {
             transform: translateX(0);
@@ -576,11 +595,43 @@
         let totalChaptersToLoad = 0;
         
         // Font size variables
-        let currentFontSize = 100; // 100% is default
-        const minFontSize = 80;    // 80% minimum
+        let currentFontSize = 90; // 90% is default
+        const minFontSize = 70;    // 70% minimum
         const maxFontSize = 200;   // 200% maximum
         const fontSizeStep = 10;   // Change in 10% increments
         let forceRedraw = false;
+
+// Function to get optimal characters per page based on device
+function getOptimalCharsPerPage() {
+    // Base character count
+    let baseCount = 1550;
+    
+    // Get device dimensions
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    // Apply safety margin based on device size
+    let safetyFactor = 1.0;
+    
+    // Small phones need more margin
+    if (width < 375 || height < 667) {
+        safetyFactor = 0.85; // 15% fewer characters for small screens
+    } 
+    // Medium phones
+    else if (width < 414 || height < 736) {
+        safetyFactor = 0.9; // 10% fewer characters
+    }
+    // Large phones
+    else if (width < 480 || height < 800) {
+        safetyFactor = 0.95; // 5% fewer characters
+    }
+    
+    // Apply safety factor
+    baseCount = Math.floor(baseCount * safetyFactor);
+    
+    // Further adjust based on font size (already happening in regeneratePages)
+    return baseCount;
+}
         
         /* === Initialization === */
         document.addEventListener('DOMContentLoaded', function() {
@@ -725,6 +776,17 @@
                 hideMenuPanel();
             });
         }
+
+        // Handle orientation changes
+window.addEventListener('orientationchange', function() {
+    // Wait for the orientation change to complete
+    setTimeout(function() {
+        // Force regeneration of pages with optimal sizing for new orientation
+        forceRedraw = true;
+        changeFontSize(0); // Keep same font size but force redraw
+        forceRedraw = false;
+    }, 300);
+});
         
         /* === Setup Tap Navigation for Mobile === */
         function setupTapNavigation() {
@@ -1547,9 +1609,12 @@
             
             // Recalculate the CHARS_PER_PAGE constant based on the current font size
             // This is a very rough approximation
-            const BASELINE_CHARS = 1550; // Our original character count at 100% font size
-            const scaleFactor = 100 / currentFontSize; // Inverse relationship
-            const adjustedCharsPerPage = Math.floor(BASELINE_CHARS * scaleFactor);
+const BASELINE_CHARS = getOptimalCharsPerPage();
+// Adjust for current font size
+const scaleFactor = 100 / currentFontSize; // Inverse relationship
+// Apply additional safety margin of 5% to prevent overflow
+const safetyMargin = 0.95;
+const adjustedCharsPerPage = Math.floor(BASELINE_CHARS * scaleFactor * safetyMargin);
             
             console.log(`Font size: ${currentFontSize}%, Adjusted chars per page: ${adjustedCharsPerPage}`);
             
