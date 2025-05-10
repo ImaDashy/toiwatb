@@ -6,3 +6,15 @@
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
+
+# Moon page redirect (new)
+[[redirects]]
+  from = "/moon/*"
+  to = "/moon/:splat"
+  status = 200
+
+# Handle 404 errors (new)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 404
