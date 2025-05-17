@@ -1,0 +1,57 @@
+
+    <script>
+        // This script immediately runs when this page loads
+        // It also runs when you navigate to a new page (like Reddit)
+        
+        // Function to check if current site is Reddit
+        function checkAndBlockReddit() {
+            // List of domains to block
+            const blockedDomains = [
+                'reddit.com',
+                'www.reddit.com',
+                'm.reddit.com',
+                'old.reddit.com',
+                'np.reddit.com',
+                'i.reddit.com'
+            ];
+            
+            // Get current domain
+            const currentDomain = window.location.hostname;
+            
+            // Check if we're on a blocked site
+            let isBlocked = false;
+            for (const domain of blockedDomains) {
+                if (currentDomain === domain || currentDomain.endsWith('.' + domain)) {
+                    isBlocked = true;
+                    break;
+                }
+            }
+            
+            // If this is Reddit, redirect away
+            if (isBlocked) {
+                // Redirect to this file - replace with your actual hosted path
+                window.location.replace('https:///toiwatb.com/byebyereddit.html');
+                // Note: Replace 'file:///path/to/your/byebyereddit.html' with the actual path 
+                // where you'll host this file
+            }
+        }
+        
+        // Run the check immediately
+        checkAndBlockReddit();
+        
+        // Also set up a MutationObserver for single-page apps
+        // This handles cases where the URL changes without a full page reload
+        let lastUrl = location.href; 
+        new MutationObserver(() => {
+            const url = location.href;
+            if (url !== lastUrl) {
+                lastUrl = url;
+                checkAndBlockReddit();
+            }
+        }).observe(document, {subtree: true, childList: true});
+        
+        // Set up an interval check as a backup method
+        setInterval(checkAndBlockReddit, 2000);
+    </script>
+</body>
+</html>
