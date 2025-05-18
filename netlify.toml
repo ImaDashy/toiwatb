@@ -13,6 +13,12 @@
   to = "/moon/:splat"
   status = 200
 
+# Shitquiz-1 page redirect
+[[redirects]]
+  from = "/shitquiz-1/*"
+  to = "/shitquiz-1/:splat"
+  status = 200
+
 # Handle 404 errors (new)
 [[redirects]]
   from = "/*"
