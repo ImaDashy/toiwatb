@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>What Type of Awkward Interaction Are You?</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>The Official Shit Quiz</title>
     <style>
         * {
             margin: 0;
@@ -21,6 +21,7 @@
             justify-content: center;
             align-items: center;
             overflow: auto; /* Allow scrolling if needed */
+            touch-action: manipulation; /* Improved touch handling */
         }
         
         .image-container {
@@ -39,6 +40,7 @@
             height: auto;
             object-fit: contain;
             display: block; /* Removes any extra space below the image */
+            transform-origin: center center; /* For proper zooming */
         }
         
         /* For mobile devices */
@@ -56,6 +58,12 @@
                 width: auto;
                 /* Add a small border to ensure the edges are clearly visible */
                 border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            
+            /* Container becomes scrollable when zoomed */
+            .image-container {
+                overflow: auto;
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
             }
         }
     </style>
@@ -118,6 +126,17 @@
         window.addEventListener('orientationchange', function() {
             setTimeout(adjustImageSize, 200);
         });
+        
+        // Allow double-tap to zoom on mobile devices
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                // Double tap detected - allow default browser zoom behavior
+                event.stopPropagation();
+            }
+            lastTouchEnd = now;
+        }, false);
     </script>
 </body>
 </html>
