@@ -646,7 +646,153 @@
             transform: translateY(-50%) translateX(10px);
         }
     }
-      
+
+
+
+        /* Menu Indicator Styles */
+.menu-indicator {
+    position: absolute;
+    top: 10%; /* Position near the top */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 60px;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none; /* Make sure it doesn't interfere with taps */
+    animation: menuFadeInOut 5s ease-in-out 1s forwards;
+    text-align: center;
+}
+
+.menu-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    top: 115%;
+    left: 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: textPulse 3s ease-in-out infinite 0.5s;
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+}
+
+.menu-circle {
+    position: absolute;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    top: 0;
+    left: 0;
+    opacity: 0;
+}
+
+.menu-circle-1 {
+    animation: menuRipple 3s linear infinite;
+    animation-delay: 0s;
+}
+
+.menu-circle-2 {
+    animation: menuRipple 3s linear infinite;
+    animation-delay: 0.75s;
+}
+
+.menu-circle-3 {
+    animation: menuRipple 3s linear infinite;
+    animation-delay: 1.5s;
+}
+
+.menu-center {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.menu-up-arrow {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-135deg); /* Rotate to point upward */
+    width: 16px;
+    height: 16px;
+    opacity: 0.9;
+}
+
+.menu-up-arrow:before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-top: 3px solid rgba(255, 255, 255, 0.9);
+    border-right: 3px solid rgba(255, 255, 255, 0.9);
+    transform: rotate(45deg);
+}
+
+@keyframes menuRipple {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    20% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+@keyframes menuFadeInOut {
+    0% {
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes textPulse {
+    0% {
+        opacity: 0.3;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.3;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0.7;
+    }
+}
     </style>
 </head>
 <body>
@@ -1116,6 +1262,19 @@ window.addEventListener('orientationchange', function() {
                 <div class="dedication-content">
                     <p class="dedication-top">And so am I.</p>
                     <p class="dedication-bottom">For everyone, but especially you.</p>
+<!-- Menu indicator component -->
+<div class="menu-indicator" id="menu-indicator">
+    <!-- Ripple circles -->
+    <div class="menu-circle menu-circle-1"></div>
+    <div class="menu-circle menu-circle-2"></div>
+    <div class="menu-circle menu-circle-3"></div>
+    <!-- Up arrow -->
+    <div class="menu-up-arrow"></div>
+    <!-- Center dot -->
+    <div class="menu-center"></div>
+    <!-- Menu text -->
+    <div class="menu-text">MENU</div>
+</div>                   
                 </div>
             `;
             
@@ -1845,7 +2004,29 @@ function showTapIndicator() {
     }
 }
 
-// Add this to the existing page initialization function
+// Function to show the menu indicator on page 2 (dedication page)
+function showMenuIndicator() {
+    // Check if this is the first time seeing page 2
+    const hasSeenPage2 = localStorage.getItem('has_seen_page_2');
+    
+    if (!hasSeenPage2 || hasSeenPage2 !== 'true') {
+        // Show the menu indicator
+        const menuIndicator = document.getElementById('menu-indicator');
+        if (menuIndicator) {
+            menuIndicator.style.display = 'block';
+            
+            // Hide the indicator after animation completes (8 seconds)
+            setTimeout(() => {
+                menuIndicator.style.display = 'none';
+            }, 8000);
+        }
+        
+        // Set the flag that user has seen page 2
+        localStorage.setItem('has_seen_page_2', 'true');
+    }
+}
+
+// Override the existing showPage function
 const originalShowPage = showPage;
 showPage = function(pageIndex) {
     const result = originalShowPage(pageIndex);
@@ -1856,8 +2037,13 @@ showPage = function(pageIndex) {
         document.hasShownTapIndicator = true;
     }
     
+    // If we're showing the dedication page (index 1)
+    if (pageIndex === 1) {
+        showMenuIndicator();
+    }
+    
     return result;
-};       
+};      
     </script>
 </body>
 </html>
