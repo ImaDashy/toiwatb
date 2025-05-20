@@ -850,72 +850,36 @@
         const fontSizeStep = 10;   // Change in 10% increments
         let forceRedraw = false;
 
-// Dynamic sizing function to adjust characters per page based on device and font size
+// Function to get optimal characters per page based on device
 function getOptimalCharsPerPage() {
-    // Base character count for standard conditions
-    let baseCount = 1800;
+    // Base character count
+    let baseCount = 1550;
     
-    // Get device dimensions and orientation
+    // Get device dimensions
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const isLandscape = width > height;
     
-    // Get the available height for text (accounting for headers, margins, etc.)
-    // This is approximate and should be adjusted based on your actual layout
-    const pageHeaderHeight = 60; // Estimated height for chapter title, etc.
-    const pageMargins = 60; // Total vertical margins
-    const availableHeight = height - pageHeaderHeight - pageMargins;
+    // Apply safety margin based on device size
+    let safetyFactor = 1.0;
     
-    // Average line height in pixels (this will vary with font size)
-    // We'll calculate this more precisely based on font size
-    const baseLineHeight = 24; // For 100% font size
-    const currentFontSize = parseInt(localStorage.getItem('ebook-font-size')) || 100;
-    const adjustedLineHeight = baseLineHeight * (currentFontSize / 100);
-    
-    // Average characters per line (varies with device width and font size)
-    // For a standard width phone in portrait
-    let averageCharsPerLine = 45; // Default for medium phone
-    
-    // Adjust for screen width and font size
-    if (width < 320) {
-        averageCharsPerLine = 30; // Very small screen
-    } else if (width < 375) {
-        averageCharsPerLine = 35; // Small phone
-    } else if (width < 414) {
-        averageCharsPerLine = 40; // Medium phone
-    } else if (width < 768) {
-        averageCharsPerLine = 55; // Large phone
-    } else if (width < 1024) {
-        averageCharsPerLine = 70; // Tablet portrait
-    } else {
-        averageCharsPerLine = 90; // Large tablet or desktop
-    }
-    
-    // Scale characters per line based on font size
-    averageCharsPerLine = Math.floor(averageCharsPerLine * (100 / currentFontSize));
-    
-    // Estimate lines per page
-    const linesPerPage = Math.floor(availableHeight / adjustedLineHeight);
-    
-    // Calculate total characters per page
-    let charsPerPage = averageCharsPerLine * linesPerPage;
-    
-    // Apply safety margin to prevent overflow (more conservative for smaller screens)
-    let safetyFactor = 0.92; // Default 8% margin
-    
+    // Small phones need more margin
     if (width < 375 || height < 667) {
-        safetyFactor = 0.85; // 15% safety margin for small screens
-    } else if (width < 414 || height < 736) {
-        safetyFactor = 0.88; // 12% safety margin for medium screens
+        safetyFactor = 0.85; // 15% fewer characters for small screens
+    } 
+    // Medium phones
+    else if (width < 414 || height < 736) {
+        safetyFactor = 0.9; // 10% fewer characters
+    }
+    // Large phones
+    else if (width < 480 || height < 800) {
+        safetyFactor = 0.95; // 5% fewer characters
     }
     
-    // Final character count with safety factor
-    charsPerPage = Math.floor(charsPerPage * safetyFactor);
+    // Apply safety factor
+    baseCount = Math.floor(baseCount * safetyFactor);
     
-    // Log the calculation for debugging
-    console.log(`Screen: ${width}x${height}, Font: ${currentFontSize}%, Lines: ${linesPerPage}, Chars/line: ${averageCharsPerLine}, Total: ${charsPerPage}`);
-    
-    return charsPerPage;
+    // Further adjust based on font size (already happening in regeneratePages)
+    return baseCount;
 }
         
         /* === Initialization === */
@@ -1452,230 +1416,108 @@ function createDedicationPage() {
             });
         }
         
-        // Enhanced pagination function that properly splits paragraphs across pages
-function paginateContent(content, footnotes, options) {
-    // Get the character count per page from options (or use default)
-    const CHARS_PER_PAGE = options.charsPerPage || 1550;
-    
-    // Parse and clean the HTML content
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    
-    // Get all paragraphs and elements
-    const elements = Array.from(tempDiv.childNodes);
-    
-    // Initialize pages array
-    const pages = [];
-    
-    // Current page data
-    let currentPage = {
-        content: '',
-        charCount: 0,
-        footnotes: '',
-        footnoteIds: new Set()
-    };
-    
-    // Process each element
-    for (let i = 0; i < elements.length; i++) {
-        const element = elements[i];
-        
-        // Skip empty or non-element nodes
-        if (!element.textContent?.trim()) {
-            continue;
-        }
-        
-        // Calculate effective space on current page
-        const availableChars = CHARS_PER_PAGE - currentPage.charCount;
-        
-        // Get element HTML and text
-        const elementHTML = element.outerHTML || element.textContent;
-        const elementText = element.textContent || '';
-        
-        // Extract footnote references from this element
-        const footnoteRefs = extractFootnoteRefs(element);
-        const footnoteLength = calculateFootnoteLength(footnoteRefs, footnotes);
-        
-        // Total length including element and its footnotes
-        const totalLength = elementText.length + footnoteLength;
-        
-        // Check if this element is a block element that needs handling
-        const isBlockElement = element.nodeType === 1 && 
-            ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'BLOCKQUOTE'].includes(element.tagName);
-        
-        // If element fits on current page
-        if (totalLength <= availableChars || currentPage.charCount === 0) {
-            // Add full element to current page
-            currentPage.content += elementHTML;
-            currentPage.charCount += totalLength;
-            addFootnoteRefsToPage(currentPage, footnoteRefs);
-        }
-        // If element doesn't fit but is a paragraph that can be split
-        else if (isBlockElement && element.tagName === 'P') {
-            // Split paragraph across pages
-            splitParagraph(element, footnoteRefs, availableChars);
-        }
-        // If element is a heading or other non-splittable element
-        else {
-            // Complete current page
-            finishCurrentPage();
+        // Improved paginate content function that handles footnotes better
+        function paginateContent(content, footnotes, options) {
+            // Get the character count per page from options (or use default)
+            const CHARS_PER_PAGE = options.charsPerPage || 1550;
             
-            // Start new page with this element
-            currentPage.content = elementHTML;
-            currentPage.charCount = totalLength;
-            addFootnoteRefsToPage(currentPage, footnoteRefs);
-        }
-    }
-    
-    // Add the last page if not empty
-    if (currentPage.charCount > 0) {
-        finishCurrentPage();
-    }
-    
-    return pages;
-    
- // Helper function to extract footnote references from an element
-    function extractFootnoteRefs(element) {
-        const refs = [];
-        const footnoteRegex = /<sup class="footnote-ref"[^>]*data-id="([^"]+)"[^>]*>.*?<\/sup>/g;
-        const html = element.outerHTML || element.textContent;
-        let match;
-        
-        while ((match = footnoteRegex.exec(html)) !== null) {
-            refs.push(match[1]);
-        }
-        
-        return refs;
-    }
-    
-    // Helper function to calculate total footnote length
-    function calculateFootnoteLength(refs, allFootnotes) {
-        if (!refs.length) return 0;
-        
-        let length = 0;
-        const footnoteScale = 0.8; // Footnotes are smaller text so take less space
-        
-        refs.forEach(id => {
-            const footnote = allFootnotes.find(fn => fn.id === id);
-            if (footnote) {
-                // Add length plus some overhead for each footnote
-                length += (footnote.content.length + 25);
+            // Parse and clean the HTML content
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            
+            // Get all paragraphs and elements
+            const elements = Array.from(tempDiv.childNodes);
+            
+            // Initialize pages array
+            const pages = [];
+            
+            // Current page data
+            let currentPage = {
+                content: '',
+                charCount: 0,
+                footnotes: '',
+                footnoteIds: []
+            };
+            
+            // Process each element
+            for (let i = 0; i < elements.length; i++) {
+                const element = elements[i];
+                const elementHTML = element.outerHTML || element.textContent;
+                const elementText = element.textContent || '';
+                
+                // Skip empty elements
+                if (!elementText.trim()) {
+                    continue;
+                }
+                
+                // Extract footnote references from this element
+                const footnoteRefs = [];
+                const footnoteRegex = /<sup class="footnote-ref"[^>]*data-id="([^"]+)"[^>]*>.*?<\/sup>/g;
+                let match;
+                while ((match = footnoteRegex.exec(elementHTML)) !== null) {
+                    footnoteRefs.push(match[1]);
+                }
+                
+                // Calculate the footnote text length (for better pagination with footnotes)
+                let footnoteTextLength = 0;
+                if (footnoteRefs.length > 0) {
+                    const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
+                    pageFootnotes.forEach(fn => {
+                        // Add the length of footnote content plus some overhead
+                        footnoteTextLength += (fn.content.length + 20);
+                    });
+                    
+                    // Scale down footnote text length since it's smaller font
+                    footnoteTextLength = Math.floor(footnoteTextLength * 0.8);
+                }
+                
+                // Total length including element and its footnotes
+                const totalLength = elementText.length + footnoteTextLength;
+                
+                // Check if this is a block element like paragraph, heading, etc.
+                const isBlockElement = element.nodeType === 1 && 
+                    ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'BLOCKQUOTE'].includes(element.tagName);
+                
+                // If this is a block element and it's too large for a single page, we need to split it
+                if (isBlockElement && totalLength > CHARS_PER_PAGE) {
+                    // We'll split this large paragraph into smaller chunks
+                    splitLargeElement(element, footnotes, footnoteRefs);
+                } else {
+                    // Normal element handling
+                    // If adding this element would exceed the page limit, start a new page
+                    if (currentPage.charCount + totalLength > CHARS_PER_PAGE && currentPage.charCount > 0) {
+                        // Complete the current page
+                        pages.push({
+                            content: currentPage.content,
+                            footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                        });
+                        
+                        // Start a new page
+                        currentPage = {
+                            content: elementHTML,
+                            charCount: totalLength,
+                            footnotes: '',
+                            footnoteIds: [...footnoteRefs]
+                        };
+                    } else {
+                        // Add to current page
+                        currentPage.content += elementHTML;
+                        currentPage.charCount += totalLength;
+                        currentPage.footnoteIds.push(...footnoteRefs);
+                    }
+                }
             }
-        });
-        
-        return Math.floor(length * footnoteScale);
-    }
-    
-    // Helper function to add footnote references to current page
-    function addFootnoteRefsToPage(page, refs) {
-        refs.forEach(id => page.footnoteIds.add(id));
-    }
-    
-    // Helper function to finish current page and start a new one
-    function finishCurrentPage() {
-        pages.push({
-            content: currentPage.content,
-            footnotes: buildFootnotesHTML(Array.from(currentPage.footnoteIds), footnotes)
-        });
-        
-        currentPage = {
-            content: '',
-            charCount: 0,
-            footnotes: '',
-            footnoteIds: new Set()
-        };
-    }
-    
-    // Helper function to split a paragraph across pages
-    function splitParagraph(paragraph, footnoteRefs, availableChars) {
-        // Get paragraph content
-        const html = paragraph.outerHTML;
-        const text = paragraph.textContent;
-        
-        // If almost no space left, just start a new page
-        if (availableChars < 100) {
-            finishCurrentPage();
-            currentPage.content = html;
-            currentPage.charCount = text.length + calculateFootnoteLength(footnoteRefs, footnotes);
-            addFootnoteRefsToPage(currentPage, footnoteRefs);
-            return;
-        }
-        
-        // Determine where to split by finding word boundary
-        let splitPos = findOptimalSplitPosition(text, availableChars);
-        
-        // If we get back 0, means no good split point found
-        if (splitPos === 0) {
-            finishCurrentPage();
-            currentPage.content = html;
-            currentPage.charCount = text.length + calculateFootnoteLength(footnoteRefs, footnotes);
-            addFootnoteRefsToPage(currentPage, footnoteRefs);
-            return;
-        }
-        
-        // Split the text
-        const firstPartText = text.substring(0, splitPos);
-        const secondPartText = text.substring(splitPos);
-        
-        // Check if we need to handle footnotes specially
-        let firstPartFootnotes = [];
-        let secondPartFootnotes = [];
-        
-        // For now, we'll assign all footnotes to the first part if it contains most of the paragraph
-        // This is a simplification - ideally we would identify which footnote refs are in which part
-        if (splitPos > text.length / 2) {
-            firstPartFootnotes = footnoteRefs;
-        } else {
-            // Put footnotes in second part
-            secondPartFootnotes = footnoteRefs;
-        }
-        
-        // Create split paragraphs with proper HTML tags
-        const tagMatch = html.match(/<([a-z0-9]+)([^>]*)>/i);
-        const tagName = tagMatch ? tagMatch[1] : 'p';
-        const tagAttributes = tagMatch ? tagMatch[2] : '';
-        
-        // First part of paragraph
-        const firstPartHTML = `<${tagName}${tagAttributes}>${firstPartText}</${tagName}>`;
-        
-        // Add first part to current page
-        currentPage.content += firstPartHTML;
-        currentPage.charCount += firstPartText.length + calculateFootnoteLength(firstPartFootnotes, footnotes);
-        addFootnoteRefsToPage(currentPage, firstPartFootnotes);
-        
-        // Finish current page
-        finishCurrentPage();
-        
-        // Second part of paragraph
-        const secondPartHTML = `<${tagName}${tagAttributes}>${secondPartText}</${tagName}>`;
-        
-        // Start new page with second part
-        currentPage.content = secondPartHTML;
-        currentPage.charCount = secondPartText.length + calculateFootnoteLength(secondPartFootnotes, footnotes);
-        addFootnoteRefsToPage(currentPage, secondPartFootnotes);
-    }
-    
-    // Find optimal position to split text (at word boundaries)
-    function findOptimalSplitPosition(text, maxLength) {
-        if (text.length <= maxLength) return text.length;
-        
-        // Look for last space, comma, period, colon, semicolon within maxLength
-        const punctuation = ['. ', ', ', '; ', ': ', '? ', '! ', ' '];
-        
-        // Try to find break at sentence or clause level first
-        for (const punct of punctuation) {
-            const pos = text.lastIndexOf(punct, maxLength);
-            if (pos > maxLength * 0.5) { // Only use if at least half of allowed text
-                return pos + (punct === ' ' ? 1 : 2); // Include punctuation in first part
+            
+            // Add the last page if not empty
+            if (currentPage.charCount > 0) {
+                pages.push({
+                    content: currentPage.content,
+                    footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                });
             }
-        }
-        
-        // If we can't find a good break point, just use the max length
-        // This might break mid-word but better than wasting space
-        return maxLength;
-    }
-}
-
-        
+            
+            return pages;
+            
             // Helper function to split large elements
             function splitLargeElement(element, footnotes, footnoteRefs) {
                 // Get the HTML content
@@ -1820,91 +1662,73 @@ function paginateContent(content, footnotes, options) {
             }
         }
         
-// Build footnotes HTML with improved handling
-function buildFootnotesHTML(footnoteIds, footnotes) {
-    if (!footnoteIds.length || !footnotes || !footnotes.length) {
-        return '';
-    }
-    
-    let html = '';
-    
-    // Get footnotes that are referenced on this page
-    const pageFootnotes = footnotes.filter(fn => footnoteIds.includes(fn.id));
-    
-    if (pageFootnotes.length) {
-        for (const footnote of pageFootnotes) {
-            html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
+        // Build footnotes HTML
+        function buildFootnotesHTML(footnoteIds, footnotes) {
+            if (!footnoteIds.length || !footnotes || !footnotes.length) {
+                return '';
+            }
+            
+            let html = '';
+            
+            // Get footnotes that are referenced on this page
+            const pageFootnotes = footnotes.filter(fn => footnoteIds.includes(fn.id));
+            
+            if (pageFootnotes.length) {
+                for (const footnote of pageFootnotes) {
+                    html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
+                }
+            }
+            
+            return html;
         }
-    }
-    
-    return html;
-}
         
         /* === Page Navigation === */
         // Show a specific page
         function showPage(pageIndex) {
-if (pageIndex < 0 || pageIndex >= pagesMap.length) {
-        return false;
-    }
-    
-    // Remember current page for navigation history
-    const previousPageIndex = currentPageIndex;
-    
-    // Get all pages
-    const pages = document.querySelectorAll('.page');
-    
-    // Reset all pages
-    pages.forEach(page => {
-        page.classList.remove('active', 'previous', 'next');
-        page.style.transform = '';
-    });
-    
-    // Get current, previous and next pages
-    const currentPage = document.getElementById(`page-${pageIndex}`);
-    const prevPage = pageIndex > 0 ? document.getElementById(`page-${pageIndex - 1}`) : null;
-    const nextPage = pageIndex < pagesMap.length - 1 ? document.getElementById(`page-${pageIndex + 1}`) : null;
-    
-    // Set classes for animation
-    if (currentPage) {
-        currentPage.classList.add('active');
-        
-        // Reset scroll position to top when changing pages, 
-        // but remember position for back button if needed
-        if (currentPage.scrollTo) {
-            // Store current scroll position for browser history
-            if (previousPageIndex !== pageIndex) {
-                // Save scroll position of previous page
-                const previousPage = document.getElementById(`page-${previousPageIndex}`);
-                if (previousPage) {
-                    previousPage.dataset.scrollPosition = previousPage.scrollTop;
-                }
+            if (pageIndex < 0 || pageIndex >= pagesMap.length) {
+                return false;
+            }
+            
+            // Get all pages
+            const pages = document.querySelectorAll('.page');
+            
+            // Reset all pages
+            pages.forEach(page => {
+                page.classList.remove('active', 'previous', 'next');
+                page.style.transform = '';
+            });
+            
+            // Get current, previous and next pages
+            const currentPage = document.getElementById(`page-${pageIndex}`);
+            const prevPage = pageIndex > 0 ? document.getElementById(`page-${pageIndex - 1}`) : null;
+            const nextPage = pageIndex < pagesMap.length - 1 ? document.getElementById(`page-${pageIndex + 1}`) : null;
+            
+            // Set classes for animation
+            if (currentPage) {
+                currentPage.classList.add('active');
                 
-                // Restore scroll position if we have one saved
-                if (currentPage.dataset.scrollPosition) {
-                    currentPage.scrollTo(0, parseInt(currentPage.dataset.scrollPosition));
-                } else {
+                // Reset scroll position to top when changing pages
+                if (currentPage.scrollTo) {
                     currentPage.scrollTo(0, 0);
                 }
             }
+            
+            if (prevPage) {
+                prevPage.classList.add('previous');
+            }
+            
+            if (nextPage) {
+                nextPage.classList.add('next');
+            }
+            
+            // Update current page index
+            currentPageIndex = pageIndex;
+            
+            // Update navigation
+            updateNavigation();
+            
+            return true;
         }
-    }
-    
-    if (prevPage) {
-        prevPage.classList.add('previous');
-    }
-    
-    if (nextPage) {
-        nextPage.classList.add('next');
-    }
-    
-    // Update current page index
-    currentPageIndex = pageIndex;
-    
-    // Update navigation
-    updateNavigation();
-    
-    return true;
-}
         
         // Go to previous page
         function goToPreviousPage() {
@@ -1991,215 +1815,133 @@ if (pageIndex < 0 || pageIndex >= pagesMap.length) {
             setupMobileFeatures();
         });
         
-// Modified changeFontSize function with improved handling
-function changeFontSize(delta) {
-    // Only proceed if there's actually a change
-    if (delta === 0 && !forceRedraw) return;
-    
-    // Show loading overlay while we repaginate
-    showLoading();
-    
-    // Update current font size with bounds checking
-    currentFontSize = Math.max(minFontSize, Math.min(maxFontSize, currentFontSize + delta));
-    
-    // Save preference to localStorage for persistence
-    localStorage.setItem('ebook-font-size', currentFontSize);
-    
-    // Remember current reading position
-    const currentPage = pagesMap[currentPageIndex];
-    
-    // Store scroll position if we're in the middle of a page
-    let scrollRatio = 0;
-    const activePage = document.querySelector('.page.active');
-    if (activePage) {
-        const scrollPos = activePage.scrollTop;
-        const scrollHeight = activePage.scrollHeight - activePage.clientHeight;
-        scrollRatio = scrollHeight > 0 ? scrollPos / scrollHeight : 0;
-    }
-    
-    // Optional: Store paragraph position for even more precise positioning
-    let currentParagraphIndex = -1;
-    let paragraphScrollRatio = 0;
-    
-    if (activePage) {
-        const paragraphs = activePage.querySelectorAll('p');
-        if (paragraphs.length) {
-            // Find which paragraph is currently in view
-            const viewportTop = activePage.scrollTop;
-            const viewportHeight = activePage.clientHeight;
-            const viewportMid = viewportTop + (viewportHeight / 2);
+        // Function to change the font size
+        function changeFontSize(delta) {
+            // Only proceed if there's actually a change
+            if (delta === 0 && !forceRedraw) return;
             
-            for (let i = 0; i < paragraphs.length; i++) {
-                const para = paragraphs[i];
-                const paraTop = para.offsetTop;
-                const paraBottom = paraTop + para.offsetHeight;
-                
-                if (viewportMid >= paraTop && viewportMid <= paraBottom) {
-                    currentParagraphIndex = i;
-                    // Calculate scroll position within paragraph
-                    paragraphScrollRatio = (viewportMid - paraTop) / para.offsetHeight;
-                    break;
-                }
-            }
-        }
-    }
-    
-    // Completely regenerate all pages with the new font size
-    regeneratePages().then(() => {
-        // After regeneration, try to go back to approximately where we were reading
-        if (currentPage) {
-            let newPageIndex = 0;
+            // Show loading overlay while we repaginate
+            showLoading();
             
-            if (currentPage.type === 'chapter') {
-                // Find the first page of the same chapter
-                newPageIndex = pagesMap.findIndex(p => 
-                    p.type === 'chapter' && 
-                    p.chapterIndex === currentPage.chapterIndex
-                );
-                
-                if (newPageIndex < 0) newPageIndex = 0;
-            } else {
-                // For non-chapter pages (cover, dedication, TOC), go to the same type
-                newPageIndex = pagesMap.findIndex(p => p.type === currentPage.type);
-                if (newPageIndex < 0) newPageIndex = 0;
-            }
+            // Update current font size with bounds checking
+            currentFontSize = Math.max(minFontSize, Math.min(maxFontSize, currentFontSize + delta));
             
-            // Go to that page
-            showPage(newPageIndex);
+            // Save preference to localStorage for persistence
+            localStorage.setItem('ebook-font-size', currentFontSize);
             
-            // Try to restore approximate scroll position
-            setTimeout(() => {
-                const newActivePage = document.querySelector('.page.active');
-                if (newActivePage) {
-                    // If we found the paragraph position, try to go there
-                    if (currentParagraphIndex >= 0) {
-                        const paragraphs = newActivePage.querySelectorAll('p');
-                        if (paragraphs.length > currentParagraphIndex) {
-                            const targetPara = paragraphs[currentParagraphIndex];
-                            const scrollTarget = targetPara.offsetTop + 
-                                (targetPara.offsetHeight * paragraphScrollRatio) - 
-                                (newActivePage.clientHeight / 2);
-                            
-                            newActivePage.scrollTo({
-                                top: Math.max(0, scrollTarget),
-                                behavior: 'auto'
-                            });
-                        } else {
-                            // Fall back to ratio-based scrolling
-                            const scrollTarget = scrollRatio * 
-                                (newActivePage.scrollHeight - newActivePage.clientHeight);
-                            newActivePage.scrollTo({
-                                top: scrollTarget,
-                                behavior: 'auto'
-                            });
-                        }
+            // Remember which chapter and position we're currently viewing
+            const currentPage = pagesMap[currentPageIndex];
+            
+            // Completely regenerate all pages with the new font size
+            regeneratePages().then(() => {
+                // After regeneration, try to go back to approximately where we were reading
+                if (currentPage) {
+                    let newPageIndex = 0;
+                    
+                    if (currentPage.type === 'chapter') {
+                        // Find the first page of the same chapter
+                        newPageIndex = pagesMap.findIndex(p => 
+                            p.type === 'chapter' && 
+                            p.chapterIndex === currentPage.chapterIndex
+                        );
+                        
+                        if (newPageIndex < 0) newPageIndex = 0;
                     } else {
-                        // Use ratio-based scrolling as fallback
-                        const scrollTarget = scrollRatio * 
-                            (newActivePage.scrollHeight - newActivePage.clientHeight);
-                        newActivePage.scrollTo({
-                            top: scrollTarget,
-                            behavior: 'auto'
-                        });
+                        // For non-chapter pages (cover, dedication, TOC), go to the same type
+                        newPageIndex = pagesMap.findIndex(p => p.type === currentPage.type);
+                        if (newPageIndex < 0) newPageIndex = 0;
                     }
+                    
+                    // Go to that page
+                    showPage(newPageIndex);
                 }
-            }, 100); // Small delay to ensure page is fully rendered
+                
+                // Hide loading overlay
+                hideLoading();
+            });
         }
-    });
-}
-
-
         
         // Function to regenerate all pages
-        // Function to regenerate all pages with improved handling
-async function regeneratePages() {
-    console.time('Page generation');
-    // Show loading overlay
-    showLoading();
-    
-    // Clear page container
-    const pageContainer = document.getElementById('page-container');
-    pageContainer.innerHTML = '';
-    
-    // Reset page mapping but keep the chapter data
-    pagesMap = [];
-    
-    // Create cover page (page 0)
-    createCoverPage();
-    
-    // Create dedication page (page 1)
-    createDedicationPage();
-    
-    // Create TOC page (now page 2)
-    createTOCPage();
-    
-    // Calculate optimal characters per page based on current conditions
-    const adjustedCharsPerPage = getOptimalCharsPerPage();
-    
-    console.log(`Font size: ${currentFontSize}%, Adjusted chars per page: ${adjustedCharsPerPage}`);
-    
-    try {
-        // Process each chapter with a small delay to prevent UI freezing
-        for (let i = 0; i < bookData.chapters.length; i++) {
-            createChapterPages(bookData.chapters[i], i, adjustedCharsPerPage);
+        async function regeneratePages() {
+            // Clear page container
+            const pageContainer = document.getElementById('page-container');
+            pageContainer.innerHTML = '';
             
-            // Only yield to UI thread if there are many chapters
-            if (bookData.chapters.length > 5 && i % 2 === 1) {
-                await new Promise(resolve => setTimeout(resolve, 0));
+            // Reset page mapping but keep the chapter data
+            pagesMap = [];
+            
+            // Create cover page (page 0)
+            createCoverPage();
+            
+            // Create dedication page (page 1)
+            createDedicationPage();
+            
+            // Create TOC page (now page 2)
+            createTOCPage();
+            
+            // Recalculate the CHARS_PER_PAGE constant based on the current font size
+            // This is a very rough approximation
+const BASELINE_CHARS = getOptimalCharsPerPage();
+// Adjust for current font size
+const scaleFactor = 100 / currentFontSize; // Inverse relationship
+// Apply additional safety margin of 5% to prevent overflow
+const safetyMargin = 0.95;
+const adjustedCharsPerPage = Math.floor(BASELINE_CHARS * scaleFactor * safetyMargin);
+            
+            console.log(`Font size: ${currentFontSize}%, Adjusted chars per page: ${adjustedCharsPerPage}`);
+            
+            try {
+                // Create content pages for each chapter with the new font size
+                for (let i = 0; i < bookData.chapters.length; i++) {
+                    createChapterPages(bookData.chapters[i], i, adjustedCharsPerPage);
+                }
+                
+                // Update total pages
+                totalPages = pagesMap.length;
+                
+                // Now that all pages are created, we need to update the TOC links
+                updateTOCLinks();
+                
+                // Setup footnote references and links
+                setupFootnoteReferences();
+                setupExternalLinks();
+                
+                // Apply current font size to all content
+                document.querySelectorAll('.page-content').forEach(content => {
+                    content.style.fontSize = `${currentFontSize}%`;
+                });
+                
+                document.querySelectorAll('.footnotes').forEach(footnotes => {
+                    footnotes.style.fontSize = `${currentFontSize * 0.8}%`;
+                });
+                
+                // Update navigation buttons
+                updateNavigation();
+                
+                // Initialize mobile features
+                setupMobileFeatures();
+            } catch (error) {
+                console.error('Error during page generation:', error);
+                // Add fallback content if there's an error
+                if (pagesMap.length === 0) {
+                    const errorPage = document.createElement('div');
+                    errorPage.className = 'page';
+                    errorPage.id = 'page-0';
+                    errorPage.innerHTML = `
+                        <div class="page-content">
+                            <h2>Error Loading Content</h2>
+                            <p>There was an error generating book pages. Please try refreshing the page.</p>
+                            <p>Error details: ${error.message}</p>
+                        </div>
+                    `;
+                    pageContainer.appendChild(errorPage);
+                    pagesMap.push({ type: 'error', index: 0 });
+                    totalPages = 1;
+                }
             }
+            
+            return Promise.resolve();
         }
-        
-        // Update total pages
-        totalPages = pagesMap.length;
-        
-        // Now that all pages are created, we need to update the TOC links
-        updateTOCLinks();
-        
-        // Setup footnote references and links
-        setupFootnoteReferences();
-        setupExternalLinks();
-        
-        // Apply current font size to all content
-        document.querySelectorAll('.page-content').forEach(content => {
-            content.style.fontSize = `${currentFontSize}%`;
-        });
-        
-        document.querySelectorAll('.footnotes').forEach(footnotes => {
-            footnotes.style.fontSize = `${Math.floor(currentFontSize * 0.8)}%`;
-        });
-        
-        // Update navigation buttons
-        updateNavigation();
-        
-        // Initialize mobile features
-        setupMobileFeatures();
-    } catch (error) {
-        console.error('Error during page generation:', error);
-        // Add fallback content if there's an error
-        if (pagesMap.length === 0) {
-            const errorPage = document.createElement('div');
-            errorPage.className = 'page';
-            errorPage.id = 'page-0';
-            errorPage.innerHTML = `
-                <div class="page-content">
-                    <h2>Error Loading Content</h2>
-                    <p>There was an error generating book pages. Please try refreshing the page.</p>
-                    <p>Error details: ${error.message}</p>
-                </div>
-            `;
-            pageContainer.appendChild(errorPage);
-            pagesMap.push({ type: 'error', index: 0 });
-            totalPages = 1;
-        }
-    }
-    
-    console.timeEnd('Page generation');
-    // Hide loading overlay
-    hideLoading();
-    
-    return Promise.resolve();
-}
-
         
         // Load saved font size preference
         function loadUserPreferences() {
@@ -2281,97 +2023,6 @@ showPage = function(pageIndex) {
     
     return result;
 };      
-
-// Function to detect text overflow on the current page
-function detectTextOverflow() {
-    // Get current page
-    const currentPage = document.querySelector('.page.active');
-    if (!currentPage) return false;
-    
-    // Get content container
-    const contentContainer = currentPage.querySelector('.page-content');
-    if (!contentContainer) return false;
-    
-    // Check if content is taller than its container
-    const contentHeight = contentContainer.scrollHeight;
-    const containerHeight = contentContainer.clientHeight;
-    
-    return contentHeight > containerHeight;
-}
-
-// Function to monitor and fix any text overflow issues
-function monitorTextOverflow() {
-    // After each page load or font change, check for overflow
-    if (detectTextOverflow()) {
-        console.warn('Text overflow detected, adjusting pagination...');
-        
-        // Reduce the character count temporarily
-        const currentCharsPerPage = getOptimalCharsPerPage();
-        const adjustedCharsPerPage = Math.floor(currentCharsPerPage * 0.9); // 10% reduction
-        
-        // Force regeneration with adjusted count
-        regeneratePages();
-    }
-}
-
-// Add orientation change handler with improved reliability
-window.addEventListener('orientationchange', function() {
-    // Show loading to prevent flashing during resize
-    showLoading();
-    
-    // Wait for the orientation change to complete
-    setTimeout(function() {
-        // Force regeneration of pages with optimal sizing for new orientation
-        forceRedraw = true;
-        regeneratePages().then(() => {
-            // Try to maintain current reading position
-            if (currentPageIndex >= 0 && currentPageIndex < pagesMap.length) {
-                showPage(currentPageIndex);
-            }
-            forceRedraw = false;
-        });
-    }, 300);
-});
-
-// Add resize handler with debounce for better performance
-let resizeTimeout;
-window.addEventListener('resize', function() {
-    // Clear any existing timeout
-    if (resizeTimeout) clearTimeout(resizeTimeout);
-    
-    // Set a debounced timeout
-    resizeTimeout = setTimeout(function() {
-        // Only regenerate if it's a significant size change (not just a small UI element)
-        const newWidth = window.innerWidth;
-        const newHeight = window.innerHeight;
-        
-        // Calculate size difference as percentage
-        const oldSize = window.lastWidth * window.lastHeight;
-        const newSize = newWidth * newHeight;
-        const sizeDiff = Math.abs(1 - (newSize / oldSize));
-        
-        // If size change is significant (more than 5%), regenerate
-        if (!window.lastWidth || !window.lastHeight || sizeDiff > 0.05) {
-            forceRedraw = true;
-            regeneratePages().then(() => {
-                showPage(currentPageIndex);
-                forceRedraw = false;
-            });
-            
-            // Update stored dimensions
-            window.lastWidth = newWidth;
-            window.lastHeight = newHeight;
-        }
-    }, 500); // Wait 500ms after resize stops
-});
-
-// Initialize the stored screen dimensions on load
-document.addEventListener('DOMContentLoaded', function() {
-    window.lastWidth = window.innerWidth;
-    window.lastHeight = window.innerHeight;
-});
-
-        
     </script>
 </body>
 </html>
