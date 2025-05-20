@@ -649,10 +649,10 @@
 
 
 
-       /* Menu Indicator Styles */
+     /* Menu Indicator Styles */
 .menu-indicator {
     position: absolute;
-    top: 5%; /* Moved closer to the top edge (was 10%) */
+    top: 2%; /* Moved even closer to the top edge */
     left: 50%;
     transform: translateX(-50%);
     width: 60px;
@@ -668,11 +668,11 @@
     position: absolute;
     width: 100%;
     text-align: center;
-    top: 115%;
+    top: -45%; /* Moved above the circles */
     left: 0;
-    color: rgba(0, 0, 0, 0.8); /* Changed to dark color */
+    color: rgba(0, 0, 0, 0.8);
     font-size: 14px;
-    font-weight: 500; /* Made slightly bolder for better visibility */
+    font-weight: 500;
     letter-spacing: 2px;
     text-transform: uppercase;
     opacity: 0;
@@ -681,7 +681,7 @@
 
 .menu-circle {
     position: absolute;
-    border: 2px solid rgba(0, 0, 0, 0.6); /* Changed to dark color */
+    border: 2px solid rgba(0, 0, 0, 0.6);
     border-radius: 50%;
     width: 60px;
     height: 60px;
@@ -709,32 +709,12 @@
     position: absolute;
     width: 20px;
     height: 20px;
-    background-color: rgba(0, 0, 0, 0.7); /* Changed to dark color */
+    background-color: rgba(0, 0, 0, 0.7);
     border-radius: 50%;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     animation: pulse 2s ease-in-out infinite;
-}
-
-.menu-up-arrow {
-    position: absolute;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-135deg); /* Rotate to point upward */
-    width: 16px;
-    height: 16px;
-    opacity: 0.9;
-}
-
-.menu-up-arrow:before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-top: 3px solid rgba(0, 0, 0, 0.9); /* Changed to dark color */
-    border-right: 3px solid rgba(0, 0, 0, 0.9); /* Changed to dark color */
-    transform: rotate(45deg);
 }
 
 @keyframes menuRipple {
@@ -1250,39 +1230,38 @@ window.addEventListener('orientationchange', function() {
             pagesMap.push({ type: 'cover', index: 0 });
         }
         
-        // Create the dedication page
-        function createDedicationPage() {
-            const pageContainer = document.getElementById('page-container');
+// Create the dedication page with menu indicator
+function createDedicationPage() {
+    const pageContainer = document.getElementById('page-container');
+    
+    const dedicationPage = document.createElement('div');
+    dedicationPage.className = 'page dedication-page';
+    dedicationPage.id = 'page-1'; // This will become page 1
+    
+    dedicationPage.innerHTML = `
+        <div class="dedication-content">
+            <p class="dedication-top">And so am I.</p>
+            <p class="dedication-bottom">For everyone, but especially you.</p>
             
-            const dedicationPage = document.createElement('div');
-            dedicationPage.className = 'page dedication-page';
-            dedicationPage.id = 'page-1'; // This will become page 1
-            
-            dedicationPage.innerHTML = `
-                <div class="dedication-content">
-                    <p class="dedication-top">And so am I.</p>
-                    <p class="dedication-bottom">For everyone, but especially you.</p>
-<!-- Menu indicator component -->
-<div class="menu-indicator" id="menu-indicator">
-    <!-- Ripple circles -->
-    <div class="menu-circle menu-circle-1"></div>
-    <div class="menu-circle menu-circle-2"></div>
-    <div class="menu-circle menu-circle-3"></div>
-    <!-- Up arrow -->
-    <div class="menu-up-arrow"></div>
-    <!-- Center dot -->
-    <div class="menu-center"></div>
-    <!-- Menu text -->
-    <div class="menu-text">MENU</div>
-</div>                   
-                </div>
-            `;
-            
-            pageContainer.appendChild(dedicationPage);
-            
-            // Add to pages map
-            pagesMap.push({ type: 'dedication', index: 0 });
-        }
+            <!-- Menu indicator component -->
+            <div class="menu-indicator" id="menu-indicator">
+                <!-- Menu text (now above) -->
+                <div class="menu-text">MENU</div>
+                <!-- Ripple circles -->
+                <div class="menu-circle menu-circle-1"></div>
+                <div class="menu-circle menu-circle-2"></div>
+                <div class="menu-circle menu-circle-3"></div>
+                <!-- Center dot -->
+                <div class="menu-center"></div>
+            </div>
+        </div>
+    `;
+    
+    pageContainer.appendChild(dedicationPage);
+    
+    // Add to pages map
+    pagesMap.push({ type: 'dedication', index: 0 });
+}
         
         // Create the table of contents page
         function createTOCPage() {
