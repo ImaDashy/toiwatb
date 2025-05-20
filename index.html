@@ -850,36 +850,72 @@
         const fontSizeStep = 10;   // Change in 10% increments
         let forceRedraw = false;
 
-// Function to get optimal characters per page based on device
+// Dynamic sizing function to adjust characters per page based on device and font size
 function getOptimalCharsPerPage() {
-    // Base character count
-    let baseCount = 1550;
+    // Base character count for standard conditions
+    let baseCount = 1800;
     
-    // Get device dimensions
+    // Get device dimensions and orientation
     const width = window.innerWidth;
     const height = window.innerHeight;
+    const isLandscape = width > height;
     
-    // Apply safety margin based on device size
-    let safetyFactor = 1.0;
+    // Get the available height for text (accounting for headers, margins, etc.)
+    // This is approximate and should be adjusted based on your actual layout
+    const pageHeaderHeight = 60; // Estimated height for chapter title, etc.
+    const pageMargins = 60; // Total vertical margins
+    const availableHeight = height - pageHeaderHeight - pageMargins;
     
-    // Small phones need more margin
+    // Average line height in pixels (this will vary with font size)
+    // We'll calculate this more precisely based on font size
+    const baseLineHeight = 24; // For 100% font size
+    const currentFontSize = parseInt(localStorage.getItem('ebook-font-size')) || 100;
+    const adjustedLineHeight = baseLineHeight * (currentFontSize / 100);
+    
+    // Average characters per line (varies with device width and font size)
+    // For a standard width phone in portrait
+    let averageCharsPerLine = 45; // Default for medium phone
+    
+    // Adjust for screen width and font size
+    if (width < 320) {
+        averageCharsPerLine = 30; // Very small screen
+    } else if (width < 375) {
+        averageCharsPerLine = 35; // Small phone
+    } else if (width < 414) {
+        averageCharsPerLine = 40; // Medium phone
+    } else if (width < 768) {
+        averageCharsPerLine = 55; // Large phone
+    } else if (width < 1024) {
+        averageCharsPerLine = 70; // Tablet portrait
+    } else {
+        averageCharsPerLine = 90; // Large tablet or desktop
+    }
+    
+    // Scale characters per line based on font size
+    averageCharsPerLine = Math.floor(averageCharsPerLine * (100 / currentFontSize));
+    
+    // Estimate lines per page
+    const linesPerPage = Math.floor(availableHeight / adjustedLineHeight);
+    
+    // Calculate total characters per page
+    let charsPerPage = averageCharsPerLine * linesPerPage;
+    
+    // Apply safety margin to prevent overflow (more conservative for smaller screens)
+    let safetyFactor = 0.92; // Default 8% margin
+    
     if (width < 375 || height < 667) {
-        safetyFactor = 0.85; // 15% fewer characters for small screens
-    } 
-    // Medium phones
-    else if (width < 414 || height < 736) {
-        safetyFactor = 0.9; // 10% fewer characters
-    }
-    // Large phones
-    else if (width < 480 || height < 800) {
-        safetyFactor = 0.95; // 5% fewer characters
+        safetyFactor = 0.85; // 15% safety margin for small screens
+    } else if (width < 414 || height < 736) {
+        safetyFactor = 0.88; // 12% safety margin for medium screens
     }
     
-    // Apply safety factor
-    baseCount = Math.floor(baseCount * safetyFactor);
+    // Final character count with safety factor
+    charsPerPage = Math.floor(charsPerPage * safetyFactor);
     
-    // Further adjust based on font size (already happening in regeneratePages)
-    return baseCount;
+    // Log the calculation for debugging
+    console.log(`Screen: ${width}x${height}, Font: ${currentFontSize}%, Lines: ${linesPerPage}, Chars/line: ${averageCharsPerLine}, Total: ${charsPerPage}`);
+    
+    return charsPerPage;
 }
         
         /* === Initialization === */
