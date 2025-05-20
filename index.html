@@ -530,6 +530,123 @@
             font-size: 16px;
             margin: 0 10px;
         }
+        
+    /* Tap Indicator Styles */
+    .tap-indicator {
+        position: absolute;
+        right: 20%; /* Position on the right side */
+        top: 50%;
+        transform: translateY(-50%);
+        width: 50px;
+        height: 50px;
+        z-index: 50;
+        opacity: 0;
+        pointer-events: none; /* Make sure it doesn't interfere with taps */
+        animation: fadeInOut 5s ease-in-out 1s forwards;
+    }
+
+    .tap-circle {
+        position: absolute;
+        border: 2px solid rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        top: 0;
+        left: 0;
+        opacity: 0;
+    }
+
+    .tap-circle-1 {
+        animation: ripple 3s linear infinite;
+        animation-delay: 0s;
+    }
+
+    .tap-circle-2 {
+        animation: ripple 3s linear infinite;
+        animation-delay: 0.75s;
+    }
+
+    .tap-circle-3 {
+        animation: ripple 3s linear infinite;
+        animation-delay: 1.5s;
+    }
+
+    .tap-center {
+        position: absolute;
+        width: 15px;
+        height: 15px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .tap-arrow {
+        position: absolute;
+        right: 35%;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 30px;
+        height: 30px;
+        opacity: 0;
+        animation: arrowPulse 3s ease-in-out infinite 1.5s;
+    }
+
+    .tap-arrow:before {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-top: 3px solid rgba(255, 255, 255, 0.9);
+        border-right: 3px solid rgba(255, 255, 255, 0.9);
+        transform: rotate(45deg);
+    }
+
+    @keyframes ripple {
+        0% {
+            transform: scale(0.2);
+            opacity: 0;
+        }
+        20% {
+            opacity: 0.6;
+        }
+        100% {
+            transform: scale(2);
+            opacity: 0;
+        }
+    }
+
+    @keyframes fadeInOut {
+        0% {
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes arrowPulse {
+        0% {
+            opacity: 0;
+            transform: translateY(-50%) translateX(-10px);
+        }
+        50% {
+            opacity: 0.9;
+            transform: translateY(-50%) translateX(0px);
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(-50%) translateX(10px);
+        }
+    }
+      
     </style>
 </head>
 <body>
@@ -967,7 +1084,18 @@ window.addEventListener('orientationchange', function() {
             coverPage.innerHTML = `
                 <div class="cover-image-container">
                     <img src="/Cover1.png" alt="${bookData.title} Cover" class="full-cover-image">
-                </div>
+            <!-- Tap indicator component -->
+            <div class="tap-indicator" id="tap-indicator">
+                <!-- Ripple circles -->
+                <div class="tap-circle tap-circle-1"></div>
+                <div class="tap-circle tap-circle-2"></div>
+                <div class="tap-circle tap-circle-3"></div>
+                <!-- Center dot -->
+                <div class="tap-center"></div>
+                <!-- Arrow indicating swipe direction -->
+                <div class="tap-arrow"></div>
+            </div>                  
+               </div>
             `;
             
             pageContainer.appendChild(coverPage);
@@ -1694,6 +1822,42 @@ const adjustedCharsPerPage = Math.floor(BASELINE_CHARS * scaleFactor * safetyMar
                 });
             }
         }
+        
+// Function to show the tap indicator only on the first visit to the site
+function showTapIndicator() {
+    // Check if this is the first visit
+    const hasVisited = localStorage.getItem('has_visited_site');
+    
+    if (!hasVisited || hasVisited !== 'true') {
+        // Show the tap indicator
+        const tapIndicator = document.getElementById('tap-indicator');
+        if (tapIndicator) {
+            tapIndicator.style.display = 'block';
+            
+            // Hide the indicator after animation completes (8 seconds)
+            setTimeout(() => {
+                tapIndicator.style.display = 'none';
+            }, 8000);
+        }
+        
+        // Set the flag that user has visited the site
+        localStorage.setItem('has_visited_site', 'true');
+    }
+}
+
+// Add this to the existing page initialization function
+const originalShowPage = showPage;
+showPage = function(pageIndex) {
+    const result = originalShowPage(pageIndex);
+    
+    // If we're showing the cover page (index 0) and it's the first load
+    if (pageIndex === 0 && !document.hasShownTapIndicator) {
+        showTapIndicator();
+        document.hasShownTapIndicator = true;
+    }
+    
+    return result;
+};       
     </script>
 </body>
 </html>
