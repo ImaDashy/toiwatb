@@ -1299,23 +1299,22 @@ function createDedicationPage() {
         }
         
         // Create pages for a chapter with improved footnote handling
-   function createChapterPages(chapter, chapterIndex) {
-    console.log('Creating chapter pages for:', chapter.title);
+function createChapterPages(chapter, chapterIndex) {
+    console.log('Creating chapter pages with enhanced pagination for:', chapter.title);
     
     if (!chapter.content) {
         console.error('No content found for chapter:', chapter.title);
         return;
     }
     
-    // Use the height-based pagination system
+    // Use enhanced height-based pagination
     const pages = paginateContent(chapter.content, chapter.footnotes || [], {
         chapterNumber: chapter.number,
         chapterTitle: chapter.title
     });
     
-    console.log(`Chapter "${chapter.title}" generated ${pages.length} pages`);
+    console.log(`Enhanced pagination: Chapter "${chapter.title}" split into ${pages.length} pages`);
     
-    // Create a page for each paginated content
     const pageContainer = document.getElementById('page-container');
     
     for (let i = 0; i < pages.length; i++) {
@@ -1323,7 +1322,7 @@ function createDedicationPage() {
         chapterPage.className = 'page chapter-page';
         chapterPage.id = `page-${pagesMap.length}`;
         
-        // Add chapter title to first page of chapter only
+        // Add chapter title only to first page
         let titleHTML = '';
         if (i === 0) {
             titleHTML = `<h2>Chapter ${chapter.number}: ${chapter.title}</h2>`;
@@ -1337,7 +1336,6 @@ function createDedicationPage() {
         
         pageContainer.appendChild(chapterPage);
         
-        // Add to pages map
         pagesMap.push({
             type: 'chapter',
             chapterIndex: chapterIndex,
@@ -1345,10 +1343,11 @@ function createDedicationPage() {
             pageNumber: pagesMap.length
         });
         
-        console.log(`Created chapter page ${i + 1}/${pages.length}, total pages now: ${pagesMap.length}`);
+        console.log(`Created enhanced chapter page ${i + 1}/${pages.length}`);
     }
+    
+    console.log(`Chapter pagination complete: ${pages.length} pages created`);
 }
-
         
         // Function to setup footnote references after pages are created
         function setupFootnoteReferences() {
@@ -1393,13 +1392,6 @@ function createDedicationPage() {
                 });
             });
         }
-        
-        // Improved paginate content function that handles footnotes better
-       function paginateContent(content, footnotes, options) {
-    console.time('Height-based pagination');
-    
-    const pages = [];
-
 // ADD THESE MISSING FUNCTIONS TO YOUR CODE:
 
 // 1. Extract footnote references from an element (this should have been kept from original code)
@@ -1435,19 +1427,27 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
     
     return html;
 }
-
-           
-    // Get dimensions from existing page or create a reference element
-    const { measureDiv, maxHeight, maxContentHeight } = createMeasurementContainer();
+        
+        // Improved paginate content function that handles footnotes better
+function paginateContent(content, footnotes, options) {
+    console.log('Starting enhanced height-based pagination with paragraph splitting...');
+    console.time('Enhanced pagination');
+    
+    const pages = [];
+    
+    // Get dimensions with better footnote space calculation
+    const { measureDiv, maxContentHeight } = createMeasurementContainer();
     
     try {
-        // Parse and prepare content
+        // Parse content into manageable elements
         const parser = new DOMParser();
         const doc = parser.parseFromString(`<div>${content}</div>`, 'text/html');
         const elements = Array.from(doc.body.firstChild.childNodes).filter(node => 
             node.nodeType === Node.ELEMENT_NODE || 
             (node.nodeType === Node.TEXT_NODE && node.textContent.trim())
         );
+        
+        console.log(`Processing ${elements.length} elements for pagination`);
         
         let currentPageContent = '';
         let currentPageFootnotes = new Set();
@@ -1456,98 +1456,108 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
             const element = elements[i];
             const elementHTML = element.outerHTML || element.textContent;
             
-            // Extract footnote references from this element
+            // Extract footnote references
             const footnoteRefs = extractFootnoteRefs(element);
             
-            // Test adding this element to the current page
-            const testContent = currentPageContent + elementHTML;
-            const testFootnotes = new Set([...currentPageFootnotes, ...footnoteRefs]);
-            
-            // Check if this content fits on the current page
-            if (testContentFitsOnPage(measureDiv, testContent, testFootnotes, footnotes, maxContentHeight)) {
-                // Content fits, add it to current page
-                currentPageContent = testContent;
+            // Test if element fits as-is
+            if (doesContentFitOnPage(measureDiv, currentPageContent + elementHTML, 
+                new Set([...currentPageFootnotes, ...footnoteRefs]), footnotes, maxContentHeight)) {
+                
+                // Element fits completely, add it
+                currentPageContent += elementHTML;
                 footnoteRefs.forEach(ref => currentPageFootnotes.add(ref));
+                
             } else {
-                // Content doesn't fit
+                // Element doesn't fit - need to handle splitting
+                
+                // First, save current page if it has content
                 if (currentPageContent.trim()) {
-                    // Save current page if it has content
                     pages.push({
                         content: currentPageContent,
                         footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
                     });
+                    console.log(`Created page ${pages.length} (content length: ${currentPageContent.length})`);
                 }
                 
-                // Check if the current element can fit on a new page by itself
-                const newPageFootnotes = new Set(footnoteRefs);
-                if (testContentFitsOnPage(measureDiv, elementHTML, newPageFootnotes, footnotes, maxContentHeight)) {
-                    // Element fits on new page, start new page with this element
-                    currentPageContent = elementHTML;
-                    currentPageFootnotes = newPageFootnotes;
-                } else {
-                    // Element is too large for a page, need to split it
-                    const splitResult = splitElementByHeight(element, footnoteRefs, footnotes, measureDiv, maxContentHeight);
+                // Now handle the element that doesn't fit
+                if (element.tagName === 'P') {
+                    // This is a paragraph - split it properly
+                    const splitPages = splitParagraphAcrossPages(element, footnoteRefs, footnotes, measureDiv, maxContentHeight);
                     
-                    // Add all the split parts except the last one as complete pages
-                    for (let j = 0; j < splitResult.length - 1; j++) {
-                        pages.push(splitResult[j]);
+                    // Add all but the last split page as complete pages
+                    for (let j = 0; j < splitPages.length - 1; j++) {
+                        pages.push(splitPages[j]);
+                        console.log(`Created split page ${pages.length} (partial paragraph)`);
                     }
                     
                     // Start new page with the last part
-                    const lastPart = splitResult[splitResult.length - 1];
-                    currentPageContent = lastPart.content;
-                    currentPageFootnotes = new Set(lastPart.footnoteIds || []);
+                    if (splitPages.length > 0) {
+                        const lastSplit = splitPages[splitPages.length - 1];
+                        currentPageContent = lastSplit.content;
+                        currentPageFootnotes = new Set(lastSplit.footnoteIds || []);
+                    } else {
+                        currentPageContent = '';
+                        currentPageFootnotes = new Set();
+                    }
+                    
+                } else {
+                    // Non-paragraph element (heading, etc.) - put on new page as-is
+                    currentPageContent = elementHTML;
+                    currentPageFootnotes = new Set(footnoteRefs);
                 }
             }
         }
         
-        // Add the last page if it has content
+        // Add final page if it has content
         if (currentPageContent.trim()) {
             pages.push({
                 content: currentPageContent,
                 footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
             });
+            console.log(`Created final page ${pages.length}`);
         }
         
     } finally {
-        // Clean up measurement container
         document.body.removeChild(measureDiv);
     }
     
-    console.timeEnd('Height-based pagination');
-    console.log(`Generated ${pages.length} pages using height-based pagination`);
-    
+    console.timeEnd('Enhanced pagination');
+    console.log(`Generated ${pages.length} pages with proper paragraph splitting`);
     return pages;
 }
+        
 // Create a hidden measurement container that matches the real page styling
 function createMeasurementContainer() {
-    // Find an existing page to copy dimensions from
     let samplePage = document.querySelector('.page-content');
     let parentPage = document.querySelector('.page');
     
-    // If no existing page, create a temporary reference
     if (!samplePage || !parentPage) {
         parentPage = createTemporaryPageReference();
         samplePage = parentPage.querySelector('.page-content');
     }
     
-    // Get computed styles from the sample page
-    const sampleStyles = window.getComputedStyle(samplePage);
     const parentStyles = window.getComputedStyle(parentPage);
+    const sampleStyles = window.getComputedStyle(samplePage);
     
-    // Calculate available space for content
+    // Calculate available space more precisely
     const parentHeight = parentPage.clientHeight;
     const parentPadding = parseInt(parentStyles.paddingTop) + parseInt(parentStyles.paddingBottom);
     
-    // Account for chapter title space (if this is the first page of a chapter)
-    const chapterTitleHeight = 70; // Approximate height of chapter title
-    const footnotesBorderHeight = 20; // Space for footnotes border/margin
+    // Reserve space for chapter title (only on first page of chapter)
+    const chapterTitleHeight = 80; // Slightly more conservative
     
-    // Maximum height for content only (excluding footnotes)
-    const maxContentHeight = parentHeight - parentPadding - chapterTitleHeight - footnotesBorderHeight;
+    // Reserve space for footnotes section (border, margin, etc.)
+    const footnotesSectionOverhead = 30;
     
-    // Total available height including footnotes
-    const maxHeight = parentHeight - parentPadding;
+    // Maximum height for content (before footnotes)
+    const maxContentHeight = parentHeight - parentPadding - chapterTitleHeight - footnotesSectionOverhead;
+    
+    console.log('Page dimensions:', {
+        parentHeight,
+        parentPadding,
+        maxContentHeight,
+        reservedForFootnotes: footnotesSectionOverhead
+    });
     
     // Create measurement container
     const measureDiv = document.createElement('div');
@@ -1559,28 +1569,189 @@ function createMeasurementContainer() {
     measureDiv.style.width = parentPage.offsetWidth + 'px';
     measureDiv.style.height = 'auto';
     measureDiv.style.padding = parentStyles.padding;
-    measureDiv.style.margin = parentStyles.margin;
     measureDiv.style.fontFamily = parentStyles.fontFamily;
     measureDiv.style.fontSize = parentStyles.fontSize;
     measureDiv.style.lineHeight = parentStyles.lineHeight;
     measureDiv.style.overflow = 'visible';
     
-    // Add the same structure as a real page
+    // Create structure that matches real pages
     measureDiv.innerHTML = `
         <div class="page-content" style="
             font-size: ${sampleStyles.fontSize};
             line-height: ${sampleStyles.lineHeight};
-            flex: 1;
             overflow: visible;
         "></div>
-        <div class="footnotes-container"></div>
+        <div class="footnotes-test" style="
+            border-top: 1px solid #ccc;
+            margin-top: 20px;
+            padding-top: 20px;
+            font-size: ${Math.floor(parseInt(sampleStyles.fontSize) * 0.8)}%;
+        "></div>
     `;
     
     document.body.appendChild(measureDiv);
     
-    return { measureDiv, maxHeight, maxContentHeight };
+    return { measureDiv, maxContentHeight };
+}
+        
+// Enhanced content fitting test with better footnote handling
+function doesContentFitOnPage(measureDiv, content, footnoteIds, allFootnotes, maxContentHeight) {
+    const contentContainer = measureDiv.querySelector('.page-content');
+    const footnotesContainer = measureDiv.querySelector('.footnotes-test');
+    
+    // Set content
+    contentContainer.innerHTML = content;
+    
+    // Set footnotes
+    const footnotesHTML = buildFootnotesHTML(Array.from(footnoteIds), allFootnotes);
+    footnotesContainer.innerHTML = footnotesHTML;
+    
+    // Force reflow
+    measureDiv.offsetHeight;
+    
+    // Get measurements
+    const contentHeight = contentContainer.scrollHeight;
+    const footnotesHeight = footnotesContainer.scrollHeight;
+    const totalHeight = contentHeight + footnotesHeight;
+    
+    // Check if content fits
+    const fits = totalHeight <= measureDiv.clientHeight && contentHeight <= maxContentHeight;
+    
+    if (!fits) {
+        console.log('Content overflow detected:', {
+            contentHeight,
+            footnotesHeight,
+            totalHeight,
+            maxAllowed: measureDiv.clientHeight,
+            maxContentOnly: maxContentHeight
+        });
+    }
+    
+    return fits;
 }
 
+// CORE FUNCTION: Split a paragraph across multiple pages
+function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measureDiv, maxContentHeight) {
+    console.log('Splitting paragraph across pages...');
+    
+    const paragraphText = paragraph.textContent;
+    const tagName = paragraph.tagName.toLowerCase();
+    const attributes = getElementAttributes(paragraph);
+    
+    const pages = [];
+    
+    // Split by sentences first for more natural breaks
+    const sentences = splitIntoSentences(paragraphText);
+    console.log(`Paragraph has ${sentences.length} sentences`);
+    
+    let currentText = '';
+    let sentenceIndex = 0;
+    
+    while (sentenceIndex < sentences.length) {
+        const sentence = sentences[sentenceIndex];
+        const testText = currentText + (currentText ? ' ' : '') + sentence;
+        const testHTML = `<${tagName}${attributes}>${testText}</${tagName}>`;
+        
+        // For the first part of a split paragraph, include footnotes
+        const testFootnotes = pages.length === 0 ? new Set(footnoteRefs) : new Set();
+        
+        if (doesContentFitOnPage(measureDiv, testHTML, testFootnotes, allFootnotes, maxContentHeight)) {
+            // Sentence fits, add it
+            currentText = testText;
+            sentenceIndex++;
+        } else {
+            // Sentence doesn't fit
+            if (currentText.trim()) {
+                // Save current text as a page
+                const pageHTML = `<${tagName}${attributes}>${currentText}</${tagName}>`;
+                pages.push({
+                    content: pageHTML,
+                    footnotes: pages.length === 0 ? buildFootnotesHTML(footnoteRefs, allFootnotes) : '',
+                    footnoteIds: pages.length === 0 ? footnoteRefs : []
+                });
+                console.log(`Created paragraph split page ${pages.length}`);
+                currentText = '';
+            } else {
+                // Even single sentence doesn't fit, need to split by words
+                console.log('Single sentence too long, splitting by words...');
+                const wordSplitPages = splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxContentHeight, allFootnotes);
+                pages.push(...wordSplitPages);
+                sentenceIndex++;
+            }
+        }
+    }
+    
+    // Add remaining text as final part
+    if (currentText.trim()) {
+        const finalHTML = `<${tagName}${attributes}>${currentText}</${tagName}>`;
+        pages.push({
+            content: finalHTML,
+            footnotes: '',
+            footnoteIds: []
+        });
+        console.log(`Created final paragraph part`);
+    }
+    
+    return pages;
+}
+
+// Split text into sentences more intelligently
+function splitIntoSentences(text) {
+    // Split on sentence endings, but keep the punctuation
+    const sentences = text.match(/[^\.!?]+[\.!?]+/g) || [];
+    
+    // Handle case where text doesn't end with punctuation
+    const lastMatch = sentences.join('').length;
+    if (lastMatch < text.length) {
+        sentences.push(text.substring(lastMatch));
+    }
+    
+    return sentences.filter(s => s.trim());
+}
+
+// Split a sentence by words when it's too long
+function splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxContentHeight, allFootnotes) {
+    const words = sentence.split(' ');
+    const pages = [];
+    let currentText = '';
+    
+    for (const word of words) {
+        const testText = currentText + (currentText ? ' ' : '') + word;
+        const testHTML = `<${tagName}${attributes}>${testText}</${tagName}>`;
+        
+        if (doesContentFitOnPage(measureDiv, testHTML, new Set(), allFootnotes, maxContentHeight)) {
+            currentText = testText;
+        } else {
+            if (currentText.trim()) {
+                pages.push({
+                    content: `<${tagName}${attributes}>${currentText}</${tagName}>`,
+                    footnotes: '',
+                    footnoteIds: []
+                });
+            }
+            currentText = word;
+        }
+    }
+    
+    if (currentText.trim()) {
+        pages.push({
+            content: `<${tagName}${attributes}>${currentText}</${tagName}>`,
+            footnotes: '',
+            footnoteIds: []
+        });
+    }
+    
+    return pages;
+}
+
+// Helper function to get element attributes
+function getElementAttributes(element) {
+    let attributes = '';
+    for (const attr of element.attributes) {
+        attributes += ` ${attr.name}="${attr.value}"`;
+    }
+    return attributes;
+}
 // Create a temporary page reference for measurement if none exists
 function createTemporaryPageReference() {
     const tempPage = document.createElement('div');
