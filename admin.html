@@ -828,7 +828,7 @@
                     hideLoading();
                     console.log('Server error message:', data.error);
                    let errorMessage = data.error;
-if (errorMessage === 'Unauthorised') {
+if (errorMessage === 'Unauthorized') {
     errorMessage = 'You deliberately disobeyed me.';
 }
 showNotification(errorMessage || 'Naughty!', true);
