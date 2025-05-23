@@ -826,9 +826,13 @@
                     showAdminPanel();
                 } else {
                     hideLoading();
-                    showNotification(data.error || 'Naughty!', true);
-                    
-                    // Fallback for development/testing
+                   let errorMessage = data.error;
+if (errorMessage === 'unauthorised') {
+    errorMessage = 'You deliberately disobeyed me.';
+}
+showNotification(errorMessage || 'Naughty!', true);
+
+                    // defone for development/testing
                     if (password === DEFAULT_PASSWORD) {
                         console.warn('Using fallback authentication (for development only)');
                         const tempToken = createTempToken();
