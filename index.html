@@ -1693,6 +1693,7 @@ function doesContentAndFootnotesFit(measureContainer, content, footnoteIds, allF
         
         // Set the footnotes
         const footnotesHTML = buildFootnotesHTML(Array.from(footnoteIds), allFootnotes);
+        const hasFootnotes = footnotesHTML.trim().length > 0;
         footnotesArea.innerHTML = footnotesHTML;
         
         // Force a reflow to get accurate measurements
@@ -1711,25 +1712,49 @@ function doesContentAndFootnotesFit(measureContainer, content, footnoteIds, allF
         const availableHeight = containerHeight - containerPadding;
         
         // Account for footnotes margin and border - but only if footnotes exist
-        const footnotesMarginAndBorder = footnotesHTML ? 40 : 0;
+        const footnotesMarginAndBorder = hasFootnotes ? 40 : 0;
         
         // Total used height
         const totalUsedHeight = contentHeight + footnotesHeight + footnotesMarginAndBorder;
         
-        // MUCH smaller safety margin - only 5px for edge cases
-        const safetyMargin = 5;
+        // SMART SAFETY MARGIN: More forgiving when footnotes are present
+        let safetyMargin;
+        if (hasFootnotes) {
+            // With footnotes, allow up to 25px overflow since footnotes can be flexible
+            const overflow = totalUsedHeight - availableHeight;
+            if (overflow <= 25) {
+                safetyMargin = 0; // No additional safety margin needed
+            } else {
+                safetyMargin = 5; // Small margin for larger overflows
+            }
+        } else {
+            // Without footnotes, be more strict but still reasonable
+            safetyMargin = 10;
+        }
+        
         const fits = totalUsedHeight + safetyMargin <= availableHeight;
         
-        // Only log when there's actually a significant overflow
-        if (!fits && (totalUsedHeight - availableHeight) > 10) {
-            console.log('Significant content overflow detected:', {
+        // Log decisions for debugging
+        const actualOverflow = totalUsedHeight + safetyMargin - availableHeight;
+        if (!fits && actualOverflow > 5) {
+            console.log('Content overflow (after smart margins):', {
                 contentHeight,
                 footnotesHeight,
                 footnotesMarginAndBorder,
                 totalUsed: totalUsedHeight,
                 available: availableHeight,
-                actualOverflow: totalUsedHeight - availableHeight,
-                safetyMargin
+                hasFootnotes,
+                safetyMargin,
+                actualOverflow,
+                decision: 'DOES_NOT_FIT'
+            });
+        } else if (hasFootnotes && (totalUsedHeight - availableHeight) > 0) {
+            console.log('Footnote page fits with smart margins:', {
+                totalUsed: totalUsedHeight,
+                available: availableHeight,
+                rawOverflow: totalUsedHeight - availableHeight,
+                safetyMargin,
+                finalDecision: 'FITS'
             });
         }
         
@@ -1737,7 +1762,7 @@ function doesContentAndFootnotesFit(measureContainer, content, footnoteIds, allF
         
     } catch (error) {
         console.error('Error in doesContentAndFootnotesFit:', error);
-        return false; // If measurement fails, assume it doesn't fit
+        return false;
     }
 }
         
