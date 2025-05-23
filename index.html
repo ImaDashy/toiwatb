@@ -1330,47 +1330,46 @@ function createDedicationPage() {
         }
         
         // Create pages for a chapter with improved footnote handling
-        function createChapterPages(chapter, chapterIndex, charsPerPage = 1550) {
-            const content = chapter.content;
-            
-            // Paginate the content with the adjusted character count
-            const pages = paginateContent(content, chapter.footnotes || [], {
-                chapterNumber: chapter.number,
-                chapterTitle: chapter.title,
-                charsPerPage: charsPerPage
-            });
-            
-            // Create a page for each paginated content
-            const pageContainer = document.getElementById('page-container');
-            
-            for (let i = 0; i < pages.length; i++) {
-                const chapterPage = document.createElement('div');
-                chapterPage.className = 'page chapter-page';
-                chapterPage.id = `page-${pagesMap.length}`;
-                
-                // Add chapter title to first page of chapter
-                let titleHTML = '';
-                if (i === 0) {
-                    titleHTML = `<h2>Chapter ${chapter.number}: ${chapter.title}</h2>`;
-                }
-                
-                chapterPage.innerHTML = `
-                    ${titleHTML}
-                    <div class="page-content">${pages[i].content}</div>
-                    ${pages[i].footnotes ? `<div class="footnotes">${pages[i].footnotes}</div>` : ''}
-                `;
-                
-                pageContainer.appendChild(chapterPage);
-                
-                // Add to pages map
-                pagesMap.push({
-                    type: 'chapter',
-                    chapterIndex: chapterIndex,
-                    pageIndex: i,
-                    pageNumber: pagesMap.length
-                });
-            }
+    function createChapterPages(chapter, chapterIndex) {  // Remove charsPerPage parameter
+    const content = chapter.content;
+    
+    // Use height-based pagination (no charsPerPage needed)
+    const pages = paginateContent(content, chapter.footnotes || [], {
+        chapterNumber: chapter.number,
+        chapterTitle: chapter.title
+    });
+    
+    // Create a page for each paginated content
+    const pageContainer = document.getElementById('page-container');
+    
+    for (let i = 0; i < pages.length; i++) {
+        const chapterPage = document.createElement('div');
+        chapterPage.className = 'page chapter-page';
+        chapterPage.id = `page-${pagesMap.length}`;
+        
+        // Add chapter title to first page of chapter
+        let titleHTML = '';
+        if (i === 0) {
+            titleHTML = `<h2>Chapter ${chapter.number}: ${chapter.title}</h2>`;
         }
+        
+        chapterPage.innerHTML = `
+            ${titleHTML}
+            <div class="page-content">${pages[i].content}</div>
+            ${pages[i].footnotes ? `<div class="footnotes">${pages[i].footnotes}</div>` : ''}
+        `;
+        
+        pageContainer.appendChild(chapterPage);
+        
+        // Add to pages map
+        pagesMap.push({
+            type: 'chapter',
+            chapterIndex: chapterIndex,
+            pageIndex: i,
+            pageNumber: pagesMap.length
+        });
+    }
+}
         
         // Function to setup footnote references after pages are created
         function setupFootnoteReferences() {
@@ -1417,106 +1416,325 @@ function createDedicationPage() {
         }
         
         // Improved paginate content function that handles footnotes better
-        function paginateContent(content, footnotes, options) {
-            // Get the character count per page from options (or use default)
-            const CHARS_PER_PAGE = options.charsPerPage || 1550;
+       function paginateContent(content, footnotes, options) {
+    console.time('Height-based pagination');
+    
+    const pages = [];
+    
+    // Get dimensions from existing page or create a reference element
+    const { measureDiv, maxHeight, maxContentHeight } = createMeasurementContainer();
+    
+    try {
+        // Parse and prepare content
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(`<div>${content}</div>`, 'text/html');
+        const elements = Array.from(doc.body.firstChild.childNodes).filter(node => 
+            node.nodeType === Node.ELEMENT_NODE || 
+            (node.nodeType === Node.TEXT_NODE && node.textContent.trim())
+        );
+        
+        let currentPageContent = '';
+        let currentPageFootnotes = new Set();
+        
+        for (let i = 0; i < elements.length; i++) {
+            const element = elements[i];
+            const elementHTML = element.outerHTML || element.textContent;
             
-            // Parse and clean the HTML content
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = content;
+            // Extract footnote references from this element
+            const footnoteRefs = extractFootnoteRefs(element);
             
-            // Get all paragraphs and elements
-            const elements = Array.from(tempDiv.childNodes);
+            // Test adding this element to the current page
+            const testContent = currentPageContent + elementHTML;
+            const testFootnotes = new Set([...currentPageFootnotes, ...footnoteRefs]);
             
-            // Initialize pages array
-            const pages = [];
-            
-            // Current page data
-            let currentPage = {
-                content: '',
-                charCount: 0,
-                footnotes: '',
-                footnoteIds: []
-            };
-            
-            // Process each element
-            for (let i = 0; i < elements.length; i++) {
-                const element = elements[i];
-                const elementHTML = element.outerHTML || element.textContent;
-                const elementText = element.textContent || '';
-                
-                // Skip empty elements
-                if (!elementText.trim()) {
-                    continue;
-                }
-                
-                // Extract footnote references from this element
-                const footnoteRefs = [];
-                const footnoteRegex = /<sup class="footnote-ref"[^>]*data-id="([^"]+)"[^>]*>.*?<\/sup>/g;
-                let match;
-                while ((match = footnoteRegex.exec(elementHTML)) !== null) {
-                    footnoteRefs.push(match[1]);
-                }
-                
-                // Calculate the footnote text length (for better pagination with footnotes)
-                let footnoteTextLength = 0;
-                if (footnoteRefs.length > 0) {
-                    const pageFootnotes = footnotes.filter(fn => footnoteRefs.includes(fn.id));
-                    pageFootnotes.forEach(fn => {
-                        // Add the length of footnote content plus some overhead
-                        footnoteTextLength += (fn.content.length + 20);
+            // Check if this content fits on the current page
+            if (testContentFitsOnPage(measureDiv, testContent, testFootnotes, footnotes, maxContentHeight)) {
+                // Content fits, add it to current page
+                currentPageContent = testContent;
+                footnoteRefs.forEach(ref => currentPageFootnotes.add(ref));
+            } else {
+                // Content doesn't fit
+                if (currentPageContent.trim()) {
+                    // Save current page if it has content
+                    pages.push({
+                        content: currentPageContent,
+                        footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
                     });
-                    
-                    // Scale down footnote text length since it's smaller font
-                    footnoteTextLength = Math.floor(footnoteTextLength * 0.8);
                 }
                 
-                // Total length including element and its footnotes
-                const totalLength = elementText.length + footnoteTextLength;
-                
-                // Check if this is a block element like paragraph, heading, etc.
-                const isBlockElement = element.nodeType === 1 && 
-                    ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'UL', 'OL', 'BLOCKQUOTE'].includes(element.tagName);
-                
-                // If this is a block element and it's too large for a single page, we need to split it
-                if (isBlockElement && totalLength > CHARS_PER_PAGE) {
-                    // We'll split this large paragraph into smaller chunks
-                    splitLargeElement(element, footnotes, footnoteRefs);
+                // Check if the current element can fit on a new page by itself
+                const newPageFootnotes = new Set(footnoteRefs);
+                if (testContentFitsOnPage(measureDiv, elementHTML, newPageFootnotes, footnotes, maxContentHeight)) {
+                    // Element fits on new page, start new page with this element
+                    currentPageContent = elementHTML;
+                    currentPageFootnotes = newPageFootnotes;
                 } else {
-                    // Normal element handling
-                    // If adding this element would exceed the page limit, start a new page
-                    if (currentPage.charCount + totalLength > CHARS_PER_PAGE && currentPage.charCount > 0) {
-                        // Complete the current page
-                        pages.push({
-                            content: currentPage.content,
-                            footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
-                        });
-                        
-                        // Start a new page
-                        currentPage = {
-                            content: elementHTML,
-                            charCount: totalLength,
-                            footnotes: '',
-                            footnoteIds: [...footnoteRefs]
-                        };
-                    } else {
-                        // Add to current page
-                        currentPage.content += elementHTML;
-                        currentPage.charCount += totalLength;
-                        currentPage.footnoteIds.push(...footnoteRefs);
+                    // Element is too large for a page, need to split it
+                    const splitResult = splitElementByHeight(element, footnoteRefs, footnotes, measureDiv, maxContentHeight);
+                    
+                    // Add all the split parts except the last one as complete pages
+                    for (let j = 0; j < splitResult.length - 1; j++) {
+                        pages.push(splitResult[j]);
                     }
+                    
+                    // Start new page with the last part
+                    const lastPart = splitResult[splitResult.length - 1];
+                    currentPageContent = lastPart.content;
+                    currentPageFootnotes = new Set(lastPart.footnoteIds || []);
                 }
             }
-            
-            // Add the last page if not empty
-            if (currentPage.charCount > 0) {
+        }
+        
+        // Add the last page if it has content
+        if (currentPageContent.trim()) {
+            pages.push({
+                content: currentPageContent,
+                footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
+            });
+        }
+        
+    } finally {
+        // Clean up measurement container
+        document.body.removeChild(measureDiv);
+    }
+    
+    console.timeEnd('Height-based pagination');
+    console.log(`Generated ${pages.length} pages using height-based pagination`);
+    
+    return pages;
+}
+// Create a hidden measurement container that matches the real page styling
+function createMeasurementContainer() {
+    // Find an existing page to copy dimensions from
+    let samplePage = document.querySelector('.page-content');
+    let parentPage = document.querySelector('.page');
+    
+    // If no existing page, create a temporary reference
+    if (!samplePage || !parentPage) {
+        parentPage = createTemporaryPageReference();
+        samplePage = parentPage.querySelector('.page-content');
+    }
+    
+    // Get computed styles from the sample page
+    const sampleStyles = window.getComputedStyle(samplePage);
+    const parentStyles = window.getComputedStyle(parentPage);
+    
+    // Calculate available space for content
+    const parentHeight = parentPage.clientHeight;
+    const parentPadding = parseInt(parentStyles.paddingTop) + parseInt(parentStyles.paddingBottom);
+    
+    // Account for chapter title space (if this is the first page of a chapter)
+    const chapterTitleHeight = 70; // Approximate height of chapter title
+    const footnotesBorderHeight = 20; // Space for footnotes border/margin
+    
+    // Maximum height for content only (excluding footnotes)
+    const maxContentHeight = parentHeight - parentPadding - chapterTitleHeight - footnotesBorderHeight;
+    
+    // Total available height including footnotes
+    const maxHeight = parentHeight - parentPadding;
+    
+    // Create measurement container
+    const measureDiv = document.createElement('div');
+    measureDiv.className = parentPage.className;
+    measureDiv.style.position = 'absolute';
+    measureDiv.style.visibility = 'hidden';
+    measureDiv.style.top = '-9999px';
+    measureDiv.style.left = '-9999px';
+    measureDiv.style.width = parentPage.offsetWidth + 'px';
+    measureDiv.style.height = 'auto';
+    measureDiv.style.padding = parentStyles.padding;
+    measureDiv.style.margin = parentStyles.margin;
+    measureDiv.style.fontFamily = parentStyles.fontFamily;
+    measureDiv.style.fontSize = parentStyles.fontSize;
+    measureDiv.style.lineHeight = parentStyles.lineHeight;
+    measureDiv.style.overflow = 'visible';
+    
+    // Add the same structure as a real page
+    measureDiv.innerHTML = `
+        <div class="page-content" style="
+            font-size: ${sampleStyles.fontSize};
+            line-height: ${sampleStyles.lineHeight};
+            flex: 1;
+            overflow: visible;
+        "></div>
+        <div class="footnotes-container"></div>
+    `;
+    
+    document.body.appendChild(measureDiv);
+    
+    return { measureDiv, maxHeight, maxContentHeight };
+}
+
+// Create a temporary page reference for measurement if none exists
+function createTemporaryPageReference() {
+    const tempPage = document.createElement('div');
+    tempPage.className = 'page';
+    tempPage.style.position = 'absolute';
+    tempPage.style.visibility = 'hidden';
+    tempPage.style.top = '-9999px';
+    tempPage.style.left = '-9999px';
+    tempPage.style.width = '100vw';
+    tempPage.style.height = '100vh';
+    tempPage.style.padding = '30px';
+    
+    // Apply current font size
+    const currentFontSize = parseInt(localStorage.getItem('ebook-font-size')) || 100;
+    
+    tempPage.innerHTML = `
+        <div class="page-content" style="
+            flex: 1;
+            overflow: hidden;
+            line-height: 1.7;
+            font-size: ${currentFontSize}%;
+        "></div>
+    `;
+    
+    document.body.appendChild(tempPage);
+    return tempPage;
+}
+
+// Test if content fits on a page by measuring actual height
+function testContentFitsOnPage(measureDiv, content, footnoteIds, allFootnotes, maxContentHeight) {
+    const contentContainer = measureDiv.querySelector('.page-content');
+    const footnotesContainer = measureDiv.querySelector('.footnotes-container');
+    
+    // Set the content
+    contentContainer.innerHTML = content;
+    
+    // Set the footnotes
+    const footnotesHTML = buildFootnotesHTML(Array.from(footnoteIds), allFootnotes);
+    footnotesContainer.innerHTML = footnotesHTML;
+    
+    // Force a reflow to get accurate measurements
+    measureDiv.offsetHeight;
+    
+    // Get heights
+    const contentHeight = contentContainer.scrollHeight;
+    const footnotesHeight = footnotesContainer.scrollHeight;
+    const totalHeight = contentHeight + footnotesHeight;
+    
+    // Content fits if total height is within limits
+    // Also ensure content alone doesn't exceed the content-only limit
+    return totalHeight <= measureDiv.clientHeight && contentHeight <= maxContentHeight;
+}
+
+// Split an element that's too large for a single page
+function splitElementByHeight(element, footnoteRefs, allFootnotes, measureDiv, maxContentHeight) {
+    const pages = [];
+    
+    // If it's not a paragraph, we can't split it - just put it on its own page
+    if (element.tagName !== 'P') {
+        const elementHTML = element.outerHTML || element.textContent;
+        return [{
+            content: elementHTML,
+            footnotes: buildFootnotesHTML(footnoteRefs, allFootnotes),
+            footnoteIds: footnoteRefs
+        }];
+    }
+    
+    // For paragraphs, split by sentences or words
+    const text = element.textContent;
+    const elementTag = element.tagName.toLowerCase();
+    const elementAttributes = getElementAttributes(element);
+    
+    // Try splitting by sentences first
+    const sentences = text.match(/[^\.!?]+[\.!?]+/g) || [text];
+    
+    let currentPageText = '';
+    
+    for (let i = 0; i < sentences.length; i++) {
+        const sentence = sentences[i];
+        const testText = currentPageText + sentence;
+        const testHTML = `<${elementTag}${elementAttributes}>${testText}</${elementTag}>`;
+        
+        // For simplicity, assign all footnotes to the first part
+        // In a more sophisticated implementation, you'd track which footnotes belong to which part
+        const pageFootnotes = i === 0 ? footnoteRefs : [];
+        
+        if (testContentFitsOnPage(measureDiv, testHTML, new Set(pageFootnotes), allFootnotes, maxContentHeight)) {
+            currentPageText = testText;
+        } else {
+            // Current sentence doesn't fit
+            if (currentPageText.trim()) {
+                // Save current page
+                const pageHTML = `<${elementTag}${elementAttributes}>${currentPageText}</${elementTag}>`;
                 pages.push({
-                    content: currentPage.content,
-                    footnotes: buildFootnotesHTML(currentPage.footnoteIds, footnotes)
+                    content: pageHTML,
+                    footnotes: buildFootnotesHTML(pageFootnotes, allFootnotes),
+                    footnoteIds: pageFootnotes
                 });
             }
             
-            return pages;
+            // Start new page with current sentence
+            currentPageText = sentence;
+            
+            // If even a single sentence doesn't fit, split by words
+            const singleSentenceHTML = `<${elementTag}${elementAttributes}>${sentence}</${elementTag}>`;
+            if (!testContentFitsOnPage(measureDiv, singleSentenceHTML, new Set(), allFootnotes, maxContentHeight)) {
+                // Split this sentence by words
+                const wordSplitResult = splitByWords(sentence, elementTag, elementAttributes, measureDiv, maxContentHeight, allFootnotes);
+                pages.push(...wordSplitResult);
+                currentPageText = '';
+            }
+        }
+    }
+    
+    // Add remaining text as final page
+    if (currentPageText.trim()) {
+        const finalHTML = `<${elementTag}${elementAttributes}>${currentPageText}</${elementTag}>`;
+        pages.push({
+            content: finalHTML,
+            footnotes: buildFootnotesHTML([], allFootnotes),
+            footnoteIds: []
+        });
+    }
+    
+    return pages;
+}
+
+// Split text by words when even sentences are too long
+function splitByWords(text, tagName, attributes, measureDiv, maxContentHeight, allFootnotes) {
+    const words = text.split(' ');
+    const pages = [];
+    let currentText = '';
+    
+    for (const word of words) {
+        const testText = currentText ? `${currentText} ${word}` : word;
+        const testHTML = `<${tagName}${attributes}>${testText}</${tagName}>`;
+        
+        if (testContentFitsOnPage(measureDiv, testHTML, new Set(), allFootnotes, maxContentHeight)) {
+            currentText = testText;
+        } else {
+            if (currentText.trim()) {
+                pages.push({
+                    content: `<${tagName}${attributes}>${currentText}</${tagName}>`,
+                    footnotes: '',
+                    footnoteIds: []
+                });
+            }
+            currentText = word;
+        }
+    }
+    
+    if (currentText.trim()) {
+        pages.push({
+            content: `<${tagName}${attributes}>${currentText}</${tagName}>`,
+            footnotes: '',
+            footnoteIds: []
+        });
+    }
+    
+    return pages;
+}
+
+// Get element attributes as a string
+function getElementAttributes(element) {
+    let attributes = '';
+    for (const attr of element.attributes) {
+        attributes += ` ${attr.name}="${attr.value}"`;
+    }
+    return attributes;
+}
             
             // Helper function to split large elements
             function splitLargeElement(element, footnotes, footnoteRefs) {
@@ -1863,85 +2081,90 @@ function createDedicationPage() {
         
         // Function to regenerate all pages
         async function regeneratePages() {
-            // Clear page container
-            const pageContainer = document.getElementById('page-container');
-            pageContainer.innerHTML = '';
+    console.time('Page generation');
+    showLoading();
+    
+    // Clear page container
+    const pageContainer = document.getElementById('page-container');
+    pageContainer.innerHTML = '';
+    
+    // Reset page mapping but keep the chapter data
+    pagesMap = [];
+    
+    // Create cover page (page 0)
+    createCoverPage();
+    
+    // Create dedication page (page 1)
+    createDedicationPage();
+    
+    // Create TOC page (now page 2)
+    createTOCPage();
+    
+    console.log('Using height-based pagination...');
+    
+    try {
+        // Process each chapter with height-based pagination (no charsPerPage needed)
+        for (let i = 0; i < bookData.chapters.length; i++) {
+            createChapterPages(bookData.chapters[i], i);  // Remove charsPerPage parameter
             
-            // Reset page mapping but keep the chapter data
-            pagesMap = [];
-            
-            // Create cover page (page 0)
-            createCoverPage();
-            
-            // Create dedication page (page 1)
-            createDedicationPage();
-            
-            // Create TOC page (now page 2)
-            createTOCPage();
-            
-            // Recalculate the CHARS_PER_PAGE constant based on the current font size
-            // This is a very rough approximation
-const BASELINE_CHARS = getOptimalCharsPerPage();
-// Adjust for current font size
-const scaleFactor = 100 / currentFontSize; // Inverse relationship
-// Apply additional safety margin of 5% to prevent overflow
-const safetyMargin = 0.95;
-const adjustedCharsPerPage = Math.floor(BASELINE_CHARS * scaleFactor * safetyMargin);
-            
-            console.log(`Font size: ${currentFontSize}%, Adjusted chars per page: ${adjustedCharsPerPage}`);
-            
-            try {
-                // Create content pages for each chapter with the new font size
-                for (let i = 0; i < bookData.chapters.length; i++) {
-                    createChapterPages(bookData.chapters[i], i, adjustedCharsPerPage);
-                }
-                
-                // Update total pages
-                totalPages = pagesMap.length;
-                
-                // Now that all pages are created, we need to update the TOC links
-                updateTOCLinks();
-                
-                // Setup footnote references and links
-                setupFootnoteReferences();
-                setupExternalLinks();
-                
-                // Apply current font size to all content
-                document.querySelectorAll('.page-content').forEach(content => {
-                    content.style.fontSize = `${currentFontSize}%`;
-                });
-                
-                document.querySelectorAll('.footnotes').forEach(footnotes => {
-                    footnotes.style.fontSize = `${currentFontSize * 0.8}%`;
-                });
-                
-                // Update navigation buttons
-                updateNavigation();
-                
-                // Initialize mobile features
-                setupMobileFeatures();
-            } catch (error) {
-                console.error('Error during page generation:', error);
-                // Add fallback content if there's an error
-                if (pagesMap.length === 0) {
-                    const errorPage = document.createElement('div');
-                    errorPage.className = 'page';
-                    errorPage.id = 'page-0';
-                    errorPage.innerHTML = `
-                        <div class="page-content">
-                            <h2>Error Loading Content</h2>
-                            <p>There was an error generating book pages. Please try refreshing the page.</p>
-                            <p>Error details: ${error.message}</p>
-                        </div>
-                    `;
-                    pageContainer.appendChild(errorPage);
-                    pagesMap.push({ type: 'error', index: 0 });
-                    totalPages = 1;
-                }
+            // Only yield to UI thread if there are many chapters
+            if (bookData.chapters.length > 5 && i % 2 === 1) {
+                await new Promise(resolve => setTimeout(resolve, 0));
             }
-            
-            return Promise.resolve();
         }
+        
+        // Update total pages
+        totalPages = pagesMap.length;
+        
+        // Now that all pages are created, we need to update the TOC links
+        updateTOCLinks();
+        
+        // Setup footnote references and links
+        setupFootnoteReferences();
+        setupExternalLinks();
+        
+        // Apply current font size to all content
+        document.querySelectorAll('.page-content').forEach(content => {
+            content.style.fontSize = `${currentFontSize}%`;
+        });
+        
+        document.querySelectorAll('.footnotes').forEach(footnotes => {
+            footnotes.style.fontSize = `${Math.floor(currentFontSize * 0.8)}%`;
+        });
+        
+        // Update navigation buttons
+        updateNavigation();
+        
+        // Initialize mobile features
+        setupMobileFeatures();
+        
+        // Monitor for text overflow (this should be much less needed now)
+        setTimeout(monitorTextOverflow, 500);
+    } catch (error) {
+        console.error('Error during page generation:', error);
+        // Add fallback content if there's an error
+        if (pagesMap.length === 0) {
+            const errorPage = document.createElement('div');
+            errorPage.className = 'page';
+            errorPage.id = 'page-0';
+            errorPage.innerHTML = `
+                <div class="page-content">
+                    <h2>Error Loading Content</h2>
+                    <p>There was an error generating book pages. Please try refreshing the page.</p>
+                    <p>Error details: ${error.message}</p>
+                </div>
+            `;
+            pageContainer.appendChild(errorPage);
+            pagesMap.push({ type: 'error', index: 0 });
+            totalPages = 1;
+        }
+    }
+    
+    console.timeEnd('Page generation');
+    hideLoading();
+    
+    return Promise.resolve();
+}
         
         // Load saved font size preference
         function loadUserPreferences() {
