@@ -1394,12 +1394,6 @@ function createDedicationPage() {
             });
         }
         
-        // Improved paginate content function that handles footnotes better
-       function paginateContent(content, footnotes, options) {
-    console.time('Height-based pagination');
-    
-    const pages = [];
-
 // ADD THESE MISSING FUNCTIONS TO YOUR CODE:
 
 // 1. Extract footnote references from an element (this should have been kept from original code)
@@ -1415,7 +1409,7 @@ function extractFootnoteRefs(element) {
     
     return refs;
 }
-
+        
 // 2. Build footnotes HTML (this should also have been kept)
 function buildFootnotesHTML(footnoteIds, footnotes) {
     if (!footnoteIds.length || !footnotes || !footnotes.length) {
@@ -1435,68 +1429,59 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
     
     return html;
 }
-
-           
-    // Get dimensions from existing page or create a reference element
-    const { measureDiv, maxHeight, maxContentHeight } = createMeasurementContainer();
+        
+        // Improved paginate content function that handles footnotes better
+function paginateContent(content, footnotes, options) {
+    console.log('Starting pagination with proper footnote height calculation...');
+    console.log('Content length:', content.length);
+    
+    const pages = [];
     
     try {
-        // Parse and prepare content
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(`<div>${content}</div>`, 'text/html');
-        const elements = Array.from(doc.body.firstChild.childNodes).filter(node => 
-            node.nodeType === Node.ELEMENT_NODE || 
-            (node.nodeType === Node.TEXT_NODE && node.textContent.trim())
-        );
+        // Split content by paragraphs first
+        const paragraphs = content.split('</p>').filter(p => p.trim());
         
         let currentPageContent = '';
         let currentPageFootnotes = new Set();
         
-        for (let i = 0; i < elements.length; i++) {
-            const element = elements[i];
-            const elementHTML = element.outerHTML || element.textContent;
+        // Create a temporary measurement container to test if content actually fits
+        const measureContainer = createFootnoteMeasurementContainer();
+        
+        for (let i = 0; i < paragraphs.length; i++) {
+            let paragraph = paragraphs[i];
+            if (!paragraph.endsWith('</p>')) {
+                paragraph += '</p>';
+            }
             
-            // Extract footnote references from this element
-            const footnoteRefs = extractFootnoteRefs(element);
+            // Extract footnote references from this paragraph
+            const footnoteRefs = extractFootnoteRefs({ outerHTML: paragraph });
             
-            // Test adding this element to the current page
-            const testContent = currentPageContent + elementHTML;
+            // Test if adding this paragraph would fit on the current page
+            const testContent = currentPageContent + paragraph;
             const testFootnotes = new Set([...currentPageFootnotes, ...footnoteRefs]);
             
-            // Check if this content fits on the current page
-            if (testContentFitsOnPage(measureDiv, testContent, testFootnotes, footnotes, maxContentHeight)) {
-                // Content fits, add it to current page
+            if (doesContentAndFootnotesFit(measureContainer, testContent, testFootnotes, footnotes)) {
+                // Content fits with footnotes, add to current page
                 currentPageContent = testContent;
                 footnoteRefs.forEach(ref => currentPageFootnotes.add(ref));
             } else {
-                // Content doesn't fit
+                // Content doesn't fit, save current page and start new one
                 if (currentPageContent.trim()) {
-                    // Save current page if it has content
                     pages.push({
                         content: currentPageContent,
                         footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
                     });
+                    console.log(`Created page ${pages.length} - content + footnotes fit properly`);
                 }
                 
-                // Check if the current element can fit on a new page by itself
-                const newPageFootnotes = new Set(footnoteRefs);
-                if (testContentFitsOnPage(measureDiv, elementHTML, newPageFootnotes, footnotes, maxContentHeight)) {
-                    // Element fits on new page, start new page with this element
-                    currentPageContent = elementHTML;
-                    currentPageFootnotes = newPageFootnotes;
-                } else {
-                    // Element is too large for a page, need to split it
-                    const splitResult = splitElementByHeight(element, footnoteRefs, footnotes, measureDiv, maxContentHeight);
-                    
-                    // Add all the split parts except the last one as complete pages
-                    for (let j = 0; j < splitResult.length - 1; j++) {
-                        pages.push(splitResult[j]);
-                    }
-                    
-                    // Start new page with the last part
-                    const lastPart = splitResult[splitResult.length - 1];
-                    currentPageContent = lastPart.content;
-                    currentPageFootnotes = new Set(lastPart.footnoteIds || []);
+                // Start new page with current paragraph
+                currentPageContent = paragraph;
+                currentPageFootnotes = new Set(footnoteRefs);
+                
+                // Check if even this single paragraph with its footnotes fits
+                if (!doesContentAndFootnotesFit(measureContainer, currentPageContent, currentPageFootnotes, footnotes)) {
+                    console.warn('Single paragraph with footnotes too large for page, may need splitting');
+                    // For now, we'll put it on its own page anyway - could add paragraph splitting here
                 }
             }
         }
@@ -1507,18 +1492,148 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
                 content: currentPageContent,
                 footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
             });
+            console.log(`Created final page ${pages.length}`);
         }
         
-    } finally {
         // Clean up measurement container
-        document.body.removeChild(measureDiv);
+        document.body.removeChild(measureContainer);
+        
+        console.log(`Generated ${pages.length} pages with proper footnote spacing`);
+        
+    } catch (error) {
+        console.error('Error in paginateContent:', error);
+        // Fallback: create a single page with all content
+        pages.push({
+            content: content,
+            footnotes: buildFootnotesHTML(footnotes ? footnotes.map(f => f.id) : [], footnotes)
+        });
     }
-    
-    console.timeEnd('Height-based pagination');
-    console.log(`Generated ${pages.length} pages using height-based pagination`);
     
     return pages;
 }
+
+// Create a measurement container that matches your real page layout
+function createFootnoteMeasurementContainer() {
+    // Find an existing page to copy dimensions from
+    let samplePage = document.querySelector('.page');
+    let samplePageContent = document.querySelector('.page-content');
+    
+    if (!samplePage) {
+        // Create a temporary reference page
+        samplePage = document.createElement('div');
+        samplePage.className = 'page';
+        samplePage.style.width = '100vw';
+        samplePage.style.height = '100vh';
+        samplePage.style.padding = '30px';
+        document.body.appendChild(samplePage);
+        
+        samplePageContent = document.createElement('div');
+        samplePageContent.className = 'page-content';
+        samplePageContent.style.flex = '1';
+        samplePageContent.style.overflow = 'hidden';
+        samplePageContent.style.lineHeight = '1.7';
+        samplePageContent.style.fontSize = '18px';
+        samplePage.appendChild(samplePageContent);
+    }
+    
+    // Get computed styles
+    const pageStyles = window.getComputedStyle(samplePage);
+    const contentStyles = window.getComputedStyle(samplePageContent);
+    
+    // Create measurement container with exact same styling
+    const measureContainer = document.createElement('div');
+    measureContainer.className = samplePage.className;
+    measureContainer.style.position = 'absolute';
+    measureContainer.style.visibility = 'hidden';
+    measureContainer.style.top = '-9999px';
+    measureContainer.style.left = '-9999px';
+    measureContainer.style.width = samplePage.offsetWidth + 'px';
+    measureContainer.style.height = samplePage.offsetHeight + 'px';
+    measureContainer.style.padding = pageStyles.padding;
+    measureContainer.style.margin = pageStyles.margin;
+    measureContainer.style.display = 'flex';
+    measureContainer.style.flexDirection = 'column';
+    measureContainer.style.overflow = 'hidden';
+    
+    // Add content area
+    const contentArea = document.createElement('div');
+    contentArea.className = 'page-content';
+    contentArea.style.flex = '1';
+    contentArea.style.overflow = 'hidden';
+    contentArea.style.lineHeight = contentStyles.lineHeight;
+    contentArea.style.fontSize = contentStyles.fontSize;
+    contentArea.style.fontFamily = contentStyles.fontFamily;
+    
+    // Add footnotes area
+    const footnotesArea = document.createElement('div');
+    footnotesArea.className = 'footnotes';
+    footnotesArea.style.borderTop = '1px solid #ccc';
+    footnotesArea.style.marginTop = '20px';
+    footnotesArea.style.paddingTop = '20px';
+    footnotesArea.style.fontSize = '14px';
+    
+    measureContainer.appendChild(contentArea);
+    measureContainer.appendChild(footnotesArea);
+    document.body.appendChild(measureContainer);
+    
+    console.log('Created measurement container:', {
+        width: measureContainer.offsetWidth,
+        height: measureContainer.offsetHeight,
+        padding: pageStyles.padding
+    });
+    
+    return measureContainer;
+}
+
+// Test if content and footnotes actually fit on a page
+function doesContentAndFootnotesFit(measureContainer, content, footnoteIds, allFootnotes) {
+    const contentArea = measureContainer.querySelector('.page-content');
+    const footnotesArea = measureContainer.querySelector('.footnotes');
+    
+    // Set the content
+    contentArea.innerHTML = content;
+    
+    // Set the footnotes
+    const footnotesHTML = buildFootnotesHTML(Array.from(footnoteIds), allFootnotes);
+    footnotesArea.innerHTML = footnotesHTML;
+    
+    // Force a reflow to get accurate measurements
+    measureContainer.offsetHeight;
+    
+    // Get the actual heights
+    const contentHeight = contentArea.scrollHeight;
+    const footnotesHeight = footnotesArea.scrollHeight;
+    const containerHeight = measureContainer.clientHeight;
+    
+    // Calculate available space
+    const containerPadding = parseInt(window.getComputedStyle(measureContainer).paddingTop) + 
+                            parseInt(window.getComputedStyle(measureContainer).paddingBottom);
+    const availableHeight = containerHeight - containerPadding;
+    
+    // Account for footnotes margin and border
+    const footnotesMarginAndBorder = footnotesHTML ? 40 : 0; // margin-top + padding-top + border
+    
+    // Total used height
+    const totalUsedHeight = contentHeight + footnotesHeight + footnotesMarginAndBorder;
+    
+    // Add a safety margin to prevent edge cases
+    const safetyMargin = 20;
+    const fits = totalUsedHeight + safetyMargin <= availableHeight;
+    
+    if (!fits) {
+        console.log('Content does not fit:', {
+            contentHeight,
+            footnotesHeight,
+            footnotesMarginAndBorder,
+            totalUsed: totalUsedHeight,
+            available: availableHeight,
+            overflow: totalUsedHeight - availableHeight
+        });
+    }
+    
+    return fits;
+}
+        
 // Create a hidden measurement container that matches the real page styling
 function createMeasurementContainer() {
     // Find an existing page to copy dimensions from
@@ -1754,24 +1869,25 @@ function getElementAttributes(element) {
            
         
         // Build footnotes HTML
-        function buildFootnotesHTML(footnoteIds, footnotes) {
-            if (!footnoteIds.length || !footnotes || !footnotes.length) {
-                return '';
-            }
-            
-            let html = '';
-            
-            // Get footnotes that are referenced on this page
-            const pageFootnotes = footnotes.filter(fn => footnoteIds.includes(fn.id));
-            
-            if (pageFootnotes.length) {
-                for (const footnote of pageFootnotes) {
-                    html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
-                }
-            }
-            
-            return html;
+function buildFootnotesHTML(footnoteIds, footnotes) {
+    if (!footnoteIds.length || !footnotes || !footnotes.length) {
+        return '';
+    }
+    
+    let html = '';
+    
+    // Get footnotes that are referenced on this page
+    const pageFootnotes = footnotes.filter(fn => footnoteIds.includes(fn.id));
+    
+    if (pageFootnotes.length) {
+        for (const footnote of pageFootnotes) {
+            html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
         }
+    }
+    
+    return html;
+}
+
         
         /* === Page Navigation === */
         // Show a specific page
@@ -2153,6 +2269,73 @@ function monitorTextOverflow() {
 function detectTextOverflow() {
     return false; // Stub function
 }
+
+// Debug function to check footnote sizes
+function debugFootnoteSizes() {
+    console.log('=== DEBUGGING FOOTNOTE SIZES ===');
+    
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+        const contentArea = activePage.querySelector('.page-content');
+        const footnotesArea = activePage.querySelector('.footnotes');
+        
+        if (contentArea && footnotesArea) {
+            const contentHeight = contentArea.scrollHeight;
+            const footnotesHeight = footnotesArea.scrollHeight;
+            const pageHeight = activePage.clientHeight;
+            
+            console.log('Page dimensions:', {
+                pageHeight,
+                contentHeight,
+                footnotesHeight,
+                totalContent: contentHeight + footnotesHeight,
+                remaining: pageHeight - (contentHeight + footnotesHeight),
+                isOverflowing: (contentHeight + footnotesHeight) > pageHeight
+            });
+            
+            // Check individual footnotes
+            const footnoteItems = footnotesArea.querySelectorAll('.footnote-item');
+            footnoteItems.forEach((footnote, index) => {
+                console.log(`Footnote ${index + 1}:`, {
+                    height: footnote.offsetHeight,
+                    content: footnote.textContent.substring(0, 50) + '...'
+                });
+            });
+        }
+    }
+}
+
+// Call this to debug footnote issues: debugFootnoteSizes()
+
+// Test function to verify footnote measurement is working
+function testFootnoteMeasurement() {
+    console.log('=== TESTING FOOTNOTE MEASUREMENT ===');
+    
+    const testContainer = createFootnoteMeasurementContainer();
+    
+    // Test with different content sizes
+    const testCases = [
+        { content: '<p>Short content</p>', footnotes: [] },
+        { content: '<p>Medium length content that takes up more space and might have footnotes</p>', footnotes: ['footnote1'] },
+        { content: '<p>Very long content that definitely should not fit with large footnotes and should trigger a page break when combined with substantial footnote content</p>', footnotes: ['footnote1', 'footnote2'] }
+    ];
+    
+    // Mock footnotes for testing
+    const mockFootnotes = [
+        { id: 'footnote1', number: 1, content: 'This is a short footnote.' },
+        { id: 'footnote2', number: 2, content: 'This is a much longer footnote that contains substantial additional information and might cause overflow issues if not properly accounted for in the pagination system.' }
+    ];
+    
+    testCases.forEach((testCase, index) => {
+        const fits = doesContentAndFootnotesFit(testContainer, testCase.content, new Set(testCase.footnotes), mockFootnotes);
+        console.log(`Test case ${index + 1}: ${fits ? 'FITS' : 'DOES NOT FIT'}`);
+    });
+    
+    document.body.removeChild(testContainer);
+    console.log('Footnote measurement test complete');
+}
+
+// Call this to test: testFootnoteMeasurement()
         
     </script>
 </body>
