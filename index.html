@@ -1474,7 +1474,7 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
         
         // Improved paginate content function that handles footnotes better
 function paginateContent(content, footnotes, options) {
-    console.log('Starting enhanced height-based pagination with paragraph splitting...');
+    console.log('Starting height-based pagination with paragraph normalization...');
     console.time('Enhanced pagination');
     
     const pages = [];
@@ -1498,7 +1498,18 @@ function paginateContent(content, footnotes, options) {
         
         for (let i = 0; i < elements.length; i++) {
             const element = elements[i];
-            const elementHTML = element.outerHTML || element.textContent;
+            
+            // NORMALIZE PARAGRAPH: Convert all paragraphs to plain text structure
+            let elementHTML;
+            if (element.tagName === 'P') {
+                // Extract just the text content and wrap in clean paragraph tags
+                const plainText = element.textContent;
+                const attributes = getElementAttributes(element);
+                elementHTML = `<p${attributes}>${plainText}</p>`;
+                console.log(`Normalized paragraph: "${plainText.substring(0, 50)}..."`);
+            } else {
+                elementHTML = element.outerHTML || element.textContent;
+            }
             
             // Extract footnote references
             const footnoteRefs = extractFootnoteRefs(element);
@@ -1525,7 +1536,7 @@ function paginateContent(content, footnotes, options) {
                 
                 // Now handle the element that doesn't fit
                 if (element.tagName === 'P') {
-                    // This is a paragraph - split it properly
+                    // This is a paragraph - split it properly with normalized structure
                     const splitPages = splitParagraphAcrossPages(element, footnoteRefs, footnotes, measureDiv, maxContentHeight);
                     
                     // Add all but the last split page as complete pages
@@ -1566,7 +1577,7 @@ function paginateContent(content, footnotes, options) {
     }
     
     console.timeEnd('Enhanced pagination');
-    console.log(`Generated ${pages.length} pages with proper paragraph splitting`);
+    console.log(`Generated ${pages.length} pages with normalized paragraphs`);
     return pages;
 }
         
@@ -1679,10 +1690,10 @@ function doesContentFitOnPage(measureDiv, content, footnoteIds, allFootnotes, ma
 
 // CORE FUNCTION: Split a paragraph across multiple pages
 function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measureDiv, maxContentHeight) {
-    console.log('Splitting paragraph across pages (no ellipsis)...');
+    console.log('Splitting paragraph across pages with normalization...');
     
+    // Get plain text content (no HTML formatting)
     const paragraphText = paragraph.textContent;
-    const tagName = paragraph.tagName.toLowerCase();
     const attributes = getElementAttributes(paragraph);
     
     const pages = [];
@@ -1698,7 +1709,9 @@ function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measur
         const sentence = sentences[sentenceIndex];
         // Join sentences with a space, but trim to avoid extra spaces
         const testText = (currentText + ' ' + sentence).trim();
-        const testHTML = `<${tagName}${attributes}>${testText}</${tagName}>`;
+        
+        // Create PLAIN paragraph HTML (same structure for all parts)
+        const testHTML = `<p${attributes}>${testText}</p>`;
         
         // For the first part of a split paragraph, include footnotes
         const testFootnotes = pages.length === 0 ? new Set(footnoteRefs) : new Set();
@@ -1710,34 +1723,34 @@ function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measur
         } else {
             // Sentence doesn't fit
             if (currentText.trim()) {
-                // Save current text as a page (NO ELLIPSIS)
-                const pageHTML = `<${tagName}${attributes}>${currentText}</${tagName}>`;
+                // Save current text as a page - PLAIN PARAGRAPH STRUCTURE
+                const pageHTML = `<p${attributes}>${currentText}</p>`;
                 pages.push({
                     content: pageHTML,
                     footnotes: pages.length === 0 ? buildFootnotesHTML(footnoteRefs, allFootnotes) : '',
                     footnoteIds: pages.length === 0 ? footnoteRefs : []
                 });
-                console.log(`Created paragraph split page ${pages.length}`);
+                console.log(`Created normalized split page ${pages.length}`);
                 currentText = '';
             } else {
                 // Even single sentence doesn't fit, split by words
                 console.log('Single sentence too long, splitting by words...');
-                const wordSplitPages = splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxContentHeight, allFootnotes);
+                const wordSplitPages = splitSentenceByWords(sentence, 'p', attributes, measureDiv, maxContentHeight, allFootnotes);
                 pages.push(...wordSplitPages);
                 sentenceIndex++;
             }
         }
     }
     
-    // Add remaining text as final part (NO ELLIPSIS)
+    // Add remaining text as final part - PLAIN PARAGRAPH STRUCTURE
     if (currentText.trim()) {
-        const finalHTML = `<${tagName}${attributes}>${currentText}</${tagName}>`;
+        const finalHTML = `<p${attributes}>${currentText}</p>`;
         pages.push({
             content: finalHTML,
             footnotes: '',
             footnoteIds: []
         });
-        console.log(`Created final paragraph part`);
+        console.log(`Created final normalized paragraph part`);
     }
     
     return pages;
@@ -1765,13 +1778,14 @@ function splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxCont
     
     for (const word of words) {
         const testText = currentText ? `${currentText} ${word}` : word;
+        // Create PLAIN paragraph structure
         const testHTML = `<${tagName}${attributes}>${testText}</${tagName}>`;
         
         if (doesContentFitOnPage(measureDiv, testHTML, new Set(), allFootnotes, maxContentHeight)) {
             currentText = testText;
         } else {
             if (currentText.trim()) {
-                // Save current text (NO ELLIPSIS - clean break)
+                // Save current text - PLAIN STRUCTURE
                 pages.push({
                     content: `<${tagName}${attributes}>${currentText}</${tagName}>`,
                     footnotes: '',
@@ -1793,6 +1807,7 @@ function splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxCont
     return pages;
 }
 
+
 // Helper function to get element attributes
 function getElementAttributes(element) {
     let attributes = '';
@@ -1810,7 +1825,35 @@ function getElementAttributes(element) {
     
     return attributes;
 }
+
+// Simple verification function
+function verifyParagraphConsistency() {
+    console.log('=== VERIFYING PARAGRAPH CONSISTENCY ===');
+    
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+        const paragraphs = activePage.querySelectorAll('.page-content p');
         
+        console.log(`Found ${paragraphs.length} paragraphs`);
+        
+        paragraphs.forEach((p, index) => {
+            const hasSpans = p.querySelectorAll('span').length > 0;
+            const hasInlineStyles = p.hasAttribute('style') || p.querySelector('[style]');
+            
+            console.log(`Paragraph ${index + 1}: spans=${hasSpans ? 'YES' : 'NO'}, inline styles=${hasInlineStyles ? 'YES' : 'NO'}, content="${p.textContent.substring(0, 30)}..."`);
+        });
+        
+        const spanCount = activePage.querySelectorAll('.page-content p span').length;
+        console.log(`Total spans in paragraphs: ${spanCount}`);
+        
+        if (spanCount === 0) {
+            console.log('✅ SUCCESS: All paragraphs have consistent plain text structure');
+        } else {
+            console.log('⚠️ Some paragraphs still contain spans');
+        }
+    }
+}
+
 // Create a temporary page reference for measurement if none exists
 function createTemporaryPageReference() {
     const tempPage = document.createElement('div');
