@@ -773,50 +773,6 @@
     }
 }
 
-
-/* ADD THIS TO YOUR EXISTING <style> SECTION */
-
-/* Page Content Paragraph Styling - CONSISTENT MARGINS */
-.page-content p {
-    font-family: 'Georgia', serif;
-    font-size: inherit;
-    font-weight: 400;
-    line-height: 1.7;
-    margin: 16px 0; /* Consistent top and bottom margins for ALL paragraphs */
-    padding: 0;
-    text-align: left;
-}
-
-/* Override browser defaults for first paragraph */
-.page-content p:first-child {
-    margin-top: 16px; /* Same as other paragraphs, not 0 */
-}
-
-/* Override browser defaults for last paragraph */
-.page-content p:last-child {
-    margin-bottom: 16px; /* Same as other paragraphs */
-}
-
-/* Ensure chapter titles have proper spacing but don't affect paragraph margins */
-.chapter-page h2 {
-    font-size: 24px;
-    margin-bottom: 30px;
-    text-align: center;
-}
-
-/* Mobile paragraph adjustments */
-@media (max-width: 768px) {
-    .page-content p,
-    .page-content p:first-child,
-    .page-content p:last-child {
-        margin: 14px 0; /* Slightly smaller margins on mobile */
-    }
-    
-    .chapter-page h2 {
-        font-size: 20px;
-        margin-bottom: 20px;
-    }
-}
     </style>
 </head>
 <body>
@@ -1343,22 +1299,23 @@ function createDedicationPage() {
         }
         
         // Create pages for a chapter with improved footnote handling
-function createChapterPages(chapter, chapterIndex) {
-    console.log('Creating chapter pages with enhanced pagination for:', chapter.title);
+   function createChapterPages(chapter, chapterIndex) {
+    console.log('Creating chapter pages for:', chapter.title);
     
     if (!chapter.content) {
         console.error('No content found for chapter:', chapter.title);
         return;
     }
     
-    // Use enhanced height-based pagination
+    // Use the height-based pagination system
     const pages = paginateContent(chapter.content, chapter.footnotes || [], {
         chapterNumber: chapter.number,
         chapterTitle: chapter.title
     });
     
-    console.log(`Enhanced pagination: Chapter "${chapter.title}" split into ${pages.length} pages`);
+    console.log(`Chapter "${chapter.title}" generated ${pages.length} pages`);
     
+    // Create a page for each paginated content
     const pageContainer = document.getElementById('page-container');
     
     for (let i = 0; i < pages.length; i++) {
@@ -1366,7 +1323,7 @@ function createChapterPages(chapter, chapterIndex) {
         chapterPage.className = 'page chapter-page';
         chapterPage.id = `page-${pagesMap.length}`;
         
-        // Add chapter title only to first page
+        // Add chapter title to first page of chapter only
         let titleHTML = '';
         if (i === 0) {
             titleHTML = `<h2>Chapter ${chapter.number}: ${chapter.title}</h2>`;
@@ -1380,6 +1337,7 @@ function createChapterPages(chapter, chapterIndex) {
         
         pageContainer.appendChild(chapterPage);
         
+        // Add to pages map
         pagesMap.push({
             type: 'chapter',
             chapterIndex: chapterIndex,
@@ -1387,11 +1345,10 @@ function createChapterPages(chapter, chapterIndex) {
             pageNumber: pagesMap.length
         });
         
-        console.log(`Created enhanced chapter page ${i + 1}/${pages.length}`);
+        console.log(`Created chapter page ${i + 1}/${pages.length}, total pages now: ${pagesMap.length}`);
     }
-    
-    console.log(`Chapter pagination complete: ${pages.length} pages created`);
 }
+
         
         // Function to setup footnote references after pages are created
         function setupFootnoteReferences() {
@@ -1436,6 +1393,13 @@ function createChapterPages(chapter, chapterIndex) {
                 });
             });
         }
+        
+        // Improved paginate content function that handles footnotes better
+       function paginateContent(content, footnotes, options) {
+    console.time('Height-based pagination');
+    
+    const pages = [];
+
 // ADD THESE MISSING FUNCTIONS TO YOUR CODE:
 
 // 1. Extract footnote references from an element (this should have been kept from original code)
@@ -1471,19 +1435,13 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
     
     return html;
 }
-        
-        // Improved paginate content function that handles footnotes better
-function paginateContent(content, footnotes, options) {
-    console.log('Starting height-based pagination with paragraph normalization...');
-    console.time('Enhanced pagination');
-    
-    const pages = [];
-    
-    // Get dimensions with better footnote space calculation
-    const { measureDiv, maxContentHeight } = createMeasurementContainer();
+
+           
+    // Get dimensions from existing page or create a reference element
+    const { measureDiv, maxHeight, maxContentHeight } = createMeasurementContainer();
     
     try {
-        // Parse content into manageable elements
+        // Parse and prepare content
         const parser = new DOMParser();
         const doc = parser.parseFromString(`<div>${content}</div>`, 'text/html');
         const elements = Array.from(doc.body.firstChild.childNodes).filter(node => 
@@ -1491,127 +1449,107 @@ function paginateContent(content, footnotes, options) {
             (node.nodeType === Node.TEXT_NODE && node.textContent.trim())
         );
         
-        console.log(`Processing ${elements.length} elements for pagination`);
-        
         let currentPageContent = '';
         let currentPageFootnotes = new Set();
         
         for (let i = 0; i < elements.length; i++) {
             const element = elements[i];
+            const elementHTML = element.outerHTML || element.textContent;
             
-            // NORMALIZE PARAGRAPH: Convert all paragraphs to plain text structure
-            let elementHTML;
-            if (element.tagName === 'P') {
-                // Extract just the text content and wrap in clean paragraph tags
-                const plainText = element.textContent;
-                const attributes = getElementAttributes(element);
-                elementHTML = `<p${attributes}>${plainText}</p>`;
-                console.log(`Normalized paragraph: "${plainText.substring(0, 50)}..."`);
-            } else {
-                elementHTML = element.outerHTML || element.textContent;
-            }
-            
-            // Extract footnote references
+            // Extract footnote references from this element
             const footnoteRefs = extractFootnoteRefs(element);
             
-            // Test if element fits as-is
-            if (doesContentFitOnPage(measureDiv, currentPageContent + elementHTML, 
-                new Set([...currentPageFootnotes, ...footnoteRefs]), footnotes, maxContentHeight)) {
-                
-                // Element fits completely, add it
-                currentPageContent += elementHTML;
+            // Test adding this element to the current page
+            const testContent = currentPageContent + elementHTML;
+            const testFootnotes = new Set([...currentPageFootnotes, ...footnoteRefs]);
+            
+            // Check if this content fits on the current page
+            if (testContentFitsOnPage(measureDiv, testContent, testFootnotes, footnotes, maxContentHeight)) {
+                // Content fits, add it to current page
+                currentPageContent = testContent;
                 footnoteRefs.forEach(ref => currentPageFootnotes.add(ref));
-                
             } else {
-                // Element doesn't fit - need to handle splitting
-                
-                // First, save current page if it has content
+                // Content doesn't fit
                 if (currentPageContent.trim()) {
+                    // Save current page if it has content
                     pages.push({
                         content: currentPageContent,
                         footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
                     });
-                    console.log(`Created page ${pages.length} (content length: ${currentPageContent.length})`);
                 }
                 
-                // Now handle the element that doesn't fit
-                if (element.tagName === 'P') {
-                    // This is a paragraph - split it properly with normalized structure
-                    const splitPages = splitParagraphAcrossPages(element, footnoteRefs, footnotes, measureDiv, maxContentHeight);
+                // Check if the current element can fit on a new page by itself
+                const newPageFootnotes = new Set(footnoteRefs);
+                if (testContentFitsOnPage(measureDiv, elementHTML, newPageFootnotes, footnotes, maxContentHeight)) {
+                    // Element fits on new page, start new page with this element
+                    currentPageContent = elementHTML;
+                    currentPageFootnotes = newPageFootnotes;
+                } else {
+                    // Element is too large for a page, need to split it
+                    const splitResult = splitElementByHeight(element, footnoteRefs, footnotes, measureDiv, maxContentHeight);
                     
-                    // Add all but the last split page as complete pages
-                    for (let j = 0; j < splitPages.length - 1; j++) {
-                        pages.push(splitPages[j]);
-                        console.log(`Created split page ${pages.length} (partial paragraph)`);
+                    // Add all the split parts except the last one as complete pages
+                    for (let j = 0; j < splitResult.length - 1; j++) {
+                        pages.push(splitResult[j]);
                     }
                     
                     // Start new page with the last part
-                    if (splitPages.length > 0) {
-                        const lastSplit = splitPages[splitPages.length - 1];
-                        currentPageContent = lastSplit.content;
-                        currentPageFootnotes = new Set(lastSplit.footnoteIds || []);
-                    } else {
-                        currentPageContent = '';
-                        currentPageFootnotes = new Set();
-                    }
-                    
-                } else {
-                    // Non-paragraph element (heading, etc.) - put on new page as-is
-                    currentPageContent = elementHTML;
-                    currentPageFootnotes = new Set(footnoteRefs);
+                    const lastPart = splitResult[splitResult.length - 1];
+                    currentPageContent = lastPart.content;
+                    currentPageFootnotes = new Set(lastPart.footnoteIds || []);
                 }
             }
         }
         
-        // Add final page if it has content
+        // Add the last page if it has content
         if (currentPageContent.trim()) {
             pages.push({
                 content: currentPageContent,
                 footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
             });
-            console.log(`Created final page ${pages.length}`);
         }
         
     } finally {
+        // Clean up measurement container
         document.body.removeChild(measureDiv);
     }
     
-    console.timeEnd('Enhanced pagination');
-    console.log(`Generated ${pages.length} pages with normalized paragraphs`);
+    console.timeEnd('Height-based pagination');
+    console.log(`Generated ${pages.length} pages using height-based pagination`);
+    
     return pages;
 }
-        
 // Create a hidden measurement container that matches the real page styling
 function createMeasurementContainer() {
+    // Find an existing page to copy dimensions from
     let samplePage = document.querySelector('.page-content');
     let parentPage = document.querySelector('.page');
     
+    // If no existing page, create a temporary reference
     if (!samplePage || !parentPage) {
         parentPage = createTemporaryPageReference();
         samplePage = parentPage.querySelector('.page-content');
     }
     
-    const parentStyles = window.getComputedStyle(parentPage);
+    // Get computed styles from the sample page
     const sampleStyles = window.getComputedStyle(samplePage);
+    const parentStyles = window.getComputedStyle(parentPage);
     
-    // Calculate available space more precisely
+    // Calculate available space for content
     const parentHeight = parentPage.clientHeight;
     const parentPadding = parseInt(parentStyles.paddingTop) + parseInt(parentStyles.paddingBottom);
     
-    // Reserve space for chapter title and footnotes
-    const chapterTitleHeight = 80;
-    const footnotesSectionOverhead = 40; // Increased for safety
+    // Account for chapter title space (if this is the first page of a chapter)
+    const chapterTitleHeight = 70; // Approximate height of chapter title
+    const footnotesBorderHeight = 20; // Space for footnotes border/margin
     
-    const maxContentHeight = parentHeight - parentPadding - chapterTitleHeight - footnotesSectionOverhead;
+    // Maximum height for content only (excluding footnotes)
+    const maxContentHeight = parentHeight - parentPadding - chapterTitleHeight - footnotesBorderHeight;
     
-    console.log('Page dimensions for measurement:', {
-        parentHeight,
-        maxContentHeight,
-        fontSize: sampleStyles.fontSize,
-        lineHeight: sampleStyles.lineHeight
-    });
+    // Total available height including footnotes
+    const maxHeight = parentHeight - parentPadding;
     
-    // Create measurement container that exactly matches real pages
+    // Create measurement container
     const measureDiv = document.createElement('div');
     measureDiv.className = parentPage.className;
     measureDiv.style.position = 'absolute';
@@ -1620,238 +1558,27 @@ function createMeasurementContainer() {
     measureDiv.style.left = '-9999px';
     measureDiv.style.width = parentPage.offsetWidth + 'px';
     measureDiv.style.height = 'auto';
-    
-    // Copy ALL computed styles to ensure exact matching
     measureDiv.style.padding = parentStyles.padding;
     measureDiv.style.margin = parentStyles.margin;
     measureDiv.style.fontFamily = parentStyles.fontFamily;
     measureDiv.style.fontSize = parentStyles.fontSize;
     measureDiv.style.lineHeight = parentStyles.lineHeight;
-    measureDiv.style.color = parentStyles.color;
-    measureDiv.style.fontWeight = parentStyles.fontWeight;
-    measureDiv.style.letterSpacing = parentStyles.letterSpacing;
-    measureDiv.style.wordSpacing = parentStyles.wordSpacing;
     measureDiv.style.overflow = 'visible';
     
-    // Create structure that exactly matches real pages
+    // Add the same structure as a real page
     measureDiv.innerHTML = `
         <div class="page-content" style="
             font-size: ${sampleStyles.fontSize};
             line-height: ${sampleStyles.lineHeight};
-            font-family: ${sampleStyles.fontFamily};
-            font-weight: ${sampleStyles.fontWeight};
-            color: ${sampleStyles.color};
-            letter-spacing: ${sampleStyles.letterSpacing};
-            word-spacing: ${sampleStyles.wordSpacing};
-            overflow: visible;
             flex: 1;
+            overflow: visible;
         "></div>
-        <div class="footnotes-test" style="
-            border-top: 1px solid #ccc;
-            margin-top: 20px;
-            padding-top: 20px;
-            font-size: ${Math.floor(parseInt(sampleStyles.fontSize) * 0.8)}px;
-        "></div>
+        <div class="footnotes-container"></div>
     `;
     
     document.body.appendChild(measureDiv);
     
-    return { measureDiv, maxContentHeight };
-}
-
-        
-// Enhanced content fitting test with better footnote handling
-function doesContentFitOnPage(measureDiv, content, footnoteIds, allFootnotes, maxContentHeight) {
-    const contentContainer = measureDiv.querySelector('.page-content');
-    const footnotesContainer = measureDiv.querySelector('.footnotes-test');
-    
-    // Set content
-    contentContainer.innerHTML = content;
-    
-    // Set footnotes
-    const footnotesHTML = buildFootnotesHTML(Array.from(footnoteIds), allFootnotes);
-    footnotesContainer.innerHTML = footnotesHTML;
-    
-    // Force reflow
-    measureDiv.offsetHeight;
-    
-    // Get measurements
-    const contentHeight = contentContainer.scrollHeight;
-    const footnotesHeight = footnotesContainer.scrollHeight;
-    const totalHeight = contentHeight + footnotesHeight;
-    
-    // Check if content fits with some safety margin
-    const safetyMargin = 10; // 10px safety margin
-    const fits = (totalHeight + safetyMargin) <= measureDiv.clientHeight && 
-                 (contentHeight + safetyMargin) <= maxContentHeight;
-    
-    return fits;
-}
-
-// CORE FUNCTION: Split a paragraph across multiple pages
-function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measureDiv, maxContentHeight) {
-    console.log('Splitting paragraph across pages with normalization...');
-    
-    // Get plain text content (no HTML formatting)
-    const paragraphText = paragraph.textContent;
-    const attributes = getElementAttributes(paragraph);
-    
-    const pages = [];
-    
-    // Split by sentences for natural breaks
-    const sentences = splitIntoSentences(paragraphText);
-    console.log(`Paragraph has ${sentences.length} sentences`);
-    
-    let currentText = '';
-    let sentenceIndex = 0;
-    
-    while (sentenceIndex < sentences.length) {
-        const sentence = sentences[sentenceIndex];
-        // Join sentences with a space, but trim to avoid extra spaces
-        const testText = (currentText + ' ' + sentence).trim();
-        
-        // Create PLAIN paragraph HTML (same structure for all parts)
-        const testHTML = `<p${attributes}>${testText}</p>`;
-        
-        // For the first part of a split paragraph, include footnotes
-        const testFootnotes = pages.length === 0 ? new Set(footnoteRefs) : new Set();
-        
-        if (doesContentFitOnPage(measureDiv, testHTML, testFootnotes, allFootnotes, maxContentHeight)) {
-            // Sentence fits, add it
-            currentText = testText;
-            sentenceIndex++;
-        } else {
-            // Sentence doesn't fit
-            if (currentText.trim()) {
-                // Save current text as a page - PLAIN PARAGRAPH STRUCTURE
-                const pageHTML = `<p${attributes}>${currentText}</p>`;
-                pages.push({
-                    content: pageHTML,
-                    footnotes: pages.length === 0 ? buildFootnotesHTML(footnoteRefs, allFootnotes) : '',
-                    footnoteIds: pages.length === 0 ? footnoteRefs : []
-                });
-                console.log(`Created normalized split page ${pages.length}`);
-                currentText = '';
-            } else {
-                // Even single sentence doesn't fit, split by words
-                console.log('Single sentence too long, splitting by words...');
-                const wordSplitPages = splitSentenceByWords(sentence, 'p', attributes, measureDiv, maxContentHeight, allFootnotes);
-                pages.push(...wordSplitPages);
-                sentenceIndex++;
-            }
-        }
-    }
-    
-    // Add remaining text as final part - PLAIN PARAGRAPH STRUCTURE
-    if (currentText.trim()) {
-        const finalHTML = `<p${attributes}>${currentText}</p>`;
-        pages.push({
-            content: finalHTML,
-            footnotes: '',
-            footnoteIds: []
-        });
-        console.log(`Created final normalized paragraph part`);
-    }
-    
-    return pages;
-}
-
-// Split text into sentences more intelligently
-function splitIntoSentences(text) {
-    // Split on sentence endings, but keep the punctuation
-    const sentences = text.match(/[^\.!?]+[\.!?]+/g) || [];
-    
-    // Handle case where text doesn't end with punctuation
-    const lastMatch = sentences.join('').length;
-    if (lastMatch < text.length) {
-        sentences.push(text.substring(lastMatch));
-    }
-    
-    return sentences.filter(s => s.trim());
-}
-
-// Split a sentence by words when it's too long
-function splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxContentHeight, allFootnotes) {
-    const words = sentence.split(' ');
-    const pages = [];
-    let currentText = '';
-    
-    for (const word of words) {
-        const testText = currentText ? `${currentText} ${word}` : word;
-        // Create PLAIN paragraph structure
-        const testHTML = `<${tagName}${attributes}>${testText}</${tagName}>`;
-        
-        if (doesContentFitOnPage(measureDiv, testHTML, new Set(), allFootnotes, maxContentHeight)) {
-            currentText = testText;
-        } else {
-            if (currentText.trim()) {
-                // Save current text - PLAIN STRUCTURE
-                pages.push({
-                    content: `<${tagName}${attributes}>${currentText}</${tagName}>`,
-                    footnotes: '',
-                    footnoteIds: []
-                });
-            }
-            currentText = word; // Start new page with current word
-        }
-    }
-    
-    if (currentText.trim()) {
-        pages.push({
-            content: `<${tagName}${attributes}>${currentText}</${tagName}>`,
-            footnotes: '',
-            footnoteIds: []
-        });
-    }
-    
-    return pages;
-}
-
-
-// Helper function to get element attributes
-function getElementAttributes(element) {
-    let attributes = '';
-    
-    // Get all attributes from the original element
-    for (const attr of element.attributes) {
-        attributes += ` ${attr.name}="${attr.value}"`;
-    }
-    
-    // If no class attribute exists, ensure we're using standard paragraph class
-    if (!element.hasAttribute('class')) {
-        // You can add a default class here if needed
-        // attributes += ' class="content-paragraph"';
-    }
-    
-    return attributes;
-}
-
-// Simple verification function
-function verifyParagraphConsistency() {
-    console.log('=== VERIFYING PARAGRAPH CONSISTENCY ===');
-    
-    const activePage = document.querySelector('.page.active');
-    if (activePage) {
-        const paragraphs = activePage.querySelectorAll('.page-content p');
-        
-        console.log(`Found ${paragraphs.length} paragraphs`);
-        
-        paragraphs.forEach((p, index) => {
-            const hasSpans = p.querySelectorAll('span').length > 0;
-            const hasInlineStyles = p.hasAttribute('style') || p.querySelector('[style]');
-            
-            console.log(`Paragraph ${index + 1}: spans=${hasSpans ? 'YES' : 'NO'}, inline styles=${hasInlineStyles ? 'YES' : 'NO'}, content="${p.textContent.substring(0, 30)}..."`);
-        });
-        
-        const spanCount = activePage.querySelectorAll('.page-content p span').length;
-        console.log(`Total spans in paragraphs: ${spanCount}`);
-        
-        if (spanCount === 0) {
-            console.log('✅ SUCCESS: All paragraphs have consistent plain text structure');
-        } else {
-            console.log('⚠️ Some paragraphs still contain spans');
-        }
-    }
+    return { measureDiv, maxHeight, maxContentHeight };
 }
 
 // Create a temporary page reference for measurement if none exists
@@ -2426,57 +2153,7 @@ function monitorTextOverflow() {
 function detectTextOverflow() {
     return false; // Stub function
 }
-// Add CSS debugging helper to ensure paragraph consistency
-function debugParagraphStyling() {
-    console.log('=== DEBUGGING PARAGRAPH STYLING ===');
-    
-    // Check all paragraphs on current page
-    const activePage = document.querySelector('.page.active');
-    if (activePage) {
-        const paragraphs = activePage.querySelectorAll('p');
-        paragraphs.forEach((p, index) => {
-            const styles = window.getComputedStyle(p);
-            console.log(`Paragraph ${index + 1}:`, {
-                fontSize: styles.fontSize,
-                fontWeight: styles.fontWeight,
-                fontFamily: styles.fontFamily,
-                lineHeight: styles.lineHeight,
-                margin: styles.margin,
-                padding: styles.padding,
-                className: p.className,
-                innerHTML: p.innerHTML.substring(0, 50) + '...'
-            });
-        });
-    }
-}
-
-// Call this function to debug styling issues: debugParagraphStyling()
-
-// CSS fix for paragraph consistency - add this to your CSS or apply programmatically
-function ensureConsistentParagraphStyling() {
-    // Apply consistent styling to all paragraphs
-    const style = document.createElement('style');
-    style.textContent = `
-        .page-content p {
-            font-family: 'Georgia', serif !important;
-            font-size: inherit !important;
-            font-weight: normal !important;
-            line-height: 1.7 !important;
-            margin-bottom: 1em !important;
-            text-align: left !important;
-        }
         
-        /* Ensure no heading styles leak into paragraphs */
-        .page-content p:first-child {
-            font-size: inherit !important;
-            font-weight: normal !important;
-            margin-top: 0 !important;
-        }
-    `;
-    document.head.appendChild(style);
-    console.log('Applied consistent paragraph styling');
-}
-     
     </script>
 </body>
 </html>
