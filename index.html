@@ -1543,23 +1543,20 @@ function createMeasurementContainer() {
     const parentHeight = parentPage.clientHeight;
     const parentPadding = parseInt(parentStyles.paddingTop) + parseInt(parentStyles.paddingBottom);
     
-    // Reserve space for chapter title (only on first page of chapter)
-    const chapterTitleHeight = 80; // Slightly more conservative
+    // Reserve space for chapter title and footnotes
+    const chapterTitleHeight = 80;
+    const footnotesSectionOverhead = 40; // Increased for safety
     
-    // Reserve space for footnotes section (border, margin, etc.)
-    const footnotesSectionOverhead = 30;
-    
-    // Maximum height for content (before footnotes)
     const maxContentHeight = parentHeight - parentPadding - chapterTitleHeight - footnotesSectionOverhead;
     
-    console.log('Page dimensions:', {
+    console.log('Page dimensions for measurement:', {
         parentHeight,
-        parentPadding,
         maxContentHeight,
-        reservedForFootnotes: footnotesSectionOverhead
+        fontSize: sampleStyles.fontSize,
+        lineHeight: sampleStyles.lineHeight
     });
     
-    // Create measurement container
+    // Create measurement container that exactly matches real pages
     const measureDiv = document.createElement('div');
     measureDiv.className = parentPage.className;
     measureDiv.style.position = 'absolute';
@@ -1568,24 +1565,37 @@ function createMeasurementContainer() {
     measureDiv.style.left = '-9999px';
     measureDiv.style.width = parentPage.offsetWidth + 'px';
     measureDiv.style.height = 'auto';
+    
+    // Copy ALL computed styles to ensure exact matching
     measureDiv.style.padding = parentStyles.padding;
+    measureDiv.style.margin = parentStyles.margin;
     measureDiv.style.fontFamily = parentStyles.fontFamily;
     measureDiv.style.fontSize = parentStyles.fontSize;
     measureDiv.style.lineHeight = parentStyles.lineHeight;
+    measureDiv.style.color = parentStyles.color;
+    measureDiv.style.fontWeight = parentStyles.fontWeight;
+    measureDiv.style.letterSpacing = parentStyles.letterSpacing;
+    measureDiv.style.wordSpacing = parentStyles.wordSpacing;
     measureDiv.style.overflow = 'visible';
     
-    // Create structure that matches real pages
+    // Create structure that exactly matches real pages
     measureDiv.innerHTML = `
         <div class="page-content" style="
             font-size: ${sampleStyles.fontSize};
             line-height: ${sampleStyles.lineHeight};
+            font-family: ${sampleStyles.fontFamily};
+            font-weight: ${sampleStyles.fontWeight};
+            color: ${sampleStyles.color};
+            letter-spacing: ${sampleStyles.letterSpacing};
+            word-spacing: ${sampleStyles.wordSpacing};
             overflow: visible;
+            flex: 1;
         "></div>
         <div class="footnotes-test" style="
             border-top: 1px solid #ccc;
             margin-top: 20px;
             padding-top: 20px;
-            font-size: ${Math.floor(parseInt(sampleStyles.fontSize) * 0.8)}%;
+            font-size: ${Math.floor(parseInt(sampleStyles.fontSize) * 0.8)}px;
         "></div>
     `;
     
@@ -1593,6 +1603,7 @@ function createMeasurementContainer() {
     
     return { measureDiv, maxContentHeight };
 }
+
         
 // Enhanced content fitting test with better footnote handling
 function doesContentFitOnPage(measureDiv, content, footnoteIds, allFootnotes, maxContentHeight) {
@@ -1614,25 +1625,17 @@ function doesContentFitOnPage(measureDiv, content, footnoteIds, allFootnotes, ma
     const footnotesHeight = footnotesContainer.scrollHeight;
     const totalHeight = contentHeight + footnotesHeight;
     
-    // Check if content fits
-    const fits = totalHeight <= measureDiv.clientHeight && contentHeight <= maxContentHeight;
-    
-    if (!fits) {
-        console.log('Content overflow detected:', {
-            contentHeight,
-            footnotesHeight,
-            totalHeight,
-            maxAllowed: measureDiv.clientHeight,
-            maxContentOnly: maxContentHeight
-        });
-    }
+    // Check if content fits with some safety margin
+    const safetyMargin = 10; // 10px safety margin
+    const fits = (totalHeight + safetyMargin) <= measureDiv.clientHeight && 
+                 (contentHeight + safetyMargin) <= maxContentHeight;
     
     return fits;
 }
 
 // CORE FUNCTION: Split a paragraph across multiple pages
 function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measureDiv, maxContentHeight) {
-    console.log('Splitting paragraph across pages...');
+    console.log('Splitting paragraph across pages (no ellipsis)...');
     
     const paragraphText = paragraph.textContent;
     const tagName = paragraph.tagName.toLowerCase();
@@ -1640,7 +1643,7 @@ function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measur
     
     const pages = [];
     
-    // Split by sentences first for more natural breaks
+    // Split by sentences for natural breaks
     const sentences = splitIntoSentences(paragraphText);
     console.log(`Paragraph has ${sentences.length} sentences`);
     
@@ -1649,7 +1652,8 @@ function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measur
     
     while (sentenceIndex < sentences.length) {
         const sentence = sentences[sentenceIndex];
-        const testText = currentText + (currentText ? ' ' : '') + sentence;
+        // Join sentences with a space, but trim to avoid extra spaces
+        const testText = (currentText + ' ' + sentence).trim();
         const testHTML = `<${tagName}${attributes}>${testText}</${tagName}>`;
         
         // For the first part of a split paragraph, include footnotes
@@ -1662,7 +1666,7 @@ function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measur
         } else {
             // Sentence doesn't fit
             if (currentText.trim()) {
-                // Save current text as a page
+                // Save current text as a page (NO ELLIPSIS)
                 const pageHTML = `<${tagName}${attributes}>${currentText}</${tagName}>`;
                 pages.push({
                     content: pageHTML,
@@ -1672,7 +1676,7 @@ function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measur
                 console.log(`Created paragraph split page ${pages.length}`);
                 currentText = '';
             } else {
-                // Even single sentence doesn't fit, need to split by words
+                // Even single sentence doesn't fit, split by words
                 console.log('Single sentence too long, splitting by words...');
                 const wordSplitPages = splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxContentHeight, allFootnotes);
                 pages.push(...wordSplitPages);
@@ -1681,7 +1685,7 @@ function splitParagraphAcrossPages(paragraph, footnoteRefs, allFootnotes, measur
         }
     }
     
-    // Add remaining text as final part
+    // Add remaining text as final part (NO ELLIPSIS)
     if (currentText.trim()) {
         const finalHTML = `<${tagName}${attributes}>${currentText}</${tagName}>`;
         pages.push({
@@ -1716,20 +1720,21 @@ function splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxCont
     let currentText = '';
     
     for (const word of words) {
-        const testText = currentText + (currentText ? ' ' : '') + word;
+        const testText = currentText ? `${currentText} ${word}` : word;
         const testHTML = `<${tagName}${attributes}>${testText}</${tagName}>`;
         
         if (doesContentFitOnPage(measureDiv, testHTML, new Set(), allFootnotes, maxContentHeight)) {
             currentText = testText;
         } else {
             if (currentText.trim()) {
+                // Save current text (NO ELLIPSIS - clean break)
                 pages.push({
                     content: `<${tagName}${attributes}>${currentText}</${tagName}>`,
                     footnotes: '',
                     footnoteIds: []
                 });
             }
-            currentText = word;
+            currentText = word; // Start new page with current word
         }
     }
     
@@ -1747,11 +1752,21 @@ function splitSentenceByWords(sentence, tagName, attributes, measureDiv, maxCont
 // Helper function to get element attributes
 function getElementAttributes(element) {
     let attributes = '';
+    
+    // Get all attributes from the original element
     for (const attr of element.attributes) {
         attributes += ` ${attr.name}="${attr.value}"`;
     }
+    
+    // If no class attribute exists, ensure we're using standard paragraph class
+    if (!element.hasAttribute('class')) {
+        // You can add a default class here if needed
+        // attributes += ' class="content-paragraph"';
+    }
+    
     return attributes;
 }
+        
 // Create a temporary page reference for measurement if none exists
 function createTemporaryPageReference() {
     const tempPage = document.createElement('div');
@@ -2324,7 +2339,57 @@ function monitorTextOverflow() {
 function detectTextOverflow() {
     return false; // Stub function
 }
+// Add CSS debugging helper to ensure paragraph consistency
+function debugParagraphStyling() {
+    console.log('=== DEBUGGING PARAGRAPH STYLING ===');
+    
+    // Check all paragraphs on current page
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+        const paragraphs = activePage.querySelectorAll('p');
+        paragraphs.forEach((p, index) => {
+            const styles = window.getComputedStyle(p);
+            console.log(`Paragraph ${index + 1}:`, {
+                fontSize: styles.fontSize,
+                fontWeight: styles.fontWeight,
+                fontFamily: styles.fontFamily,
+                lineHeight: styles.lineHeight,
+                margin: styles.margin,
+                padding: styles.padding,
+                className: p.className,
+                innerHTML: p.innerHTML.substring(0, 50) + '...'
+            });
+        });
+    }
+}
+
+// Call this function to debug styling issues: debugParagraphStyling()
+
+// CSS fix for paragraph consistency - add this to your CSS or apply programmatically
+function ensureConsistentParagraphStyling() {
+    // Apply consistent styling to all paragraphs
+    const style = document.createElement('style');
+    style.textContent = `
+        .page-content p {
+            font-family: 'Georgia', serif !important;
+            font-size: inherit !important;
+            font-weight: normal !important;
+            line-height: 1.7 !important;
+            margin-bottom: 1em !important;
+            text-align: left !important;
+        }
         
+        /* Ensure no heading styles leak into paragraphs */
+        .page-content p:first-child {
+            font-size: inherit !important;
+            font-weight: normal !important;
+            margin-top: 0 !important;
+        }
+    `;
+    document.head.appendChild(style);
+    console.log('Applied consistent paragraph styling');
+}
+     
     </script>
 </body>
 </html>
