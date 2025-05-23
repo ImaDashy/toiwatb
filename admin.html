@@ -828,8 +828,16 @@
                     hideLoading();
                     console.log('Server error message:', data.error);
                    let errorMessage = data.error;
-if (errorMessage === 'Unauthorized') {
-    errorMessage = 'You deliberately disobeyed me.';
+if (errorMessage && errorMessage.toLowerCase() === 'unauthorized') {
+    const sassyMessages = [
+        'You deliberately disobeyed me',
+        'Whats a girl like you doing on a page like this',
+        'Sneaky sneaky',
+        'How do you make those little circles',
+        'You kiss your mother with that mouth?',
+        'I HAVE NOW ACCESSED ALL YOUR PHONES DATA jks jks'
+    ];
+    errorMessage = sassyMessages[Math.floor(Math.random() * sassyMessages.length)];
 }
 showNotification(errorMessage || 'Naughty!', true);
 
