@@ -1302,29 +1302,53 @@ function createDedicationPage() {
    function createChapterPages(chapter, chapterIndex) {
     console.log('Creating chapter pages for:', chapter.title);
     
-    // Temporary: Create just one page per chapter to test
-    const pageContainer = document.getElementById('page-container');
+    if (!chapter.content) {
+        console.error('No content found for chapter:', chapter.title);
+        return;
+    }
     
-    const chapterPage = document.createElement('div');
-    chapterPage.className = 'page chapter-page';
-    chapterPage.id = `page-${pagesMap.length}`;
-    
-    chapterPage.innerHTML = `
-        <h2>Chapter ${chapter.number}: ${chapter.title}</h2>
-        <div class="page-content">${chapter.content || 'No content available'}</div>
-    `;
-    
-    pageContainer.appendChild(chapterPage);
-    
-    pagesMap.push({
-        type: 'chapter',
-        chapterIndex: chapterIndex,
-        pageIndex: 0,
-        pageNumber: pagesMap.length
+    // Use the height-based pagination system
+    const pages = paginateContent(chapter.content, chapter.footnotes || [], {
+        chapterNumber: chapter.number,
+        chapterTitle: chapter.title
     });
     
-    console.log('Chapter page created, total pages now:', pagesMap.length);
+    console.log(`Chapter "${chapter.title}" generated ${pages.length} pages`);
+    
+    // Create a page for each paginated content
+    const pageContainer = document.getElementById('page-container');
+    
+    for (let i = 0; i < pages.length; i++) {
+        const chapterPage = document.createElement('div');
+        chapterPage.className = 'page chapter-page';
+        chapterPage.id = `page-${pagesMap.length}`;
+        
+        // Add chapter title to first page of chapter only
+        let titleHTML = '';
+        if (i === 0) {
+            titleHTML = `<h2>Chapter ${chapter.number}: ${chapter.title}</h2>`;
+        }
+        
+        chapterPage.innerHTML = `
+            ${titleHTML}
+            <div class="page-content">${pages[i].content}</div>
+            ${pages[i].footnotes ? `<div class="footnotes">${pages[i].footnotes}</div>` : ''}
+        `;
+        
+        pageContainer.appendChild(chapterPage);
+        
+        // Add to pages map
+        pagesMap.push({
+            type: 'chapter',
+            chapterIndex: chapterIndex,
+            pageIndex: i,
+            pageNumber: pagesMap.length
+        });
+        
+        console.log(`Created chapter page ${i + 1}/${pages.length}, total pages now: ${pagesMap.length}`);
+    }
 }
+
         
         // Function to setup footnote references after pages are created
         function setupFootnoteReferences() {
@@ -1892,7 +1916,8 @@ function getElementAttributes(element) {
         }
         
         // Function to regenerate all pages
-        async function regeneratePages() {
+      async function regeneratePages() {
+    console.log('=== STARTING PAGE REGENERATION ===');
     console.time('Page generation');
     showLoading();
     
@@ -1903,23 +1928,40 @@ function getElementAttributes(element) {
     // Reset page mapping but keep the chapter data
     pagesMap = [];
     
+    console.log('Creating special pages...');
+    
     // Create cover page (page 0)
     createCoverPage();
+    console.log('Cover page created, pagesMap length:', pagesMap.length);
     
     // Create dedication page (page 1)
     createDedicationPage();
+    console.log('Dedication page created, pagesMap length:', pagesMap.length);
     
     // Create TOC page (now page 2)
     createTOCPage();
+    console.log('TOC page created, pagesMap length:', pagesMap.length);
     
-    console.log('Using height-based pagination...');
+    console.log('Book data chapters:', bookData.chapters.length);
     
     try {
-        // Process each chapter with height-based pagination (no charsPerPage needed)
+        // Process each chapter with height-based pagination
         for (let i = 0; i < bookData.chapters.length; i++) {
-            createChapterPages(bookData.chapters[i], i);  // Remove charsPerPage parameter
+            console.log(`\n=== Processing Chapter ${i + 1} ===`);
+            console.log('Chapter data:', {
+                number: bookData.chapters[i].number,
+                title: bookData.chapters[i].title,
+                contentLength: bookData.chapters[i].content ? bookData.chapters[i].content.length : 0,
+                footnotes: bookData.chapters[i].footnotes ? bookData.chapters[i].footnotes.length : 0
+            });
             
-            // Only yield to UI thread if there are many chapters
+            const chapterPagesBefore = pagesMap.length;
+            createChapterPages(bookData.chapters[i], i);
+            const chapterPagesAfter = pagesMap.length;
+            
+            console.log(`Chapter ${i + 1} created ${chapterPagesAfter - chapterPagesBefore} pages`);
+            
+            // Yield to UI thread if there are many chapters
             if (bookData.chapters.length > 5 && i % 2 === 1) {
                 await new Promise(resolve => setTimeout(resolve, 0));
             }
@@ -1927,11 +1969,11 @@ function getElementAttributes(element) {
         
         // Update total pages
         totalPages = pagesMap.length;
+        console.log('Total pages created:', totalPages);
+        console.log('Pages map preview:', pagesMap.slice(0, 10)); // Show first 10 pages
         
-        // Now that all pages are created, we need to update the TOC links
+        // Setup TOC links and other features
         updateTOCLinks();
-        
-        // Setup footnote references and links
         setupFootnoteReferences();
         setupExternalLinks();
         
@@ -1950,29 +1992,36 @@ function getElementAttributes(element) {
         // Initialize mobile features
         setupMobileFeatures();
         
-        // Monitor for text overflow (this should be much less needed now)
-        setTimeout(monitorTextOverflow, 500);
+        // REMOVED: monitorTextOverflow call (not needed with height-based pagination)
+        
     } catch (error) {
         console.error('Error during page generation:', error);
+        console.error('Error stack:', error.stack);
+        
         // Add fallback content if there's an error
-        if (pagesMap.length === 0) {
+        if (pagesMap.length <= 3) { // Only cover, dedication, and TOC
+            console.log('Adding fallback error page...');
             const errorPage = document.createElement('div');
             errorPage.className = 'page';
-            errorPage.id = 'page-0';
+            errorPage.id = `page-${pagesMap.length}`;
             errorPage.innerHTML = `
                 <div class="page-content">
                     <h2>Error Loading Content</h2>
                     <p>There was an error generating book pages. Please try refreshing the page.</p>
                     <p>Error details: ${error.message}</p>
+                    <p>Check the browser console for more details.</p>
                 </div>
             `;
             pageContainer.appendChild(errorPage);
             pagesMap.push({ type: 'error', index: 0 });
-            totalPages = 1;
+            totalPages = pagesMap.length;
         }
     }
     
     console.timeEnd('Page generation');
+    console.log('=== PAGE REGENERATION COMPLETE ===');
+    console.log('Final total pages:', totalPages);
+    console.log('Can navigate to chapter?', totalPages > 3);
     hideLoading();
     
     return Promise.resolve();
@@ -2057,7 +2106,17 @@ showPage = function(pageIndex) {
     }
     
     return result;
-};      
+}; 
+
+function monitorTextOverflow() {
+    // No longer needed with height-based pagination
+    console.log('monitorTextOverflow called (stub function)');
+}
+
+function detectTextOverflow() {
+    return false; // Stub function
+}
+        
     </script>
 </body>
 </html>
