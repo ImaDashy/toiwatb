@@ -1299,45 +1299,31 @@ function createDedicationPage() {
         }
         
         // Create pages for a chapter with improved footnote handling
-    function createChapterPages(chapter, chapterIndex) {  // Remove charsPerPage parameter
-    const content = chapter.content;
+   function createChapterPages(chapter, chapterIndex) {
+    console.log('Creating chapter pages for:', chapter.title);
     
-    // Use height-based pagination (no charsPerPage needed)
-    const pages = paginateContent(content, chapter.footnotes || [], {
-        chapterNumber: chapter.number,
-        chapterTitle: chapter.title
-    });
-    
-    // Create a page for each paginated content
+    // Temporary: Create just one page per chapter to test
     const pageContainer = document.getElementById('page-container');
     
-    for (let i = 0; i < pages.length; i++) {
-        const chapterPage = document.createElement('div');
-        chapterPage.className = 'page chapter-page';
-        chapterPage.id = `page-${pagesMap.length}`;
-        
-        // Add chapter title to first page of chapter
-        let titleHTML = '';
-        if (i === 0) {
-            titleHTML = `<h2>Chapter ${chapter.number}: ${chapter.title}</h2>`;
-        }
-        
-        chapterPage.innerHTML = `
-            ${titleHTML}
-            <div class="page-content">${pages[i].content}</div>
-            ${pages[i].footnotes ? `<div class="footnotes">${pages[i].footnotes}</div>` : ''}
-        `;
-        
-        pageContainer.appendChild(chapterPage);
-        
-        // Add to pages map
-        pagesMap.push({
-            type: 'chapter',
-            chapterIndex: chapterIndex,
-            pageIndex: i,
-            pageNumber: pagesMap.length
-        });
-    }
+    const chapterPage = document.createElement('div');
+    chapterPage.className = 'page chapter-page';
+    chapterPage.id = `page-${pagesMap.length}`;
+    
+    chapterPage.innerHTML = `
+        <h2>Chapter ${chapter.number}: ${chapter.title}</h2>
+        <div class="page-content">${chapter.content || 'No content available'}</div>
+    `;
+    
+    pageContainer.appendChild(chapterPage);
+    
+    pagesMap.push({
+        type: 'chapter',
+        chapterIndex: chapterIndex,
+        pageIndex: 0,
+        pageNumber: pagesMap.length
+    });
+    
+    console.log('Chapter page created, total pages now:', pagesMap.length);
 }
         
         // Function to setup footnote references after pages are created
