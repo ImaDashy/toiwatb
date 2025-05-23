@@ -773,6 +773,50 @@
     }
 }
 
+
+/* ADD THIS TO YOUR EXISTING <style> SECTION */
+
+/* Page Content Paragraph Styling - CONSISTENT MARGINS */
+.page-content p {
+    font-family: 'Georgia', serif;
+    font-size: inherit;
+    font-weight: 400;
+    line-height: 1.7;
+    margin: 16px 0; /* Consistent top and bottom margins for ALL paragraphs */
+    padding: 0;
+    text-align: left;
+}
+
+/* Override browser defaults for first paragraph */
+.page-content p:first-child {
+    margin-top: 16px; /* Same as other paragraphs, not 0 */
+}
+
+/* Override browser defaults for last paragraph */
+.page-content p:last-child {
+    margin-bottom: 16px; /* Same as other paragraphs */
+}
+
+/* Ensure chapter titles have proper spacing but don't affect paragraph margins */
+.chapter-page h2 {
+    font-size: 24px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* Mobile paragraph adjustments */
+@media (max-width: 768px) {
+    .page-content p,
+    .page-content p:first-child,
+    .page-content p:last-child {
+        margin: 14px 0; /* Slightly smaller margins on mobile */
+    }
+    
+    .chapter-page h2 {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+}
     </style>
 </head>
 <body>
