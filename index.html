@@ -1432,7 +1432,7 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
         
         // Improved paginate content function that handles footnotes better
 function paginateContent(content, footnotes, options) {
-    console.log('Starting pagination with proper footnote height calculation...');
+    console.log('Starting pagination with improved footnote handling...');
     console.log('Content length:', content.length);
     
     const pages = [];
@@ -1440,11 +1440,12 @@ function paginateContent(content, footnotes, options) {
     try {
         // Split content by paragraphs first
         const paragraphs = content.split('</p>').filter(p => p.trim());
+        console.log(`Found ${paragraphs.length} paragraphs to paginate`);
         
         let currentPageContent = '';
         let currentPageFootnotes = new Set();
         
-        // Create a temporary measurement container to test if content actually fits
+        // Create measurement container
         const measureContainer = createFootnoteMeasurementContainer();
         
         for (let i = 0; i < paragraphs.length; i++) {
@@ -1471,17 +1472,17 @@ function paginateContent(content, footnotes, options) {
                         content: currentPageContent,
                         footnotes: buildFootnotesHTML(Array.from(currentPageFootnotes), footnotes)
                     });
-                    console.log(`Created page ${pages.length} - content + footnotes fit properly`);
+                    console.log(`Created page ${pages.length} (${currentPageContent.length} chars)`);
                 }
                 
                 // Start new page with current paragraph
                 currentPageContent = paragraph;
                 currentPageFootnotes = new Set(footnoteRefs);
                 
-                // Check if even this single paragraph with its footnotes fits
+                // Double-check if even this single paragraph fits
                 if (!doesContentAndFootnotesFit(measureContainer, currentPageContent, currentPageFootnotes, footnotes)) {
-                    console.warn('Single paragraph with footnotes too large for page, may need splitting');
-                    // For now, we'll put it on its own page anyway - could add paragraph splitting here
+                    console.warn(`Large paragraph may need splitting (${paragraph.length} chars)`);
+                    // Still put it on its own page - we could add paragraph splitting logic here later
                 }
             }
         }
@@ -1500,7 +1501,7 @@ function paginateContent(content, footnotes, options) {
             document.body.removeChild(measureContainer);
         }
         
-        console.log(`Generated ${pages.length} pages with proper footnote spacing`);
+        console.log(`Generated ${pages.length} pages with smart footnote handling`);
         
     } catch (error) {
         console.error('Error in paginateContent:', error);
@@ -1512,10 +1513,10 @@ function paginateContent(content, footnotes, options) {
     
     return pages;
 }
-
+        
 // Create a measurement container that matches your real page layout
 function createFootnoteMeasurementContainer() {
-    console.log('Creating footnote measurement container...');
+    console.log('Creating improved footnote measurement container...');
     
     // Try to find existing page elements
     let samplePage = document.querySelector('.page');
@@ -1545,7 +1546,7 @@ function createFootnoteMeasurementContainer() {
         
         console.log('Using existing page styles for measurement');
     } else {
-        console.log('No existing page found, using default dimensions');
+        console.log('No existing page found, using responsive defaults');
         
         // Apply responsive padding based on screen size
         if (window.innerWidth <= 375) {
@@ -1563,7 +1564,7 @@ function createFootnoteMeasurementContainer() {
         }
     }
     
-    // Create measurement container with known good styles
+    // Create measurement container with proper sizing
     const measureContainer = document.createElement('div');
     measureContainer.className = 'page';
     measureContainer.style.position = 'absolute';
@@ -1578,8 +1579,9 @@ function createFootnoteMeasurementContainer() {
     measureContainer.style.overflow = 'hidden';
     measureContainer.style.backgroundColor = '#f4f0e8';
     measureContainer.style.fontFamily = contentFontFamily;
+    measureContainer.style.boxSizing = 'border-box';
     
-    // Add content area
+    // Add content area with proper flex sizing
     const contentArea = document.createElement('div');
     contentArea.className = 'page-content';
     contentArea.style.flex = '1';
@@ -1588,7 +1590,7 @@ function createFootnoteMeasurementContainer() {
     contentArea.style.fontSize = contentFontSize;
     contentArea.style.fontFamily = contentFontFamily;
     
-    // Add footnotes area
+    // Add footnotes area with conservative spacing
     const footnotesArea = document.createElement('div');
     footnotesArea.className = 'footnotes';
     footnotesArea.style.borderTop = '1px solid #ccc';
@@ -1597,12 +1599,13 @@ function createFootnoteMeasurementContainer() {
     footnotesArea.style.fontSize = '14px';
     footnotesArea.style.position = 'relative';
     footnotesArea.style.zIndex = '50';
+    footnotesArea.style.flexShrink = '0'; // Don't shrink footnotes
     
     measureContainer.appendChild(contentArea);
     measureContainer.appendChild(footnotesArea);
     document.body.appendChild(measureContainer);
     
-    console.log('Measurement container created successfully:', {
+    console.log('Improved measurement container created:', {
         width: pageWidth,
         height: pageHeight,
         padding: pagePadding,
@@ -1707,24 +1710,26 @@ function doesContentAndFootnotesFit(measureContainer, content, footnoteIds, allF
         // Available height
         const availableHeight = containerHeight - containerPadding;
         
-        // Account for footnotes margin and border
+        // Account for footnotes margin and border - but only if footnotes exist
         const footnotesMarginAndBorder = footnotesHTML ? 40 : 0;
         
         // Total used height
         const totalUsedHeight = contentHeight + footnotesHeight + footnotesMarginAndBorder;
         
-        // Safety margin
-        const safetyMargin = 30; // Increased safety margin
+        // MUCH smaller safety margin - only 5px for edge cases
+        const safetyMargin = 5;
         const fits = totalUsedHeight + safetyMargin <= availableHeight;
         
-        if (!fits) {
-            console.log('Content overflow detected:', {
+        // Only log when there's actually a significant overflow
+        if (!fits && (totalUsedHeight - availableHeight) > 10) {
+            console.log('Significant content overflow detected:', {
                 contentHeight,
                 footnotesHeight,
+                footnotesMarginAndBorder,
                 totalUsed: totalUsedHeight,
                 available: availableHeight,
-                safetyMargin,
-                overflow: totalUsedHeight + safetyMargin - availableHeight
+                actualOverflow: totalUsedHeight - availableHeight,
+                safetyMargin
             });
         }
         
