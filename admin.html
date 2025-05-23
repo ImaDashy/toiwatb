@@ -826,6 +826,7 @@
                     showAdminPanel();
                 } else {
                     hideLoading();
+                    console.log('Server error message:', data.error);
                    let errorMessage = data.error;
 if (errorMessage === 'Unauthorised') {
     errorMessage = 'You deliberately disobeyed me.';
