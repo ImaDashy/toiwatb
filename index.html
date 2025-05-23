@@ -1399,7 +1399,44 @@ function createDedicationPage() {
     console.time('Height-based pagination');
     
     const pages = [];
+
+// ADD THESE MISSING FUNCTIONS TO YOUR CODE:
+
+// 1. Extract footnote references from an element (this should have been kept from original code)
+function extractFootnoteRefs(element) {
+    const refs = [];
+    const footnoteRegex = /<sup class="footnote-ref"[^>]*data-id="([^"]+)"[^>]*>.*?<\/sup>/g;
+    const html = element.outerHTML || element.textContent;
+    let match;
     
+    while ((match = footnoteRegex.exec(html)) !== null) {
+        refs.push(match[1]);
+    }
+    
+    return refs;
+}
+
+// 2. Build footnotes HTML (this should also have been kept)
+function buildFootnotesHTML(footnoteIds, footnotes) {
+    if (!footnoteIds.length || !footnotes || !footnotes.length) {
+        return '';
+    }
+    
+    let html = '';
+    
+    // Get footnotes that are referenced on this page
+    const pageFootnotes = footnotes.filter(fn => footnoteIds.includes(fn.id));
+    
+    if (pageFootnotes.length) {
+        for (const footnote of pageFootnotes) {
+            html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
+        }
+    }
+    
+    return html;
+}
+
+           
     // Get dimensions from existing page or create a reference element
     const { measureDiv, maxHeight, maxContentHeight } = createMeasurementContainer();
     
