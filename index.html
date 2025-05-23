@@ -1736,67 +1736,6 @@ function doesContentAndFootnotesFit(measureContainer, content, footnoteIds, allF
     }
 }
         
-// Create a hidden measurement container that matches the real page styling
-function createMeasurementContainer() {
-    // Find an existing page to copy dimensions from
-    let samplePage = document.querySelector('.page-content');
-    let parentPage = document.querySelector('.page');
-    
-    // If no existing page, create a temporary reference
-    if (!samplePage || !parentPage) {
-        parentPage = createTemporaryPageReference();
-        samplePage = parentPage.querySelector('.page-content');
-    }
-    
-    // Get computed styles from the sample page
-    const sampleStyles = window.getComputedStyle(samplePage);
-    const parentStyles = window.getComputedStyle(parentPage);
-    
-    // Calculate available space for content
-    const parentHeight = parentPage.clientHeight;
-    const parentPadding = parseInt(parentStyles.paddingTop) + parseInt(parentStyles.paddingBottom);
-    
-    // Account for chapter title space (if this is the first page of a chapter)
-    const chapterTitleHeight = 70; // Approximate height of chapter title
-    const footnotesBorderHeight = 20; // Space for footnotes border/margin
-    
-    // Maximum height for content only (excluding footnotes)
-    const maxContentHeight = parentHeight - parentPadding - chapterTitleHeight - footnotesBorderHeight;
-    
-    // Total available height including footnotes
-    const maxHeight = parentHeight - parentPadding;
-    
-    // Create measurement container
-    const measureDiv = document.createElement('div');
-    measureDiv.className = parentPage.className;
-    measureDiv.style.position = 'absolute';
-    measureDiv.style.visibility = 'hidden';
-    measureDiv.style.top = '-9999px';
-    measureDiv.style.left = '-9999px';
-    measureDiv.style.width = parentPage.offsetWidth + 'px';
-    measureDiv.style.height = 'auto';
-    measureDiv.style.padding = parentStyles.padding;
-    measureDiv.style.margin = parentStyles.margin;
-    measureDiv.style.fontFamily = parentStyles.fontFamily;
-    measureDiv.style.fontSize = parentStyles.fontSize;
-    measureDiv.style.lineHeight = parentStyles.lineHeight;
-    measureDiv.style.overflow = 'visible';
-    
-    // Add the same structure as a real page
-    measureDiv.innerHTML = `
-        <div class="page-content" style="
-            font-size: ${sampleStyles.fontSize};
-            line-height: ${sampleStyles.lineHeight};
-            flex: 1;
-            overflow: visible;
-        "></div>
-        <div class="footnotes-container"></div>
-    `;
-    
-    document.body.appendChild(measureDiv);
-    
-    return { measureDiv, maxHeight, maxContentHeight };
-}
 
 // Create a temporary page reference for measurement if none exists
 function createTemporaryPageReference() {
