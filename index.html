@@ -974,7 +974,14 @@
         readingArea.style.fontSize = currentFontSize + '%';
         }
         }
-
+        
+// Add this function to update the font size display:
+function updateFontSizeDisplay() {
+    const fontSizeElement = document.getElementById('current-font-size');
+    if (fontSizeElement) {
+        fontSizeElement.textContent = currentFontSize + '%';
+    }
+}
         
         /* === Setup Event Listeners === */
         function setupEventListeners() {
