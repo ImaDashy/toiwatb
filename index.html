@@ -530,6 +530,24 @@
             font-size: 16px;
             margin: 0 10px;
         }
+
+.font-size-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.size-label-text {
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.current-font-size {
+    font-size: 12px;
+    color: #666;
+    font-weight: bold;
+}
         
     /* Tap Indicator Styles */
     .tap-indicator {
@@ -809,7 +827,10 @@
         <div class="menu-panel">
             <div class="font-size-control">
                 <button id="decrease-font-btn">A-</button>
-                <span class="font-size-label">Text Size</span>
+                <span class="font-size-label">
+                <span class="size-label-text">Text Size</span>
+                <span class="current-font-size" id="current-font-size">110%</span>
+                </span>
                 <button id="increase-font-btn">A+</button>
             </div>
             <ul class="menu-list">
@@ -844,7 +865,7 @@
         let totalChaptersToLoad = 0;
         
         // Font size variables
-        let currentFontSize = 90; // 90% is default
+        let currentFontSize = 110; // 110% is default
         const minFontSize = 70;    // 70% minimum
         const maxFontSize = 200;   // 200% maximum
         const fontSizeStep = 10;   // Change in 10% increments
@@ -942,12 +963,26 @@
                 return Promise.reject(error);
             }
         }
+
+        function initializeFontSizeDisplay() {
+        // Set initial font size display
+        updateFontSizeDisplay();
+    
+        // Apply initial font size to reading area
+        const readingArea = document.getElementById('reading-area');
+        if (readingArea) {
+        readingArea.style.fontSize = currentFontSize + '%';
+        }
+        }
+
         
         /* === Setup Event Listeners === */
         function setupEventListeners() {
             // Page navigation buttons
             document.getElementById('prev-page-btn').addEventListener('click', goToPreviousPage);
             document.getElementById('next-page-btn').addEventListener('click', goToNextPage);
+
+            initializeFontSizeDisplay();
             
             // Touch/swipe for mobile
             setupSwipeNavigation();
@@ -994,7 +1029,6 @@
                 hideMenuPanel();
             });
         }
-
         // Handle orientation changes
 window.addEventListener('orientationchange', function() {
     // Wait for the orientation change to complete
@@ -2067,6 +2101,9 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
             
             // Remember which chapter and position we're currently viewing
             const currentPage = pagesMap[currentPageIndex];
+
+            // Update the display
+            updateFontSizeDisplay();
             
             // Completely regenerate all pages with the new font size
             regeneratePages().then(() => {
