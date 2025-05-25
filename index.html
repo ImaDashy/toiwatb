@@ -2407,6 +2407,59 @@ function testFootnoteMeasurement() {
 }
 
 // Call this to test: testFootnoteMeasurement()
+
+function debugFootnoteSizing() {
+    console.log('=== DEBUGGING FOOTNOTE SIZING ===');
+    
+    const activePage = document.querySelector('.page.active');
+    if (activePage) {
+        const contentArea = activePage.querySelector('.page-content');
+        const footnotesArea = activePage.querySelector('.footnotes');
+        
+        if (contentArea) {
+            const contentStyles = window.getComputedStyle(contentArea);
+            console.log('Content area styling:', {
+                fontSize: contentStyles.fontSize,
+                lineHeight: contentStyles.lineHeight,
+                height: contentArea.offsetHeight,
+                scrollHeight: contentArea.scrollHeight
+            });
+        }
+        
+        if (footnotesArea) {
+            const footnotesStyles = window.getComputedStyle(footnotesArea);
+            console.log('Footnotes area styling:', {
+                fontSize: footnotesStyles.fontSize,
+                lineHeight: footnotesStyles.lineHeight,
+                height: footnotesArea.offsetHeight,
+                scrollHeight: footnotesArea.scrollHeight,
+                marginTop: footnotesStyles.marginTop,
+                paddingTop: footnotesStyles.paddingTop,
+                borderTop: footnotesStyles.borderTop
+            });
+            
+            // Check individual footnotes
+            const footnoteItems = footnotesArea.querySelectorAll('.footnote-item');
+            footnoteItems.forEach((item, index) => {
+                const itemStyles = window.getComputedStyle(item);
+                console.log(`Footnote ${index + 1}:`, {
+                    fontSize: itemStyles.fontSize,
+                    height: item.offsetHeight,
+                    content: item.textContent.substring(0, 100) + '...'
+                });
+            });
+        }
+        
+        console.log('Page totals:', {
+            pageHeight: activePage.offsetHeight,
+            contentHeight: contentArea ? contentArea.scrollHeight : 0,
+            footnotesHeight: footnotesArea ? footnotesArea.scrollHeight : 0,
+            totalUsed: (contentArea ? contentArea.scrollHeight : 0) + (footnotesArea ? footnotesArea.scrollHeight : 0)
+        });
+    }
+}
+
+
         
     </script>
 </body>
