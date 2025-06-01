@@ -1272,45 +1272,76 @@ function createDedicationPage() {
     // Add to pages map
     pagesMap.push({ type: 'dedication', index: 0 });
 }
-        
+
+// Add these helper functions for tracking reading progress
+function getReadChapters() {
+    const readChapters = localStorage.getItem('readChapters');
+    return readChapters ? JSON.parse(readChapters) : [];
+}
+
+function markChapterAsRead(chapterNumber) {
+    const readChapters = getReadChapters();
+    if (!readChapters.includes(chapterNumber)) {
+        readChapters.push(chapterNumber);
+        localStorage.setItem('readChapters', JSON.stringify(readChapters));
+    }
+}
+
+function isChapterRead(chapterNumber) {
+    const readChapters = getReadChapters();
+    return readChapters.includes(chapterNumber);
+}
         // Create the table of contents page
-        function createTOCPage() {
-            const pageContainer = document.getElementById('page-container');
-            
-            const tocPage = document.createElement('div');
-            tocPage.className = 'page toc-page';
-            tocPage.id = 'page-2';
-            
-            let tocContent = '<h1>Table of Contents</h1><ul class="toc-list">';
-            
-            for (let i = 0; i < bookData.chapters.length; i++) {
-                const chapter = bookData.chapters[i];
-                
-                // For each chapter, we need to find its first page
-                // We need to calculate this *after* all pages are created
-                // So for now, we'll store the chapter index and update links later
-                tocContent += `<li><span class="chapter-link" data-chapter-index="${i}">Chapter ${chapter.number}: ${chapter.title}</span>`;
-                
-                // Add "new" badge if chapter is less than 7 days old
-                const publishDate = new Date(chapter.publishDate);
-                const now = new Date();
-                const daysDiff = Math.floor((now - publishDate) / (1000 * 60 * 60 * 24));
-                
-                if (daysDiff < 7) {
-                    tocContent += '<span class="new-badge">NEW</span>';
-                }
-                
-                tocContent += '</li>';
-            }
-            
-            tocContent += '</ul>';
-            
-            tocPage.innerHTML = tocContent;
-            pageContainer.appendChild(tocPage);
-            
-            // Add to pages map
-            pagesMap.push({ type: 'toc', index: 0 });
+       function createTOCPage() {
+    const pageContainer = document.getElementById('page-container');
+    
+    const tocPage = document.createElement('div');
+    tocPage.className = 'page toc-page';
+    tocPage.id = 'page-2';
+    
+    let tocContent = '<h1>Table of Contents</h1><ul class="toc-list">';
+    
+    for (let i = 0; i < bookData.chapters.length; i++) {
+        const chapter = bookData.chapters[i];
+        
+        // For each chapter, we need to find its first page
+        // We need to calculate this *after* all pages are created
+        // So for now, we'll store the chapter index and update links later
+        tocContent += `<li><span class="chapter-link" data-chapter-index="${i}">Chapter ${chapter.number}: ${chapter.title}</span>`;
+        
+        // Add "new" badge if chapter is less than 7 days old AND hasn't been read
+        const publishDate = new Date(chapter.publishDate);
+        const now = new Date();
+        const daysDiff = Math.floor((now - publishDate) / (1000 * 60 * 60 * 24));
+        const hasBeenRead = isChapterRead(chapter.number);
+        
+        if (daysDiff < 7 && !hasBeenRead) {
+            tocContent += '<span class="new-badge">NEW</span>';
         }
+        
+        tocContent += '</li>';
+    }
+    
+    tocContent += '</ul>';
+    
+    tocPage.innerHTML = tocContent;
+    pageContainer.appendChild(tocPage);
+    
+    // Add to pages map
+    pagesMap.push({ type: 'toc', index: 0 });
+}
+
+// Add this function to mark chapters as read when the user navigates to them
+function trackChapterReading() {
+    const currentPage = pagesMap[currentPageIndex];
+    if (currentPage && currentPage.type === 'chapter') {
+        const chapterIndex = currentPage.chapterIndex;
+        const chapter = bookData.chapters[chapterIndex];
+        if (chapter) {
+            markChapterAsRead(chapter.number);
+        }
+    }
+}
         
         // Update the TOC links after all pages are created
         function updateTOCLinks() {
@@ -2011,6 +2042,7 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
         function goToPreviousPage() {
             if (currentPageIndex > 0) {
                 showPage(currentPageIndex - 1);
+                trackChapterReading();
             }
         }
         
@@ -2018,12 +2050,14 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
         function goToNextPage() {
             if (currentPageIndex < pagesMap.length - 1) {
                 showPage(currentPageIndex + 1);
+                trackChapterReading();
             }
         }
         
         // Go to a specific page
         function goToPage(pageIndex) {
             showPage(pageIndex);
+            trackChapterReading();
         }
         
         // Update navigation buttons state
