@@ -19,6 +19,12 @@
   to = "/shitquiz-1/:splat"
   status = 200
 
+# Wilsonchat page redirect
+[[redirects]]
+  from = "/wilsonchat/*"
+  to = "/wilsonchat/:splat"
+  status = 200
+
 # Handle 404 errors (new)
 [[redirects]]
   from = "/*"
