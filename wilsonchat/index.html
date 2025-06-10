@@ -22,127 +22,104 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: auto; /* Allow scrolling if needed */
-            touch-action: manipulation; /* Improved touch handling */
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            touch-action: manipulation;
         }
         
         .image-container {
             width: 100%;
-            height: auto;
+            min-height: 100vh;
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 10px; /* Add some padding around the image */
+            align-items: flex-start;
+            padding: 10px;
         }
         
         img {
-            max-width: 100%;
-            max-height: 95vh; /* Slightly reduced from 100vh to ensure visibility */
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            display: block; /* Removes any extra space below the image */
-            transform-origin: center center; /* For proper zooming */
+            display: block;
+            transform-origin: top center;
         }
         
-        /* For mobile devices */
-        @media (max-width: 768px) {
+        /* Desktop view - fit image within viewport */
+        @media (min-width: 769px) {
             body {
-                /* Allow vertical scrolling on mobile if needed */
-                overflow-y: auto;
-                /* Add extra space at top and bottom */
-                padding: 15px 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                overflow: auto;
+            }
+            
+            .image-container {
+                height: auto;
+                align-items: center;
             }
             
             img {
-                /* Ensure image fits within the viewport with some margin */
-                max-height: 90vh;
+                max-width: 100%;
+                max-height: 95vh;
                 width: auto;
-                /* Add a small border to ensure the edges are clearly visible */
-                border: 1px solid rgba(255, 255, 255, 0.1);
+                height: auto;
+                object-fit: contain;
+            }
+        }
+        
+        /* Mobile view - full width, scrollable */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
             }
             
-            /* Container becomes scrollable when zoomed */
             .image-container {
-                overflow: auto;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+                padding: 0;
+                min-height: auto;
+            }
+            
+            img {
+                width: 100%;
+                height: auto;
+                max-width: none;
+                max-height: none;
+                object-fit: none;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Image container with better mobile handling -->
     <div class="image-container">
         <img 
             src="WilsonSundressChatGPT.png" 
             alt="Wilson Sundress Chat" 
             id="chat-wilson"
-            onload="adjustImageSize()"
         >
     </div>
 
     <script>
-        // Function to ensure image fits within viewport
-        function adjustImageSize() {
-            const img = document.getElementById('chat-wilson');
-            const windowHeight = window.innerHeight;
-            const windowWidth = window.innerWidth;
-            
-            // Get the natural dimensions of the image
-            const imgWidth = img.naturalWidth;
-            const imgHeight = img.naturalHeight;
-            
-            // Calculate aspect ratio
-            const imgRatio = imgWidth / imgHeight;
-            const windowRatio = windowWidth / windowHeight;
-            
-            // Determine if we should fit by width or height
-            // Add some margin to make sure nothing gets cut off
-            const margin = 30; // pixels margin
-            
-            if (imgRatio > windowRatio) {
-                // Image is wider relative to the window
-                // So fit by width and ensure height doesn't exceed
-                const maxWidth = windowWidth - margin;
-                img.style.width = maxWidth + 'px';
-                img.style.height = 'auto';
-                
-                // Double check if the height now exceeds window height
-                if (img.offsetHeight > windowHeight - margin) {
-                    img.style.height = (windowHeight - margin) + 'px';
-                    img.style.width = 'auto';
-                }
-            } else {
-                // Image is taller relative to the window
-                // So fit by height first
-                const maxHeight = windowHeight - margin;
-                img.style.height = maxHeight + 'px';
-                img.style.width = 'auto';
-            }
-        }
-        
-        // Run on load and resize
-        window.addEventListener('resize', adjustImageSize);
-        
-        // Also run after a small delay to handle mobile orientation changes
-        window.addEventListener('orientationchange', function() {
-            setTimeout(adjustImageSize, 200);
-        });
-        
         // Allow double-tap to zoom on mobile devices
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function(event) {
             const now = (new Date()).getTime();
             if (now - lastTouchEnd <= 300) {
-                // Double tap detected - allow default browser zoom behavior
                 event.stopPropagation();
             }
             lastTouchEnd = now;
         }, false);
+        
+        // Prevent horizontal scrolling on mobile
+        document.addEventListener('touchmove', function(event) {
+            if (window.innerWidth <= 768) {
+                const touch = event.touches[0];
+                const img = document.getElementById('chat-wilson');
+                const imgRect = img.getBoundingClientRect();
+                
+                // Only prevent default if trying to scroll horizontally
+                if (touch.clientX < imgRect.left || touch.clientX > imgRect.right) {
+                    event.preventDefault();
+                }
+            }
+        }, { passive: false });
     </script>
 </body>
 </html>
