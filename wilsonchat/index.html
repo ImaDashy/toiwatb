@@ -23,9 +23,8 @@
             padding: 0;
             width: 100%;
             min-height: 100vh;
-            overflow-x: hidden;
+            overflow-x: auto;
             overflow-y: auto;
-            touch-action: manipulation;
         }
         
         .image-container {
@@ -34,69 +33,131 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            padding: 10px;
+            padding: 0;
         }
         
         img {
             display: block;
-            transform-origin: top center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
         }
         
-        /* Desktop view - fit image within viewport */
-        @media (min-width: 769px) {
-            body {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                overflow: auto;
-            }
-            
-            .image-container {
-                height: auto;
-                align-items: center;
-            }
-            
-            img {
-                max-width: 100%;
-                max-height: 95vh;
-                width: auto;
-                height: auto;
-                object-fit: contain;
-            }
-        }
-        
-        /* Mobile view - full width, scrollable */
+        /* Mobile view - full width, starts at top */
         @media (max-width: 768px) {
-            body {
-                padding: 0;
-            }
-            
             .image-container {
+                justify-content: flex-start;
+                align-items: flex-start;
                 padding: 0;
-                min-height: auto;
             }
             
             img {
                 width: 100%;
                 height: auto;
+                max-width: 100%;
+                cursor: default;
+            }
+        }
+        
+        /* Desktop view - fit to width with zoom capability */
+        @media (min-width: 769px) {
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                padding: 20px 0;
+            }
+            
+            .image-container {
+                align-items: flex-start;
+                padding: 0 20px;
+            }
+            
+            img {
+                max-width: 95%;
+                width: auto;
+                height: auto;
+                transform-origin: top center;
+            }
+            
+            img.zoomed {
                 max-width: none;
-                max-height: none;
-                object-fit: none;
+                width: 100%;
+                cursor: zoom-out;
+            }
+            
+            img:not(.zoomed) {
+                cursor: zoom-in;
+            }
+        }
+        
+        /* Zoom hint for desktop */
+        .zoom-hint {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        
+        .zoom-hint:hover {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .zoom-hint {
+                display: none;
             }
         }
     </style>
 </head>
 <body>
+    <div class="zoom-hint">Click image to zoom</div>
     <div class="image-container">
         <img 
             src="WilsonSundressChatGPT.png" 
             alt="Wilson Sundress Chat" 
             id="chat-wilson"
+            onclick="toggleZoom()"
         >
     </div>
 
     <script>
+        let isZoomed = false;
+        
+        function toggleZoom() {
+            // Only allow zoom on desktop
+            if (window.innerWidth <= 768) return;
+            
+            const img = document.getElementById('chat-wilson');
+            
+            if (isZoomed) {
+                img.classList.remove('zoomed');
+                isZoomed = false;
+                // Scroll to top when zooming out
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                img.classList.add('zoomed');
+                isZoomed = true;
+            }
+        }
+        
+        // Reset zoom on window resize
+        window.addEventListener('resize', function() {
+            const img = document.getElementById('chat-wilson');
+            if (window.innerWidth <= 768 && isZoomed) {
+                img.classList.remove('zoomed');
+                isZoomed = false;
+            }
+        });
+        
         // Allow double-tap to zoom on mobile devices
         let lastTouchEnd = 0;
         document.addEventListener('touchend', function(event) {
@@ -107,19 +168,16 @@
             lastTouchEnd = now;
         }, false);
         
-        // Prevent horizontal scrolling on mobile
-        document.addEventListener('touchmove', function(event) {
-            if (window.innerWidth <= 768) {
-                const touch = event.touches[0];
-                const img = document.getElementById('chat-wilson');
-                const imgRect = img.getBoundingClientRect();
-                
-                // Only prevent default if trying to scroll horizontally
-                if (touch.clientX < imgRect.left || touch.clientX > imgRect.right) {
-                    event.preventDefault();
+        // Handle orientation changes on mobile
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                if (window.innerWidth <= 768 && isZoomed) {
+                    const img = document.getElementById('chat-wilson');
+                    img.classList.remove('zoomed');
+                    isZoomed = false;
                 }
-            }
-        }, { passive: false });
+            }, 200);
+        });
     </script>
 </body>
 </html>
