@@ -1,4 +1,4 @@
-      // E-book Footnote Enhancer Library
+        // Enhanced E-book Footnote Enhancer Library
         class EbookFootnoteEnhancer {
             constructor() {
                 this.audioCache = {};
@@ -22,7 +22,7 @@
                 document.body.appendChild(this.animationOverlay);
             }
 
-            // Load sound effects (you'll replace these URLs with your actual MP3 files)
+            // Load sound effects
             loadSounds() {
                 const sounds = {
                     'chime': this.createSynthSound('chime'),
@@ -31,19 +31,13 @@
                     'swoosh': this.createSynthSound('swoosh')
                 };
 
-                // Cache the audio objects
                 Object.keys(sounds).forEach(name => {
                     this.audioCache[name] = sounds[name];
                 });
             }
 
-            // Create synthetic sounds (replace with actual MP3 loading)
+            // Create synthetic sounds
             createSynthSound(type) {
-                // This creates a simple synthetic sound using Web Audio API
-                // In your actual implementation, replace this with:
-                // const audio = new Audio('path/to/your/sound.mp3');
-                // return audio;
-                
                 return {
                     play: () => {
                         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -53,7 +47,6 @@
                         oscillator.connect(gainNode);
                         gainNode.connect(audioContext.destination);
                         
-                        // Different sound types
                         switch(type) {
                             case 'chime':
                                 oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
@@ -78,9 +71,8 @@
                 };
             }
 
-            // Add interactive functionality to a footnote
+            // Original method - Add interactive functionality to footnote references
             addInteractiveFootnote(footnoteId, animationType = 'confetti', soundType = 'chime') {
-                // Find footnote reference in content
                 const footnoteRef = document.querySelector(`[data-id="${footnoteId}"]`) || 
                                   document.querySelector(`a[href="#${footnoteId}"]`);
                 
@@ -89,8 +81,44 @@
                     return;
                 }
 
-                // Style the footnote reference
-                footnoteRef.style.cssText += `
+                this.styleFootnoteReference(footnoteRef);
+                this.addFootnoteClickHandler(footnoteRef, footnoteId, animationType, soundType);
+                this.addHoverEffects(footnoteRef);
+            }
+
+            // NEW METHOD - Add interactive functionality to hyperlinks within footnotes
+            addInteractiveFootnoteLink(linkId, animationType = 'confetti', soundType = 'chime') {
+                const link = document.getElementById(linkId);
+                
+                if (!link) {
+                    console.warn(`Link with ID ${linkId} not found`);
+                    return;
+                }
+
+                this.styleInteractiveLink(link);
+                this.addLinkClickHandler(link, animationType, soundType);
+                this.addHoverEffects(link);
+            }
+
+            // NEW METHOD - Add interactive functionality using CSS selectors
+            addInteractiveFootnoteLinkBySelector(selector, animationType = 'confetti', soundType = 'chime') {
+                const links = document.querySelectorAll(selector);
+                
+                if (links.length === 0) {
+                    console.warn(`No links found with selector: ${selector}`);
+                    return;
+                }
+
+                links.forEach(link => {
+                    this.styleInteractiveLink(link);
+                    this.addLinkClickHandler(link, animationType, soundType);
+                    this.addHoverEffects(link);
+                });
+            }
+
+            // Style footnote references
+            styleFootnoteReference(element) {
+                element.style.cssText += `
                     background: linear-gradient(45deg, #ff6b6b, #ffd93d);
                     color: white !important;
                     padding: 2px 6px;
@@ -101,7 +129,73 @@
                     animation: pulse 2s infinite;
                 `;
 
-                // Add CSS for pulse animation
+                this.addPulseAnimation();
+            }
+
+            // Style interactive links within footnotes
+            styleInteractiveLink(element) {
+                element.classList.add('interactive-footnote-link');
+                
+                // Store original href to restore later
+                const originalHref = element.href;
+                element.dataset.originalHref = originalHref;
+            }
+
+            // Add click handler for footnote references
+            addFootnoteClickHandler(element, footnoteId, animationType, soundType) {
+                element.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.playSound(soundType);
+                    this.playAnimation(animationType, e.clientX, e.clientY);
+                    
+                    setTimeout(() => {
+                        const footnoteElement = document.getElementById(footnoteId);
+                        if (footnoteElement) {
+                            footnoteElement.scrollIntoView({ 
+                                behavior: 'smooth',
+                                block: 'center'
+                            });
+                            this.highlightFootnote(footnoteElement);
+                        }
+                    }, 500);
+                });
+            }
+
+            // Add click handler for hyperlinks
+            addLinkClickHandler(element, animationType, soundType) {
+                element.addEventListener('click', (e) => {
+                    // Play effects first
+                    this.playSound(soundType);
+                    this.playAnimation(animationType, e.clientX, e.clientY);
+                    
+                    // Small delay before following the link (optional)
+                    // If you want the link to work normally, remove the preventDefault and setTimeout
+                    e.preventDefault();
+                    setTimeout(() => {
+                        // Follow the original link after effects
+                        const originalHref = element.dataset.originalHref || element.href;
+                        if (originalHref) {
+                            window.open(originalHref, element.target || '_self');
+                        }
+                    }, 800); // Delay to let effects play
+                });
+            }
+
+            // Add hover effects
+            addHoverEffects(element) {
+                element.addEventListener('mouseenter', () => {
+                    element.style.transform = 'scale(1.1)';
+                    element.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
+                });
+
+                element.addEventListener('mouseleave', () => {
+                    element.style.transform = 'scale(1)';
+                    element.style.boxShadow = 'none';
+                });
+            }
+
+            // Add pulse animation CSS
+            addPulseAnimation() {
                 if (!document.getElementById('footnote-enhancer-styles')) {
                     const style = document.createElement('style');
                     style.id = 'footnote-enhancer-styles';
@@ -113,23 +207,6 @@
                     `;
                     document.head.appendChild(style);
                 }
-
-                // Add click handler
-                footnoteRef.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.playSound(soundType);
-                    this.playAnimation(animationType, e.clientX, e.clientY);
-                    
-                // Add hover effects
-                footnoteRef.addEventListener('mouseenter', () => {
-                    footnoteRef.style.transform = 'scale(1.1)';
-                    footnoteRef.style.boxShadow = '0 4px 8px rgba(0,0,0,0.3)';
-                });
-
-                footnoteRef.addEventListener('mouseleave', () => {
-                    footnoteRef.style.transform = 'scale(1)';
-                    footnoteRef.style.boxShadow = 'none';
-                });
             }
 
             // Play sound effect
@@ -162,135 +239,159 @@
 
             // Create confetti animation
             createConfetti() {
-                    const text = "YYYEEEEEEAAAAAAAAHHHHHHHHHHH";
-    const letters = text.split('');
-    
-    // Clear any existing animation
-    this.animationOverlay.innerHTML = '';
-    
-    // Create container for the text
-    const textContainer = document.createElement('div');
-    textContainer.style.cssText = `
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-family: 'Arial Black', Arial, sans-serif;
-        font-size: 8vw;
-        font-weight: 900;
-        color: #ff6b35;
-        text-shadow: 
-            3px 3px 0px #000,
-            6px 6px 10px rgba(0,0,0,0.8),
-            0 0 20px #ff6b35,
-            0 0 40px #ff6b35;
-        letter-spacing: 0.1em;
-        white-space: nowrap;
-        z-index: 1000;
-    `;
-    
-    this.animationOverlay.appendChild(textContainer);
-    
-    // Add each letter with increasing delay
-    letters.forEach((letter, index) => {
-        setTimeout(() => {
-            const letterSpan = document.createElement('span');
-            letterSpan.textContent = letter;
-            letterSpan.style.cssText = `
-                display: inline-block;
-                opacity: 0;
-                transform: scale(0) rotate(360deg);
-                animation: letterAppear 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-            `;
-            
-            textContainer.appendChild(letterSpan);
-            
-            // Add screen flash effect on certain letters
-            if (index === 2 || index === 8 || index === 16 || index === letters.length - 1) {
-                this.createScreenFlash();
-            }
-        }, index * 100);
-    });
-    
-    // Remove the animation after completion
-    setTimeout(() => {
-        textContainer.style.animation = 'fadeOut 1s ease-out forwards';
-        setTimeout(() => {
-            textContainer.remove();
-        }, 1000);
-    }, letters.length * 100 + 2000);
-    
-    // Add CSS animations
-    this.addAnimationCSS('letterAppear', `
-        @keyframes letterAppear {
-            0% {
-                opacity: 0;
-                transform: scale(0) rotate(360deg) translateY(-50px);
-                filter: blur(10px);
-            }
-            50% {
-                opacity: 1;
-                transform: scale(1.2) rotate(0deg) translateY(0px);
-                filter: blur(0px);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1) rotate(0deg) translateY(0px);
-                filter: blur(0px);
-            }
-        }
-    `);
-    
-    this.addAnimationCSS('fadeOut', `
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(1.5);
-            }
-        }
-    `);
-    
-    this.addAnimationCSS('screenFlash', `
-        @keyframes screenFlash {
-            0% {
-                background: rgba(255, 107, 53, 0);
-            }
-            50% {
-                background: rgba(255, 107, 53, 0.3);
-            }
-            100% {
-                background: rgba(255, 107, 53, 0);
-            }
-        }
-    `);
-}
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+                
+                for (let i = 0; i < 50; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.style.cssText = `
+                            position: absolute;
+                            width: ${Math.random() * 10 + 5}px;
+                            height: ${Math.random() * 10 + 5}px;
+                            background: ${colors[Math.floor(Math.random() * colors.length)]};
+                            left: ${Math.random() * 100}%;
+                            top: -10px;
+                            border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+                            animation: confetti-fall ${Math.random() * 2 + 2}s linear forwards;
+                        `;
+                        
+                        this.animationOverlay.appendChild(confetti);
+                        
+                        setTimeout(() => {
+                            confetti.remove();
+                        }, 4000);
+                    }, i * 50);
+                }
 
-// Helper function to create screen flash effect
-createScreenFlash() {
-    const flash = document.createElement('div');
-    flash.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        pointer-events: none;
-        z-index: 999;
-        animation: screenFlash 0.3s ease-out;
-    `;
-    
-    document.body.appendChild(flash);
-    
-    setTimeout(() => {
-        flash.remove();
-    }, 300);
-}
+                this.addAnimationCSS('confetti-fall', `
+                    @keyframes confetti-fall {
+                        0% {
+                            transform: translateY(-100vh) rotate(0deg);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: translateY(100vh) rotate(720deg);
+                            opacity: 0;
+                        }
+                    }
+                `);
+            }
 
-            // Bulk add interactive footnotes from configuration
+            // Create sparkles animation
+            createSparkles(x, y) {
+                for (let i = 0; i < 12; i++) {
+                    const sparkle = document.createElement('div');
+                    const angle = (i * 30) * (Math.PI / 180);
+                    const distance = Math.random() * 100 + 50;
+                    
+                    sparkle.style.cssText = `
+                        position: absolute;
+                        width: 10px;
+                        height: 10px;
+                        background: radial-gradient(circle, #ffd700, #ffed4e);
+                        border-radius: 50%;
+                        left: ${x}px;
+                        top: ${y}px;
+                        animation: sparkle-burst 1.5s ease-out forwards;
+                        --end-x: ${Math.cos(angle) * distance}px;
+                        --end-y: ${Math.sin(angle) * distance}px;
+                    `;
+                    
+                    this.animationOverlay.appendChild(sparkle);
+                    
+                    setTimeout(() => {
+                        sparkle.remove();
+                    }, 1500);
+                }
+
+                this.addAnimationCSS('sparkle-burst', `
+                    @keyframes sparkle-burst {
+                        0% {
+                            transform: translate(0, 0) scale(0);
+                            opacity: 1;
+                        }
+                        50% {
+                            transform: translate(var(--end-x), var(--end-y)) scale(1);
+                            opacity: 1;
+                        }
+                        100% {
+                            transform: translate(var(--end-x), var(--end-y)) scale(0);
+                            opacity: 0;
+                        }
+                    }
+                `);
+            }
+
+            // Create ripple animation
+            createRipple(x, y) {
+                const ripple = document.createElement('div');
+                ripple.style.cssText = `
+                    position: absolute;
+                    border: 3px solid #3498db;
+                    border-radius: 50%;
+                    left: ${x}px;
+                    top: ${y}px;
+                    width: 0;
+                    height: 0;
+                    animation: ripple-expand 1.5s ease-out forwards;
+                    transform: translate(-50%, -50%);
+                `;
+                
+                this.animationOverlay.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 1500);
+
+                this.addAnimationCSS('ripple-expand', `
+                    @keyframes ripple-expand {
+                        0% {
+                            width: 0;
+                            height: 0;
+                            opacity: 1;
+                        }
+                        100% {
+                            width: 300px;
+                            height: 300px;
+                            opacity: 0;
+                        }
+                    }
+                `);
+            }
+
+            // Add CSS animations dynamically
+            addAnimationCSS(name, css) {
+                if (!document.getElementById(`anim-${name}`)) {
+                    const style = document.createElement('style');
+                    style.id = `anim-${name}`;
+                    style.textContent = css;
+                    document.head.appendChild(style);
+                }
+            }
+
+            // Highlight footnote when scrolled to
+            highlightFootnote(element) {
+                const originalBackground = element.style.backgroundColor;
+                element.style.transition = 'background-color 0.5s ease';
+                element.style.backgroundColor = '#fff3cd';
+                
+                setTimeout(() => {
+                    element.style.backgroundColor = originalBackground;
+                }, 2000);
+            }
+
+            // NEW METHOD - Bulk initialize links from configuration
+            initializeLinksFromConfig(config) {
+                config.forEach(item => {
+                    if (item.id) {
+                        this.addInteractiveFootnoteLink(item.id, item.animation, item.sound);
+                    } else if (item.selector) {
+                        this.addInteractiveFootnoteLinkBySelector(item.selector, item.animation, item.sound);
+                    }
+                });
+            }
+
+            // Bulk add interactive footnotes from configuration (original method)
             initializeFromConfig(config) {
                 config.forEach(item => {
                     this.addInteractiveFootnote(item.id, item.animation, item.sound);
@@ -300,10 +401,3 @@ createScreenFlash() {
 
         // Initialize the enhancer
         const EbookEnhancer = new EbookFootnoteEnhancer();
-
-        // Example of how you would use this in your e-book system:
-EbookEnhancer.initializeFromConfig([
-{ id: 'fn-111', animation: 'confetti', sound: 'chime' },
-        //     { id: 'fn-2', animation: 'sparkles', sound: 'bell' },
-        //     { id: 'fn-3', animation: 'ripple', sound: 'pop' }
-]);
