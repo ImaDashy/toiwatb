@@ -21,7 +21,7 @@
     {
       "id": "fn-4",
       "number": 4,
-      "content": "<a href=\"https://#\" target=\"_blank\" rel=\"noopener noreferrer\">YEEEEEEAAAAAHHHHHH!!!</a>"
+      "content": "<a href="#" target=\"_blank\" rel=\"noopener noreferrer\" id="yeah-link">YEEEEEEAAAAAHHHHHH!!!</a>"
     }
   ],
   "publishDate": "2025-06-24T20:08:34.229Z",
