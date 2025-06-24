@@ -401,3 +401,4 @@
 
         // Initialize the enhancer
         const EbookEnhancer = new EbookFootnoteEnhancer();
+EbookEnhancer.addInteractiveFootnoteLink('yeah-link', 'confetti', 'chime');
