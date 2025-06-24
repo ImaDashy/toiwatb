@@ -303,7 +303,7 @@ createScreenFlash() {
 
         // Example of how you would use this in your e-book system:
 EbookEnhancer.initializeFromConfig([
-{ id: 'fn-1i', animation: 'confetti', sound: 'chime' },
+{ id: 'fn-111', animation: 'confetti', sound: 'chime' },
         //     { id: 'fn-2', animation: 'sparkles', sound: 'bell' },
         //     { id: 'fn-3', animation: 'ripple', sound: 'pop' }
 ]);
