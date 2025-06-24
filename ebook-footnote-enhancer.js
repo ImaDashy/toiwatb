@@ -120,20 +120,6 @@
                     this.playSound(soundType);
                     this.playAnimation(animationType, e.clientX, e.clientY);
                     
-                    // Scroll to footnote with a delay for effect
-                    setTimeout(() => {
-                        const footnoteElement = document.getElementById(footnoteId);
-                        if (footnoteElement) {
-                            footnoteElement.scrollIntoView({ 
-                                behavior: 'smooth',
-                                block: 'center'
-                            });
-                            // Highlight the footnote temporarily
-                            this.highlightFootnote(footnoteElement);
-                        }
-                    }, 500);
-                });
-
                 // Add hover effects
                 footnoteRef.addEventListener('mouseenter', () => {
                     footnoteRef.style.transform = 'scale(1.1)';
@@ -304,109 +290,6 @@ createScreenFlash() {
     }, 300);
 }
 
-            // Create sparkles animation
-            createSparkles(x, y) {
-                for (let i = 0; i < 12; i++) {
-                    const sparkle = document.createElement('div');
-                    const angle = (i * 30) * (Math.PI / 180);
-                    const distance = Math.random() * 100 + 50;
-                    
-                    sparkle.style.cssText = `
-                        position: absolute;
-                        width: 10px;
-                        height: 10px;
-                        background: radial-gradient(circle, #ffd700, #ffed4e);
-                        border-radius: 50%;
-                        left: ${x}px;
-                        top: ${y}px;
-                        animation: sparkle-burst 1.5s ease-out forwards;
-                        --end-x: ${Math.cos(angle) * distance}px;
-                        --end-y: ${Math.sin(angle) * distance}px;
-                    `;
-                    
-                    this.animationOverlay.appendChild(sparkle);
-                    
-                    setTimeout(() => {
-                        sparkle.remove();
-                    }, 1500);
-                }
-
-                this.addAnimationCSS('sparkle-burst', `
-                    @keyframes sparkle-burst {
-                        0% {
-                            transform: translate(0, 0) scale(0);
-                            opacity: 1;
-                        }
-                        50% {
-                            transform: translate(var(--end-x), var(--end-y)) scale(1);
-                            opacity: 1;
-                        }
-                        100% {
-                            transform: translate(var(--end-x), var(--end-y)) scale(0);
-                            opacity: 0;
-                        }
-                    }
-                `);
-            }
-
-            // Create ripple animation
-            createRipple(x, y) {
-                const ripple = document.createElement('div');
-                ripple.style.cssText = `
-                    position: absolute;
-                    border: 3px solid #3498db;
-                    border-radius: 50%;
-                    left: ${x}px;
-                    top: ${y}px;
-                    width: 0;
-                    height: 0;
-                    animation: ripple-expand 1.5s ease-out forwards;
-                    transform: translate(-50%, -50%);
-                `;
-                
-                this.animationOverlay.appendChild(ripple);
-                
-                setTimeout(() => {
-                    ripple.remove();
-                }, 1500);
-
-                this.addAnimationCSS('ripple-expand', `
-                    @keyframes ripple-expand {
-                        0% {
-                            width: 0;
-                            height: 0;
-                            opacity: 1;
-                        }
-                        100% {
-                            width: 300px;
-                            height: 300px;
-                            opacity: 0;
-                        }
-                    }
-                `);
-            }
-
-            // Add CSS animations dynamically
-            addAnimationCSS(name, css) {
-                if (!document.getElementById(`anim-${name}`)) {
-                    const style = document.createElement('style');
-                    style.id = `anim-${name}`;
-                    style.textContent = css;
-                    document.head.appendChild(style);
-                }
-            }
-
-            // Highlight footnote when scrolled to
-            highlightFootnote(element) {
-                const originalBackground = element.style.backgroundColor;
-                element.style.transition = 'background-color 0.5s ease';
-                element.style.backgroundColor = '#fff3cd';
-                
-                setTimeout(() => {
-                    element.style.backgroundColor = originalBackground;
-                }, 2000);
-            }
-
             // Bulk add interactive footnotes from configuration
             initializeFromConfig(config) {
                 config.forEach(item => {
@@ -419,8 +302,8 @@ createScreenFlash() {
         const EbookEnhancer = new EbookFootnoteEnhancer();
 
         // Example of how you would use this in your e-book system:
-        // EbookEnhancer.initializeFromConfig([
-        //     { id: 'fn-1i', animation: 'confetti', sound: 'chime' },
+EbookEnhancer.initializeFromConfig([
+{ id: 'fn-1i', animation: 'confetti', sound: 'chime' },
         //     { id: 'fn-2', animation: 'sparkles', sound: 'bell' },
         //     { id: 'fn-3', animation: 'ripple', sound: 'pop' }
-        // ]);
+]);
