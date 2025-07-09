@@ -25,6 +25,12 @@
   to = "/wilsonchat/:splat"
   status = 200
 
+# Rainforest page redirect
+[[redirects]]
+  from = "/rainforestsofcentralafrica/*"
+  to = "/rainforestsofcentralafrica/:splat"
+  status = 200
+
 # Handle 404 errors (new)
 [[redirects]]
   from = "/*"
