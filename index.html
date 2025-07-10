@@ -1520,12 +1520,13 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
         for (const footnote of pageFootnotes) {
             let triggerClass = '';
             // Match exact trigger text
-            if (footnote.content.trim() === "YEEEEEEEEEAAAAAAAAHHHHHHHHHH!!!") {
-                triggerClass = ' yeeaaah-trigger';
-            }
-           
-            html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
-        }
+    if (footnote.content.includes("YEEEEEEEEEAAAAAAAAHHHHHHHHHH!!!")) {
+        console.log(`Matched special footnote: ${footnote.id}`);
+        triggerClass = ' yeeaaah-trigger';
+    }
+
+    html += `<div id="${footnote.id}" class="footnote-item${triggerClass}"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
+}
     }
     
     return html;
