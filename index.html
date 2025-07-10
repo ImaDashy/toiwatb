@@ -846,7 +846,16 @@
         <div class="spinner"></div>
         <div class="loading-text">Here it comes...</div>
     </div>
-    
+
+<!-- Confetti Canvas -->
+<canvas id="confetti-canvas" style="position: fixed; top: 0; left: 0; pointer-events: none; z-index: 9999;"></canvas>
+
+<!-- Sound Effect -->
+<audio id="yeah-sound" src="https://www.myinstants.com/media/sounds/mlg-airhorn.mp3" preload="auto"></audio>
+
+<!-- Confetti Library -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+   
     <script>
         /* === Global Variables === */
         // Book data structure
@@ -1495,6 +1504,12 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
     
     if (pageFootnotes.length) {
         for (const footnote of pageFootnotes) {
+            let triggerClass = '';
+            // Match exact trigger text
+            if (footnote.content.trim() === "YEEEEEEEEEAAAAAAAAHHHHHHHHHH!!!") {
+                triggerClass = ' yeeaaah-trigger';
+            }
+           
             html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
         }
     }
@@ -1968,28 +1983,7 @@ function getElementAttributes(element) {
     return attributes;
 }
            
-        
-        // Build footnotes HTML
-function buildFootnotesHTML(footnoteIds, footnotes) {
-    if (!footnoteIds.length || !footnotes || !footnotes.length) {
-        return '';
-    }
-    
-    let html = '';
-    
-    // Get footnotes that are referenced on this page
-    const pageFootnotes = footnotes.filter(fn => footnoteIds.includes(fn.id));
-    
-    if (pageFootnotes.length) {
-        for (const footnote of pageFootnotes) {
-            html += `<div id="${footnote.id}" class="footnote-item"><sup>${footnote.number}</sup> ${footnote.content}</div>`;
-        }
-    }
-    
-    return html;
-}
-
-        
+               
         /* === Page Navigation === */
         // Show a specific page
         function showPage(pageIndex) {
@@ -2520,6 +2514,25 @@ function testWithYourNumbers() {
 }
 
 // Run this to check your math: testWithYourNumbers()
+
+
+function setupYeeaaahFootnotes() {
+  const targets = document.querySelectorAll('.yeeaaah-trigger');
+  targets.forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', () => {
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+      sound.currentTime = 0;
+      sound.play();
+    });
+  });
+}
+
+        
         
     </script>
 </body>
