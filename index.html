@@ -2548,21 +2548,148 @@ function setupYeeaaahFootnotes() {
 
     el.addEventListener('click', () => {
       console.log("CLICKED YEEAAAH!");
-      confetti({
-        particleCount: 75,
-        spread: 70,
-        origin: { y: 0.6 },
-        ticks: 100,
-        scalar: 0.75
-      });
-
+      //confetti({
+      //  particleCount: 75,
+      //  spread: 70,
+      //  origin: { y: 0.6 },
+      //  ticks: 100,
+      //  scalar: 0.75
+      // });
+      createYeahAnimation();  
       sound.currentTime = 0;
       sound.play();
     });
   });
 }
       
-        
+createYeahAnimation() {
+    const text = "YYYEEEEEEAAAAAAAAHHHHHHHHHHH";
+    const letters = text.split('');
+    
+    // Clear any existing animation
+    this.animationOverlay.innerHTML = '';
+    
+    // Create container for the text
+    const textContainer = document.createElement('div');
+    textContainer.style.cssText = `
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: 'Arial Black', Arial, sans-serif;
+        font-size: 8vw;
+        font-weight: 900;
+        color: #ff6b35;
+        text-shadow: 
+            3px 3px 0px #000,
+            6px 6px 10px rgba(0,0,0,0.8),
+            0 0 20px #ff6b35,
+            0 0 40px #ff6b35;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+        z-index: 1000;
+    `;
+    
+    this.animationOverlay.appendChild(textContainer);
+    
+    // Add each letter with increasing delay
+    letters.forEach((letter, index) => {
+        setTimeout(() => {
+            const letterSpan = document.createElement('span');
+            letterSpan.textContent = letter;
+            letterSpan.style.cssText = `
+                display: inline-block;
+                opacity: 0;
+                transform: scale(0) rotate(360deg);
+                animation: letterAppear 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+            `;
+            
+            textContainer.appendChild(letterSpan);
+            
+            // Add screen flash effect on certain letters
+            if (index === 2 || index === 8 || index === 16 || index === letters.length - 1) {
+                this.createScreenFlash();
+            }
+        }, index * 100);
+    });
+    
+    // Remove the animation after completion
+    setTimeout(() => {
+        textContainer.style.animation = 'fadeOut 1s ease-out forwards';
+        setTimeout(() => {
+            textContainer.remove();
+        }, 1000);
+    }, letters.length * 100 + 2000);
+    
+    // Add CSS animations
+    this.addAnimationCSS('letterAppear', `
+        @keyframes letterAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(360deg) translateY(-50px);
+                filter: blur(10px);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2) rotate(0deg) translateY(0px);
+                filter: blur(0px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg) translateY(0px);
+                filter: blur(0px);
+            }
+        }
+    `);
+    
+    this.addAnimationCSS('fadeOut', `
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.5);
+            }
+        }
+    `);
+    
+    this.addAnimationCSS('screenFlash', `
+        @keyframes screenFlash {
+            0% {
+                background: rgba(255, 107, 53, 0);
+            }
+            50% {
+                background: rgba(255, 107, 53, 0.3);
+            }
+            100% {
+                background: rgba(255, 107, 53, 0);
+            }
+        }
+    `);
+}
+
+// Helper function to create screen flash effect
+createScreenFlash() {
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 999;
+        animation: screenFlash 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(flash);
+    
+    setTimeout(() => {
+        flash.remove();
+    }, 300);
+}        
     </script>
 </body>
 </html>
