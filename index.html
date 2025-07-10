@@ -1532,9 +1532,7 @@ function buildFootnotesHTML(footnoteIds, footnotes) {
     return html;
 }
 
-// Then setup the click triggers
-setupYeeaaahFootnotes();
-        
+       
         // Improved paginate content function that handles footnotes better
 function paginateContent(content, footnotes, options) {
     console.log('Starting pagination with improved footnote handling...');
@@ -2263,6 +2261,9 @@ function getElementAttributes(element) {
         
         // Initialize mobile features
         setupMobileFeatures();
+
+        // Then setup the click triggers
+        setupYeeaaahFootnotes();
         
         // REMOVED: monitorTextOverflow call (not needed with height-based pagination)
         
