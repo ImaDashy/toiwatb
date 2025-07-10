@@ -794,14 +794,14 @@
   .yeeaaah-trigger {
     font-weight: bold;
     color: orange;
-    text-shadow: 1px 1px 2px #333;
+    text-decoration: underline;
     cursor: pointer;
     transition: transform 0.2s ease, text-shadow 0.2s ease;
   }
 
   .yeeaaah-trigger:hover {
-    transform: scale(1.05);
-    text-shadow: 2px 2px 4px #222;
+    transform: scale(1.10);
+    
   }
 
         
@@ -2532,22 +2532,32 @@ function testWithYourNumbers() {
 
 
 function setupYeeaaahFootnotes() {
+  const sound = document.getElementById("yeah-sound");
   const targets = document.querySelectorAll('.yeeaaah-trigger');
+
+  console.log("Setting up YEEAAAH footnotes...");
+  console.log("Found targets:", targets.length);
+
   targets.forEach(el => {
+    console.log("Adding click listener to:", el);
     el.style.cursor = 'pointer';
+
     el.addEventListener('click', () => {
+      console.log("CLICKED YEEAAAH!");
       confetti({
-        particleCount: 150,
+        particleCount: 75,
         spread: 70,
-        origin: { y: 0.6 }
+        origin: { y: 0.6 },
+        ticks: 100,
+        scalar: 0.75
       });
+
       sound.currentTime = 0;
       sound.play();
     });
   });
 }
-
-        
+      
         
     </script>
 </body>
