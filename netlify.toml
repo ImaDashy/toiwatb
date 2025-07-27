@@ -31,6 +31,12 @@
   to = "/rainforestsofcentralafrica/:splat"
   status = 200
 
+# Gandalf page redirect
+[[redirects]]
+  from = "/gandalf/*"
+  to = "/gandalf/:splat"
+  status = 200
+
 # Handle 404 errors (new)
 [[redirects]]
   from = "/*"
