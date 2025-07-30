@@ -37,6 +37,12 @@
   to = "/gandalf/:splat"
   status = 200
 
+ # Spwanchow page redirect
+[[redirects]]
+  from = "/spawnchow/*"
+  to = "/spawnchow/:splat"
+  status = 200
+
 # Handle 404 errors (new)
 [[redirects]]
   from = "/*"
