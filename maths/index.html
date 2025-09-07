@@ -339,8 +339,10 @@
     pascal: './images/Snoop.jpg'
 };
         
-        let settledCount = 0;
-        let totalMathematicians = 0;
+let settledCount = 0;           // Tracks how many mathematicians have settled
+let totalMathematicians = 0;    // Total number of mathematician entities
+let musicStarted = false;       // Flag to prevent multiple initializations
+let audioElement = null;        // HTML5 Audio element for MP3 playback
         
         function checkAnswer() {
             const answer = parseInt(document.getElementById('answer').value);
@@ -460,6 +462,57 @@
             
             animate();
         }
+
+        
+        function initializeAudio() {
+    if (musicStarted) return;
+    
+    console.log('Initializing audio...');
+    audioElement = new Audio();
+    
+    // Option 1: Use a file from your GitHub repo
+    audioElement.src = './audio/ambient-music.mp3';
+    
+    // Option 2: Use an external URL (uncomment to use)
+    // audioElement.src = 'https://example.com/your-music.mp3';
+    
+    audioElement.loop = true;
+    audioElement.volume = 0.3; // Adjust volume (0.0 to 1.0)
+    
+    // Optional: Fade in effect
+    audioElement.volume = 0;
+    
+    musicStarted = true;
+    console.log('Audio initialized');
+}
+
+        function playAmbientMusic() {
+    if (!musicStarted || !audioElement) {
+        console.log('Audio not ready');
+        return;
+    }
+    
+    console.log('Starting music playbook...');
+    audioElement.play().then(() => {
+        console.log('Music started successfully');
+        // Fade in the music over 2 seconds
+        let currentVolume = 0;
+        const targetVolume = 0.3;
+        const fadeInterval = setInterval(() => {
+            if (currentVolume < targetVolume) {
+                currentVolume += 0.02;
+                audioElement.volume = Math.min(currentVolume, targetVolume);
+            } else {
+                clearInterval(fadeInterval);
+                console.log('Fade in complete');
+            }
+        }, 100);
+    }).catch(error => {
+        console.log('Audio playback failed:', error);
+    });
+}
+
+
         
         function showEssay() {
             // Initialize audio on user interaction
