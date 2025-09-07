@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathematical Analysis System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 10px;
+            min-height: 100vh;
+            background: #0a0a0a;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #00ff00;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            background: #1a1a1a;
+            border: 2px solid #333333;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+            text-align: left;
+            width: 100%;
+            max-width: 600px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 15px;
+                font-size: 12px;
+            }
+            
+            .header {
+                font-size: 14px !important;
+            }
+            
+            .question {
+                font-size: 13px !important;
+            }
+            
+            input[type="number"] {
+                width: 120px !important;
+                margin-right: 10px !important;
+                font-size: 14px !important;
+            }
+            
+            .submit-btn {
+                font-size: 12px !important;
+                padding: 8px 16px !important;
+            }
+        }
+        
+        .header {
+            color: #00ff00;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        
+        .system-info {
+            color: #666666;
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .question {
+            color: #ffffff;
+            font-size: 14px;
+            margin-bottom: 30px;
+            background: #222222;
+            padding: 15px;
+            border-left: 3px solid #00ff00;
+        }
+        
+        .input-section {
+            margin: 20px 0;
+            background: #111111;
+            padding: 20px;
+            border: 1px solid #333333;
+        }
+        
+        .input-label {
+            color: #00ff00;
+            font-size: 12px;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        input[type="number"] {
+            background: #000000;
+            border: 1px solid #555555;
+            color: #00ff00;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 8px 12px;
+            width: 200px;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #00ff00;
+            box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+        }
+        
+        .submit-btn {
+            background: #000000;
+            border: 1px solid #555555;
+            color: #00ff00;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .submit-btn:hover {
+            background: #111111;
+            border-color: #00ff00;
+        }
+        
+        .submit-btn:active {
+            background: #00ff00;
+            color: #000000;
+        }
+        
+        .message {
+            margin-top: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: #111111;
+            padding: 10px;
+            border-left: 3px solid;
+        }
+        
+        .incorrect { 
+            color: #ff0000; 
+            border-left-color: #ff0000;
+        }
+        .close { 
+            color: #ffaa00;
+            border-left-color: #ffaa00;
+        }
+        
+        .status-line {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: #666666;
+            font-size: 12px;
+        }
+        
+        @media (max-width: 768px) {
+            .status-line {
+                font-size: 10px;
+                bottom: 10px;
+                left: 10px;
+            }
+        }
+        
+        .mathematician {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: #222222;
+            border: 1px solid #555555;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 768px) {
+            .mathematician {
+                width: 60px;
+                height: 60px;
+            }
+        }
+        
+        .mathematician img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%) contrast(1.2) brightness(0.8);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            z-index: 999;
+        }
+        
+        .success-message {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: #00ff00;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            z-index: 1001;
+        }
+        
+        @media (max-width: 768px) {
+            .success-message {
+                font-size: 14px;
+                top: 10px;
+                left: 10px;
+            }
+        }
+        
+        .calculation-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: #666666;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            z-index: 1001;
+        }
+        
+        @media (max-width: 768px) {
+            .calculation-display {
+                font-size: 10px;
+                bottom: 10px;
+                right: 10px;
+            }
+        }
+        
+        .essay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666666;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            max-width: 80%;
+            text-align: center;
+            opacity: 0;
+            z-index: 1002;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .essay {
+                font-size: 12px;
+                max-width: 90%;
+                padding: 15px;
+                line-height: 1.6;
+            }
+        }
+        
+        .essay-fade-in {
+            animation: fadeInEssay 3s ease-in forwards;
+        }
+        
+        @keyframes fadeInEssay {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="header">MATHEMATICAL ANALYSIS SYSTEM v2.1</div>
+        
+        <div class="system-info">
+            System: UNIX Terminal Interface<br>
+            Mode: Computational Analysis<br>
+            Status: Ready
+        </div>
+        
+        <div class="question">
+            QUERY: What is the sum of all the numbers in the second sentence?
+        </div>
+        
+        <div class="input-section">
+            <label class="input-label">ENTER NUMERICAL VALUE:</label>
+            <div class="input-row">
+                <input type="number" id="answer" placeholder="0">
+                <button class="submit-btn" onclick="checkAnswer()">EXECUTE</button>
+            </div>
+        </div>
+        
+        <div class="message" id="message"></div>
+    </div>
+    
+    <div class="status-line">
+        SYS_READY | MEM_OK | CPU_IDLE
+    </div>
+
+    <script>
+        const mathematicianImages = {
+            einstein: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMzMzMzMzIi8+CjxjaXJjbGUgY3g9IjQwIiBjeT0iMzAiIHI9IjE1IiBmaWxsPSIjNjY2NjY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI2MCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSI4IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FaW5zdGVpbjwvdGV4dD4KPC9zdmc+',
+            newton: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMzMzMzMzIi8+CjxyZWN0IHg9IjI1IiB5PSIyMCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjNjY2NjY2Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI2MCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSI4IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5OZXd0b248L3RleHQ+Cjwvc3ZnPg==',
+            euler: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMzMzMzMzIi8+Cjxwb2x5Z29uIHBvaW50cz0iNDAsOCAyNSwyNSA1NSwyNSIgZmlsbD0iIzY2NjY2NiIvPgo8cG9seWdvbiBwb2ludHM9IjI1LDI1IDI1LDQ1IDU1LDQ1IDU1LDI1IiBmaWxsPSIjNTU1NTU1Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI2MCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSI4IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5FdWxlcjwvdGV4dD4KPC9zdmc+',
+            gauss: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMzMzMzMzIi8+CjxyZWN0IHg9IjIwIiB5PSIyMCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjI1IiByeD0iMTIiIGZpbGw9IiM2NjY2NjYiLz4KPHRleHQgeD0iNDAiIHk9IjYwIiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjgiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdhdXNzPC90ZXh0Pgo8L3N2Zz4=',
+            turing: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMzMzMzMzIi8+CjxyZWN0IHg9IjE1IiB5PSIxNSIgd2lkdGg9IjUwIiBoZWlnaHQ9IjMwIiBmaWxsPSIjNjY2NjY2Ii8+CjxyZWN0IHg9IjMwIiB5PSIyNSIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjNTU1NTU1Ii8+Cjx0ZXh0IHg9IjQwIiB5PSI2MCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSI4IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5UdXJpbmc8L3RleHQ+Cjwvc3ZnPg==',
+            pascal: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjMzMzMzMzIi8+Cjxwb2x5Z29uIHBvaW50cz0iNDAsMTAgNjAsMzAgMjAsMzAiIGZpbGw9IiM2NjY2NjYiLz4KPHN2ZyB4PSIyMCIgeT0iMzAiIHdpZHRoPSI0MCIgaGVpZ2h0PSIyMCI+Cjx0ZXh0IHg9IjIwIiB5PSIxNSIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSI2IiBmaWxsPSIjNTU1NTU1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj4xIDEgMTwvdGV4dD4KPC9zdmc+Cjx0ZXh0IHg9IjQwIiB5PSI2MCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSI4IiBmaWxsPSIjOTk5OTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5QYXNjYWw8L3RleHQ+Cjwvc3ZnPg=='
+        };
+        
+        let settledCount = 0;
+        let totalMathematicians = 0;
+        
+        function checkAnswer() {
+            const answer = parseInt(document.getElementById('answer').value);
+            const messageEl = document.getElementById('message');
+            const correctAnswer = 3087;
+            
+            if (answer === correctAnswer) {
+                startCelebration();
+            } else if (Math.abs(answer - correctAnswer) <= 20) {
+                showMessage('RESULT: CLOSE APPROXIMATION', 'close');
+            } else {
+                showMessage('RESULT: INCORRECT VALUE', 'incorrect');
+            }
+        }
+        
+        function showMessage(text, className) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + className;
+            messageEl.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageEl.style.opacity = '0';
+            }, 2000);
+        }
+        
+        function startCelebration() {
+            document.getElementById('container').classList.add('hidden');
+            
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            document.body.appendChild(celebration);
+            
+            const successMsg = document.createElement('div');
+            successMsg.className = 'success-message';
+            successMsg.textContent = 'CALCULATION VERIFIED: CORRECT';
+            document.body.appendChild(successMsg);
+            
+            const calcDisplay = document.createElement('div');
+            calcDisplay.className = 'calculation-display';
+            calcDisplay.innerHTML = 'EXECUTING MATHEMATICIAN.EXE<br>RENDERING ENTITIES...';
+            document.body.appendChild(calcDisplay);
+            
+            const mathematicians = ['einstein', 'newton', 'euler', 'gauss', 'turing', 'pascal'];
+            totalMathematicians = 18;
+            settledCount = 0;
+            
+            for (let i = 0; i < totalMathematicians; i++) {
+                setTimeout(() => {
+                    createMathematician(mathematicians[i % mathematicians.length]);
+                }, i * 150);
+            }
+        }
+        
+        function createMathematician(type) {
+            const mathematician = document.createElement('div');
+            mathematician.className = 'mathematician ' + type;
+            
+            const img = document.createElement('img');
+            img.src = mathematicianImages[type];
+            img.alt = type;
+            mathematician.appendChild(img);
+            
+            const isMobile = window.innerWidth <= 768;
+            const size = isMobile ? 60 : 80;
+            
+            const startX = Math.random() * (window.innerWidth - size);
+            mathematician.style.left = startX + 'px';
+            mathematician.style.top = -size + 'px';
+            
+            let x = startX;
+            let y = -size;
+            let vx = (Math.random() - 0.5) * 8;
+            let vy = Math.random() * 3 + 4;
+            let gravity = 0.4;
+            let bounce = 0.75;
+            let settled = false;
+            
+            document.body.appendChild(mathematician);
+            
+            function animate() {
+                if (settled) return;
+                
+                x += vx;
+                y += vy;
+                vy += gravity;
+                
+                if (x <= 0 || x >= window.innerWidth - size) {
+                    vx *= -bounce;
+                    x = Math.max(0, Math.min(window.innerWidth - size, x));
+                }
+                
+                if (y >= window.innerHeight - size) {
+                    vy *= -bounce;
+                    y = window.innerHeight - size;
+                    vx *= 0.92;
+                    
+                    // Check if nearly settled (much more lenient)
+                    if (Math.abs(vy) < 3 && Math.abs(vx) < 2 && !settled) {
+                        settled = true;
+                        settledCount++;
+                        
+                        // Start essay fade when most have nearly settled
+                        if (settledCount === totalMathematicians) {
+                            setTimeout(showEssay, 1000);
+                        }
+                    }
+                }
+                
+                mathematician.style.left = x + 'px';
+                mathematician.style.top = y + 'px';
+                
+                if (!settled) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+        
+        function showEssay() {
+            const essay = document.createElement('div');
+            essay.className = 'essay';
+            essay.innerHTML = `
+                Why did you solve this trivial problem?<br><br>
+                
+                In a world of infinite distractions, you chose to count numbers in a sentence.<br>
+                You paused your day, focused your mind, performed arithmetic.<br><br>
+                
+                Perhaps it speaks to something deeper—<br>
+                the human need to complete, to solve, to find order in chaos.<br><br>
+                
+                Or maybe you simply couldn't resist a puzzle.<br>
+                That curiosity that drives us to poke at things,<br>
+                to see what happens when we engage.<br><br>
+                
+                These small acts of mental effort,<br>
+                these moments of voluntary difficulty,<br>
+                might be what keeps our minds sharp<br>
+                in an age of constant ease.<br><br>
+                
+                Thank you for taking the time.<br>
+                For choosing to think when you didn't have to.
+            `;
+            
+            document.body.appendChild(essay);
+            
+            setTimeout(() => {
+                essay.classList.add('essay-fade-in');
+            }, 500);
+        }
+        
+        document.getElementById('answer').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+    </script>
+</body>
+</html>
