@@ -43,6 +43,12 @@
   to = "/spawnchow/:splat"
   status = 200
 
+  # Maths page redirect
+[[redirects]]
+  from = "/maths/*"
+  to = "/maths/:splat"
+  status = 200
+
 # Handle 404 errors (new)
 [[redirects]]
   from = "/*"
