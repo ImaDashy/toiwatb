@@ -272,20 +272,24 @@
             color: #666666;
             font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
-            line-height: 1.8;
-            max-width: 80%;
+            line-height: 1.6;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
             text-align: center;
             opacity: 0;
             z-index: 1002;
-            padding: 20px;
+            padding: 5vh 20px;
+            box-sizing: border-box;
         }
         
         @media (max-width: 768px) {
             .essay {
                 font-size: 12px;
-                max-width: 90%;
-                padding: 15px;
-                line-height: 1.6;
+                max-width: 95%;
+                padding: 3vh 15px;
+                line-height: 1.5;
+                max-height: 95vh;
             }
         }
         
@@ -444,7 +448,7 @@
                         
                         // Start essay fade when most have nearly settled
                         if (settledCount === totalMathematicians) {
-                            setTimeout(showEssay, 300);
+                            setTimeout(showEssay, 1000);
                         }
                     }
                 }
