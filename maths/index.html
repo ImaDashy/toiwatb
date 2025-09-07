@@ -306,8 +306,8 @@
         
         <div class="system-info">
             System: UNIX Terminal Interface<br>
-            Mode: Hardcore Nerd<br>
-            Status: Bring it
+            Mode: Computational Analysis<br>
+            Status: Ready
         </div>
         
         <div class="question">
@@ -326,7 +326,7 @@
     </div>
     
     <div class="status-line">
-        SYS_READY | QUEEN_YASS | ITHURTS_WHEN_IP
+        SYS_READY | MEM_OK | CPU_IDLE
     </div>
 
     <script>
@@ -376,12 +376,12 @@
             
             const successMsg = document.createElement('div');
             successMsg.className = 'success-message';
-            successMsg.textContent = 'CALCULATION VERIFIED: NAILED IT';
+            successMsg.textContent = 'CALCULATION VERIFIED: CORRECT';
             document.body.appendChild(successMsg);
             
             const calcDisplay = document.createElement('div');
             calcDisplay.className = 'calculation-display';
-            calcDisplay.innerHTML = 'EXECUTING VICTORYDANCE.EXE<br>RENDERING ENTITIES...';
+            calcDisplay.innerHTML = 'EXECUTING MATHEMATICIAN.EXE<br>RENDERING ENTITIES...';
             document.body.appendChild(calcDisplay);
             
             const mathematicians = ['einstein', 'newton', 'euler', 'gauss', 'turing', 'pascal'];
@@ -462,6 +462,9 @@
         }
         
         function showEssay() {
+            // Initialize audio on user interaction
+            initializeAudio();
+            
             const essay = document.createElement('div');
             essay.className = 'essay';
             essay.innerHTML = `
@@ -490,6 +493,10 @@
             
             setTimeout(() => {
                 essay.classList.add('essay-fade-in');
+                // Start MP3 music when essay fades in
+                if (musicStarted && audioElement) {
+                    playAmbientMusic();
+                }
             }, 500);
         }
         
