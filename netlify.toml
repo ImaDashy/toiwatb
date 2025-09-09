@@ -18,6 +18,13 @@
   from = "/shitquiz-1/*"
   to = "/shitquiz-1/:splat"
   status = 200
+  
+# Shitquiz-2 page redirect
+[[redirects]]
+  from = "/shitquiz-2/*"
+  to = "/shitquiz-2/:splat"
+  status = 200
+
 
 # Wilsonchat page redirect
 [[redirects]]
