@@ -22,5 +22,11 @@
     "title": "Live, Laugh, Leuven",
     "file": "chapter-04.json",
     "publishDate": "2025-09-12T10:34:09.657Z"
+  },
+  {
+    "number": 5,
+    "title": "A Note From The Author",
+    "file": "chapter-05.json",
+    "publishDate": "2025-09-12T10:36:39.944Z"
   }
 ]
